@@ -603,7 +603,7 @@ const Header = ({subtitle, onHome, rightContent}) => (
   </div>
 );
 
-export default function DottieDeeds() {
+function DottieDeeds() {
   const [screen, setScreen] = useState(() => { try { const m = localStorage.getItem("dd_master"); return (m&&JSON.parse(m).firmName)?"home":"onboard"; } catch { return "onboard"; } });
   const [docType, setDocType] = useState("grant");
   const [step, setStep] = useState(0);
@@ -1166,37 +1166,6 @@ export default function DottieDeeds() {
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
