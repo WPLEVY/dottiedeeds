@@ -12,10 +12,159 @@
 <body class="bg-gray-50">
     <div id="root"></div>
 
-    <script type="text/babel" src="app.jsx"></script>
-
     <script type="text/babel">
-        // Wait just a split second for app.jsx to register globally, then mount it
+        // Inject React hooks globally for the browser build
+        const { useState, useCallback, useEffect } = React;
+
+        const MODEL = "claude-sonnet-4-20250514";
+        const C = { gold:"#b8960c", goldlt:"#e8c84a", ink:"#1a1710", paper:"#f5f0e8", cream:"#ede7d8", rule:"#e0d8c8", muted:"#7a7060", green:"#3a7a3a", amber:"#c07a10", red:"#c03020" };
+        const ST = {
+          inp:{ width:"100%", background:"#fff", border:`1px solid ${C.rule}`, color:C.ink, padding:"10px 14px", fontSize:14, fontFamily:"Georgia,serif", borderRadius:2, outline:"none", boxSizing:"border-box" },
+          lbl:{ display:"block", fontSize:10, letterSpacing:3, textTransform:"uppercase", color:C.muted, marginBottom:6 },
+          btnP:{ background:C.gold, color:"#fff", border:"none", padding:"12px 32px", fontSize:11, letterSpacing:3, textTransform:"uppercase", cursor:"pointer", fontFamily:"Georgia,serif", borderRadius:2 },
+          btnS:{ background:"none", border:`1px solid ${C.rule}`, color:C.muted, padding:"12px 24px", fontSize:11, letterSpacing:3, textTransform:"uppercase", cursor:"pointer", fontFamily:"Georgia,serif", borderRadius:2 },
+          btnG:{ background:"none", border:"none", color:"#a09070", padding:"12px 20px", fontSize:11, letterSpacing:2, textTransform:"uppercase", cursor:"pointer", fontFamily:"Georgia,serif" },
+          sec:{ fontSize:10, letterSpacing:3, textTransform:"uppercase", color:C.gold, marginBottom:12, marginTop:24, paddingBottom:8, borderBottom:`1px solid ${C.rule}` },
+          card:{ background:"#fff", border:`1px solid ${C.rule}`, borderRadius:2, padding:"18px 22px", marginBottom:12 },
+          warn:{ background:"#fff8f0", border:`1px solid #e8c060`, borderLeft:`3px solid ${C.gold}`, padding:"12px 16px", fontSize:12, color:"#5a4010", lineHeight:1.8, marginBottom:16 },
+          err:{ background:"#fff0f0", border:`1px solid #e09080`, borderLeft:`3px solid ${C.red}`, padding:"12px 16px", fontSize:12, color:"#5a1010", lineHeight:1.8, marginBottom:12 },
+        };
+
+        const Field = ({label, children, hint, warn, required}) => (
+          <div style={{marginBottom:18}}>
+            {label && <label style={{...ST.lbl, ...(required?{color:C.gold}:{})}}>{label}{required&&<span style={{color:C.gold}}> *</span>}</label>}
+            {children}
+            {hint && <div style={{fontSize:11,color:"#a09070",marginTop:4}}>{hint}</div>}
+            {warn && <div style={{fontSize:11,color:C.amber,marginTop:4}}>⚠ {warn}</div>}
+          </div>
+        );
+
+        const RT_EXEMPTIONS = [
+          { code:"R&T 11911 — Gift", label:"Gift — grantor received nothing in return", text:"This is a bonafide gift and the grantor received nothing in return, R&T §11911." },
+          { code:"R&T 11930", label:"Transfer into or out of a Living Trust", text:"This conveyance transfers an interest into or out of a Living Trust, R&T §11930." },
+          { code:"R&T 11930 — Death", label:"Gift or conveyance by reason of death", text:"This is a gift and the grantor received nothing in return or conveyance by reason of death, R&T §11930." },
+          { code:"R&T 11927", label:"Dissolution of marriage — one spouse to other", text:"This conveyance is in dissolution of marriage by one spouse to the other, R&T §11927." },
+          { code:"R&T 11911 — Same Parties", label:"Same parties — same proportionate interest", text:"The grantors and the grantees in this conveyance are comprised of the same parties who continue to hold the same proportionate interest in the property, R&T §11925(d)." },
+          { code:"R&T 11911 — Title Manner", label:"Change in manner title is held only", text:"This conveyance changes the manner in which title is held, grantor(s) and grantee(s) remain the same and continue to hold the same proportionate interest, R&T §11911." },
+          { code:"R&T 11911 — Court Order", label:"Court-ordered — not pursuant to sale", text:"This is a court-ordered conveyance or decree that is not pursuant to sale, R&T §11911." },
+          { code:"R&T 11911 — Sole & Separate", label:"Establishing sole and separate property of spouse", text:"This conveyance establishes sole and separate property of a spouse, R&T §11911." },
+          { code:"R&T 11911 — Community Property", label:"Confirming community property interest", text:"This conveyance confirms a community property interest, which was purchased with Community Property Funds, R&T §11911." },
+          { code:"R&T 11911 — Name Change", label:"Change of name — grantor and grantee same party", text:"This conveyance confirms a change of name, and the grantor and grantee are the same party, R&T §11911." },
+          { code:"R&T 63 — Interspousal", label:"Interspousal transfer — not a change in ownership", text:"This conveyance is solely between spouses and is exempt from Documentary Transfer Tax pursuant to R&T §§11930 and 11911. This is an Interspousal Transfer and not a change in ownership under R&T §63." },
+          { code:"custom", label:"Custom — type your own exemption language", text:"" },
+        ];
+
+        const juratBlock = (name) => `A Notary Public or other officer completing this certificate verifies only the identity of the individual who signed the document to which this certificate is attached, and not the truthfulness, accuracy, or validity of that document.
+
+State of California     )
+                        ) ss.
+County of _______________     )
+
+Subscribed and sworn to (or affirmed) before me on this __________ day of _________________, ${new Date().getFullYear()}, by ${name||"_________________________"}, proved to me on the basis of satisfactory evidence to be the person(s) who appeared before me.
+
+_______________________________
+Notary Public`;
+
+        const NOTARY = {
+          "Individual":`┌─────────────────────────────────────────────────────────────────────────────────┐\n│ A notary public or other officer completing this certificate verifies only the  │\n│ identity of the individual who signed the document to which this certificate is │\n│ attached, and not the truthfulness, accuracy, or validity of that document.     │\n└─────────────────────────────────────────────────────────────────────────────────┘\n\nState of California     )\n                        ) ss.\nCounty of _______________     )\n\nOn _____________ before me, _________________________, Notary Public, personally appeared _________________________, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that he/she/they executed the same in his/her/their authorized capacity(ies), and that by his/her/their signature(s) on the instrument the person(s), or the entity upon behalf of which the person(s) acted, executed the instrument.\n\nI certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.\n\nWITNESS my hand and official seal.\n\nSignature _________________________ (Seal)`,
+          "Trustee":`┌─────────────────────────────────────────────────────────────────────────────────┐\n│ A notary public or other officer completing this certificate verifies only the  │\n│ identity of the individual who signed the document to which this certificate is │\n│ attached, and not the truthfulness, accuracy, or validity of that document.     │\n└─────────────────────────────────────────────────────────────────────────────────┘\n\nState of California     )\n                        ) ss.\nCounty of _______________     )\n\nOn _____________ before me, _________________________, Notary Public, personally appeared _________________________, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that he/she/they executed the same in his/her/their authorized capacity(ies) as Trustee(s), and that by his/her/their signature(s) on the instrument the person(s), or the trust upon behalf of which the person(s) acted, executed the instrument.\n\nI certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.\n\nWITNESS my hand and official seal.\n\nSignature _________________________ (Seal)`,
+          "Corporate Officer / LLC Manager":`┌─────────────────────────────────────────────────────────────────────────────────┐\n│ A notary public or other officer completing this certificate verifies only the  │\n│ identity of the individual who signed the document to which this certificate is │\n│ attached, and not the truthfulness, accuracy, or validity of that document.     │\n└─────────────────────────────────────────────────────────────────────────────────┘\n\nState of California\nCounty of _______________\n\nOn _____________ before me, _________________________, Notary Public, personally appeared _________________________, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that he/she/they executed the same in his/her/their authorized capacity(ies) as an authorized officer/manager of the entity named therein, and that by his/her/their signature(s) on the instrument the entity, or the person upon behalf of which the entity acted, executed the instrument.\n\nI certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.\n\nWITNESS my hand and official seal.\n\nSignature _________________________ (Seal)`,
+          "Attorney-in-Fact":`┌─────────────────────────────────────────────────────────────────────────────────┐\n│ A notary public or other officer completing this certificate verifies only the  │\n│ identity of the individual who signed the document to which this certificate is │\n│ attached, and not the truthfulness, accuracy, or validity of that document.     │\n└─────────────────────────────────────────────────────────────────────────────────┘\n\nState of California\nCounty of _______________\n\nOn _____________ before me, _________________________, Notary Public, personally appeared _________________________, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that he/she/they executed the same in his/her/their authorized capacity(ies) as Attorney-in-Fact for _________________________, and that by his/her/their signature(s) on the instrument the person(s), or the principal upon behalf of which the person(s) acted, executed the instrument.\n\nI certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.\n\nWITNESS my hand and official seal.\n\nSignature _________________________ (Seal)`,
+          "Guardian / Conservator":`┌─────────────────────────────────────────────────────────────────────────────────┐\n│ A notary public or other officer completing this certificate verifies only the  │\n│ identity of the individual who signed the document to which this certificate is │\n│ attached, and not the truthfulness, accuracy, or validity of that document.     │\n└─────────────────────────────────────────────────────────────────────────────────┘\n\nState of California\nCounty of _______________\n\nOn _____________ before me, _________________________, Notary Public, personally appeared _________________________, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that he/she/they executed the same in his/her/their authorized capacity(ies) as Guardian/Conservator, and that by his/her/their signature(s) on the instrument the person(s), or the estate upon behalf of which the person(s) acted, executed the instrument.\n\nI certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.\n\nWITNESS my hand and official seal.\n\nSignature _________________________ (Seal)`,
+        };
+
+        const VESTING = [
+          "a married man/woman as his/her sole and separate property",
+          "an unmarried man/woman",
+          "husband and wife as community property",
+          "husband and wife as community property with right of survivorship",
+          "husband and wife as joint tenants",
+          "as joint tenants",
+          "as tenants in common",
+          "a California limited liability company",
+          "a California corporation",
+        ];
+        const COUNTIES = ["Alameda","Alpine","Amador","Butte","Calaveras","Colusa","Contra Costa","Del Norte","El Dorado","Fresno","Glenn","Humboldt","Imperial","Inyo","Kern","Kings","Lake","Lassen","Los Angeles","Madera","Marin","Mariposa","Mendocino","Merced","Modoc","Mono","Monterey","Napa","Nevada","Orange","Placer","Plumas","Riverside","Sacramento","San Benito","San Bernardino","San Diego","San Francisco","San Joaquin","San Luis Obispo","San Mateo","Santa Barbara","Santa Clara","Santa Cruz","Shasta","Sierra","Siskiyou","Solano","Sonoma","Stanislaus","Sutter","Tehama","Trinity","Tulare","Tuolumne","Ventura","Yolo","Yuba"];
+
+        const DOC_TYPES = [
+          {id:"grant",       icon:"📄", label:"Grant Deed"},
+          {id:"granttrust",  icon:"🏛",  label:"Grant Deed — Trust Transfer"},
+          {id:"dot",         icon:"🔐", label:"Deed of Trust"},
+          {id:"quitclaim",   icon:"✍️",  label:"Quitclaim Deed"},
+          {id:"interspousal",icon:"💍", label:"Interspousal Quitclaim"},
+          {id:"adjt",        icon:"📋", label:"Affidavit — Death of Joint Tenant"},
+          {id:"recon",       icon:"🔓", label:"Full Reconveyance"},
+          {id:"easement",    icon:"🗺",  label:"Easement Deed"}
+        ];
+
+        const recHdr = (m) => `RECORDING REQUESTED BY:\n\n${(m&&m.firmName)||"[FIRM NAME]"}\n\nAND WHEN RECORDED MAIL TO:\n\n${(m&&m.firmName)||"[FIRM NAME]"}\n${(m&&m.firmAddress)||"[FIRM ADDRESS]"}\n${(m&&m.firmCity)?`${m.firmCity}, ${m.firmState||"CA"} ${m.firmZip||""}`:"[CITY, STATE ZIP]"}\n\n                    Space above this line for Recorder's use only`;
+
+        const genGrant = (f,m) => { const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting; const dttLine = f.exemptFromTax ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}` : `Documentary Transfer Tax: $${f.dtt||"___________"}`; return `${recHdr(m)}\n______________________________________________________________________________________________\n\n                                  GRANT DEED\n\nMAIL TAX STATEMENTS TO:                    THE UNDERSIGNED GRANTOR(S) DECLARE(S):\n${f.grantee||"[GRANTEE NAME]"}             ${dttLine}\n${f.granteeAddress||"[GRANTEE ADDRESS]"}   Building Homes and Jobs Act Fee: $-0-\n                                            GC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\nAPN: ${f.apn||"_______________"}     County: ${f.county||"[COUNTY]"}${f.cityOfProperty?`     City: ${f.cityOfProperty}`:""}\n\n${f.grantor||"[GRANTOR NAME AND VESTING]"}, hereby GRANTS to\n\n${f.grantee||"[GRANTEE NAME]"},\n${v},\n\nthe following described real property in the County of ${f.county||"[COUNTY]"}, State of California:\n\n${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}\n\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nDated: ______________________________\n\n_______________________________\n${f.grantor||"[GRANTOR NAME]"}\n${f.grantorCapacity||"Individual"}\n\n\n${NOTARY[f.grantorCapacity] || NOTARY["Individual"]}`; };
+
+        const DEFAULT_MASTER = { firmName:"", firmAddress:"", firmCity:"", firmState:"California", firmZip:"" };
+
+        function App() {
+          const [docType, setDocType] = useState("grant");
+          const [step, setStep] = useState(0);
+          const [output, setOutput] = useState("");
+          const [master, setMaster] = useState(DEFAULT_MASTER);
+
+          const [form, setForm] = useState({
+            grantor:"", grantorCapacity:"Individual", apn:"", county:"Los Angeles",
+            propertyAddress:"", granteeAddress:"", legalDescription:"", cityOfProperty:"",
+            exemptFromTax:true, exemptReason:"R&T §11930 — transfer to/from trust", dtt:"",
+            grantee:"", granteeVesting:VESTING[0], customVesting:"",
+            dotModPosition:"first", dotModTerms:"", dotModNewAmount:"", 
+            dotModNewMaturity:"", dotModNewRate:"" 
+          });
+
+          const upd = (k,v) => setForm(p=>({...p,[k]:v}));
+
+          const handleGenerate = () => {
+            setOutput(genGrant(form, master));
+            setStep(3);
+          };
+
+          return (
+            <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+              <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`,padding:"14px 28px",display:"flex",alignItems:"center",justifyContent:"between"}}>
+                <div>
+                  <span style={{fontFamily:"monospace",fontSize:11,color:C.gold,letterSpacing:3,textTransform:"uppercase"}}>Dottie Deeds</span>
+                </div>
+              </div>
+              <div style={{maxWidth:740,margin:"0 auto",padding:"28px 20px 48px",width:"100%"}}>
+                {step===0&&(
+                  <div>
+                    <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:18}}>Step 1: Property Location</h2>
+                    <Field label="Property Street Address"><input value={form.propertyAddress} onChange={e=>upd("propertyAddress",e.target.value)} placeholder="e.g. 24 Seabluff" style={ST.inp}/></Field>
+                    <Field label="City"><input value={form.cityOfProperty} onChange={e=>upd("cityOfProperty",e.target.value)} placeholder="e.g. Newport Beach" style={ST.inp}/></Field>
+                    <Field label="County"><select value={form.county} onChange={e=>upd("county",e.target.value)} style={ST.inp}>{COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
+                    <Field label="APN / Parcel ID"><input value={form.apn} onChange={e=>upd("apn",e.target.value)} placeholder="e.g. 123-456-78" style={ST.inp}/></Field>
+                    <button onClick={()=>setStep(1)} style={ST.btnP}>Next Step →</button>
+                  </div>
+                )}
+                {step===1&&(
+                  <div>
+                    <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:18}}>Step 2: Grantor & Grantee</h2>
+                    <Field label="Grantor Name"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} style={ST.inp}/></Field>
+                    <Field label="Grantee Name"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} style={ST.inp}/></Field>
+                    <Field label="Vesting Title Manner"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}</select></Field>
+                    <Field label="Legal Description Verbatim"><textarea value={form.legalDescription} onChange={e=>upd("legalDescription",e.target.value)} rows={4} style={ST.inp}/></Field>
+                    <div style={{display:"flex",gap:10}}><button onClick={()=>setStep(0)} style={ST.btnS}>← Back</button><button onClick={handleGenerate} style={ST.btnP}>Generate Deed →</button></div>
+                  </div>
+                )}
+                {step===3&&(
+                  <div>
+                    <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:14}}>Draft Document Preview</h2>
+                    <div style={{background:"#fff",border:"1px solid #bbb",padding:24,fontFamily:"monospace",fontSize:11,whiteSpace:"pre-wrap",marginBottom:16}}>{output}</div>
+                    <button onClick={() => setStep(0)} style={ST.btnS}>Draft Another</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
         window.addEventListener('load', () => {
             const root = ReactDOM.createRoot(document.getElementById('root'));
             root.render(<App />);
