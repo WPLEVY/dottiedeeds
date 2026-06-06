@@ -1140,3 +1140,4 @@ export default function DottieDeeds() {
   );
 }
 
+window.App = App;
