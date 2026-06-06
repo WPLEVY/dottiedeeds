@@ -1,5 +1,3 @@
-import { useState, useCallback, useEffect } from "react";
-
 const MODEL = "claude-sonnet-4-20250514";
 const C = { gold:"#b8960c", goldlt:"#e8c84a", ink:"#1a1710", paper:"#f5f0e8", cream:"#ede7d8", rule:"#e0d8c8", muted:"#7a7060", green:"#3a7a3a", amber:"#c07a10", red:"#c03020" };
 const ST = {
@@ -1141,3 +1139,5 @@ export default function DottieDeeds() {
     </div>
   );
 }
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
