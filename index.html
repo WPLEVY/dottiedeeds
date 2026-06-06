@@ -72,6 +72,7 @@ Notary Public`;
           "Attorney-in-Fact":`┌─────────────────────────────────────────────────────────────────────────────────┐\n│ A notary public or other officer completing this certificate verifies only the  │\n│ identity of the individual who signed the document to which this certificate is │\n│ attached, and not the truthfulness, accuracy, or validity of that document.     │\n└─────────────────────────────────────────────────────────────────────────────────┘\n\nState of California\nCounty of _______________\n\nOn _____________ before me, _________________________, Notary Public, personally appeared _________________________, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that he/she/they executed the same in his/her/their authorized capacity(ies) as Attorney-in-Fact for _________________________, and that by his/her/their signature(s) on the instrument the person(s), or the principal upon behalf of which the person(s) acted, executed the instrument.\n\nI certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.\n\nWITNESS my hand and official seal.\n\nSignature _________________________ (Seal)`,
           "Guardian / Conservator":`┌─────────────────────────────────────────────────────────────────────────────────┐\n│ A notary public or other officer completing this certificate verifies only the  │\n│ identity of the individual who signed the document to which this certificate is │\n│ attached, and not the truthfulness, accuracy, or validity of that document.     │\n└─────────────────────────────────────────────────────────────────────────────────┘\n\nState of California\nCounty of _______________\n\nOn _____________ before me, _________________________, Notary Public, personally appeared _________________________, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that he/she/they executed the same in his/her/their authorized capacity(ies) as Guardian/Conservator, and that by his/her/their signature(s) on the instrument the person(s), or the estate upon behalf of which the person(s) acted, executed the instrument.\n\nI certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.\n\nWITNESS my hand and official seal.\n\nSignature _________________________ (Seal)`,
         };
+        const nb = (cap) => NOTARY[cap] || NOTARY["Individual"];
 
         const VESTING = [
           "a married man/woman as his/her sole and separate property",
@@ -84,91 +85,69 @@ Notary Public`;
           "a California limited liability company",
           "a California corporation",
         ];
+        const CAPACITY = ["Individual","Trustee","Corporate Officer / LLC Manager","Attorney-in-Fact","Guardian / Conservator"];
         const COUNTIES = ["Alameda","Alpine","Amador","Butte","Calaveras","Colusa","Contra Costa","Del Norte","El Dorado","Fresno","Glenn","Humboldt","Imperial","Inyo","Kern","Kings","Lake","Lassen","Los Angeles","Madera","Marin","Mariposa","Mendocino","Merced","Modoc","Mono","Monterey","Napa","Nevada","Orange","Placer","Plumas","Riverside","Sacramento","San Benito","San Bernardino","San Diego","San Francisco","San Joaquin","San Luis Obispo","San Mateo","Santa Barbara","Santa Clara","Santa Cruz","Shasta","Sierra","Siskiyou","Solano","Sonoma","Stanislaus","Sutter","Tehama","Trinity","Tulare","Tuolumne","Ventura","Yolo","Yuba"];
 
         const DOC_TYPES = [
-          {id:"grant",       icon:"📄", label:"Grant Deed"},
-          {id:"granttrust",  icon:"🏛",  label:"Grant Deed — Trust Transfer"},
-          {id:"dot",         icon:"🔐", label:"Deed of Trust"},
-          {id:"quitclaim",   icon:"✍️",  label:"Quitclaim Deed"},
-          {id:"interspousal",icon:"💍", label:"Interspousal Quitclaim"},
-          {id:"adjt",        icon:"📋", label:"Affidavit — Death of Joint Tenant"},
-          {id:"recon",       icon:"🔓", label:"Full Reconveyance"},
-          {id:"easement",    icon:"🗺",  label:"Easement Deed"}
+          {id:"grant",       icon:"📄", label:"Grant Deed",                             desc:"Individual, LLC, sale, gift"},
+          {id:"granttrust",  icon:"🏛",  label:"Grant Deed — Trust Transfer",            desc:"Into or out of a living trust"},
+          {id:"dot",         icon:"🔐", label:"Deed of Trust",                           desc:"1st or 2nd lien position"},
+          {id:"quitclaim",   icon:"✍️",  label:"Quitclaim Deed",                          desc:"Release of interest, no warranties"},
+          {id:"interspousal",icon:"💍", label:"Interspousal Quitclaim Deed",             desc:"Between spouses"},
+          {id:"adjt",        icon:"📋", label:"Affidavit — Death of Joint Tenant",       desc:"Surviving joint tenant"},
+          {id:"adtr",        icon:"📋", label:"Affidavit — Death of Trustee",            desc:"Successor trustee"},
+          {id:"sscp",        icon:"👫", label:"Affidavit — Surviving Spouse (CP)",       desc:"Probate Code §13540"},
+          {id:"tod",         icon:"🔮", label:"TOD / Beneficiary Deed",                  desc:"Transfer on death — Prob. §5642"},
+          {id:"recon",       icon:"🔓", label:"Full Reconveyance",                       desc:"Release lien after payoff"},
+          {id:"easement",    icon:"🗺",  label:"Easement Deed",                           desc:"Grant or reserve an easement"},
+          {id:"dotmod",      icon:"📝", label:"Deed of Trust — Modification",            desc:"Modify terms of existing DOT"},
+          {id:"trustees",    icon:"⚖️",  label:"Trustee's Deed Upon Sale",               desc:"Foreclosure sale conveyance"},
+          {id:"sheriff",     icon:"🏛",  label:"Sheriff's Deed",                          desc:"Court-ordered sale conveyance"},
         ];
+
+        const COUNTY_INFO = {
+          "Los Angeles":  {phone:"(562) 462-2177",url:"https://www.lavote.gov/home/recorder",eRecord:true,vendors:["Simplifile","CSC","eRecording Partners"],note:"Many LA cities add city transfer tax. Verify before recording."},
+          "Sacramento":   {phone:"(916) 874-6334",url:"https://ccr.saccounty.net",eRecord:true,vendors:["Simplifile","CSC"],note:"City of Sacramento adds city transfer tax within city limits."},
+          "Contra Costa": {phone:"(925) 335-7900",url:"https://www.ccclerkrec.us",eRecord:true,vendors:["Simplifile"],note:""},
+          "Marin":        {phone:"(415) 473-6154",url:"https://www.marincounty.gov/depts/ar",eRecord:true,vendors:["Simplifile"],note:""},
+          "Santa Clara":  {phone:"(408) 299-5688",url:"https://clerkrecorder.santaclaracounty.gov",eRecord:true,vendors:["Simplifile","CSC"],note:"San Jose adds city conveyance tax. $20 penalty if PCOR missing."},
+          "San Francisco":{phone:"(415) 554-5596",url:"https://www.sfassessor.org/recorder-information",eRecord:true,vendors:["Simplifile","CSC"],note:"Significant city transfer tax — verify carefully."},
+          "Orange":       {phone:"(714) 834-2500",url:"https://www.ocrecorder.com",eRecord:true,vendors:["Simplifile","CSC","eRecording Partners"],note:""},
+          "San Diego":    {phone:"(619) 236-3771",url:"https://arcc.sdcounty.ca.gov",eRecord:true,vendors:["Simplifile","CSC","eRecording Partners"],note:""},
+          "Ventura":      {phone:"(805) 654-2263",url:"https://clerkrecorder.venturacounty.gov",eRecord:true,vendors:["Simplifile"],note:"$10 Survey Monument fee on deeds."},
+          "Alameda":      {phone:"(510) 272-6362",url:"https://www.acgov.org/auditor/recorder",eRecord:true,vendors:["Simplifile","CSC"],note:"Oakland and other cities add city transfer tax."},
+          "Placer":       {phone:"(530) 886-5600",url:"https://www.placer.ca.gov/recorder",eRecord:true,vendors:["Simplifile"],note:"SB2 fee applies — no exemption for residential owner-occupier in Placer."},
+        };
+        const DEF_COUNTY = {phone:"See county recorder website",url:"",eRecord:false,vendors:[],note:"Verify current fees and requirements with the county recorder before recording."};
+
+        const CHECKLISTS = {
+          grant:        {steps:["Confirm grantor name matches prior deed exactly","Verify APN on county assessor website","Check legal description character by character against prior deed","Grantor signs in front of notary — no pre-signing","Notary completes all blanks — seal must be fully legible","Complete PCOR — missing PCOR adds $20 penalty"],rejections:["PCOR missing","Notary acknowledgment incomplete","Legal description mismatch","Grantor name discrepancy","Top margin under 2.5 inches","Notary seal illegible"]},
+          granttrust:   {steps:["Confirm trustee has signing authority — review trust instrument","Verify trust name and date match trust instrument exactly","Trustee signs in trustee capacity","Notary uses trustee acknowledgment block","PCOR — check Item L1 (revocable) or L2 (irrevocable)","File BOE-19-B or BOE-19-D if Prop 19 exclusion claimed"],rejections:["Trust name doesn't match trust instrument","Trustee capacity missing","Individual acknowledgment used","PCOR L1 or L2 not checked"]},
+          dot:          {steps:["Trustor(s) sign — not the lender","Both spouses sign if community property","Do NOT include a PCOR","For second DOT — verify senior lien recording reference","Attach Exhibit A before notarization"],rejections:["Not all vested parties signed","PCOR incorrectly included","Exhibit A not attached before notarization"]},
+          quitclaim:    {steps:["Confirm purpose with supervising attorney","Grantor signs before notary","PCOR required","Confirm DTT exemption code"],rejections:["PCOR missing","Wrong DTT exemption code","Notary acknowledgment incomplete"]},
+          interspousal: {steps:["Confirm parties are legally married","Only transferring spouse signs","PCOR strongly recommended — county charges $25 additional fee and requires supplemental information if not submitted. Check Item A and enter date of death","For refinance — confirm lender timing"],rejections:["PCOR Item A not checked","Both spouses signed"]},
+          adjt:         {steps:["Obtain certified copy of death certificate","Verify prior deed recording reference","Surviving joint tenant signs before notary","PCOR — check Item D with date of death","Submit affidavit and death certificate together"],rejections:["Death certificate is photocopy — must be certified","Affidavit and death certificate not together","PCOR Item D not checked"]},
+          adtr:         {steps:["Obtain certified copy of death certificate","Confirm successor trustee authority from trust instrument","Successor trustee signs in trustee capacity","Submit affidavit and death certificate together","No PCOR required"],rejections:["Death certificate not certified","Individual acknowledgment used","PCOR incorrectly included"]},
+          sscp:         {steps:["Obtain certified copy of death certificate","Confirm property held as community property","Confirm 40 days have passed since date of death","Surviving spouse signs before notary","PCOR — check Item A"],rejections:["Death certificate not certified","40-day waiting period not satisfied","PCOR missing or Item A not checked"]},
+          tod:          {steps:["Confirm owner currently vested of record","Owner signs before notary AND two witnesses simultaneously","MUST RECORD WITHIN 60 DAYS OF NOTARIZATION","Exempt from PCOR (R&T §480.3)","Exempt from DTT (R&T §11930)"],rejections:["Recorded more than 60 days after notarization — void","Two witnesses not obtained","PCOR incorrectly included"]},
+          recon:        {steps:["Confirm loan fully paid","Trustee executes — not the lender","Verify original DOT recording reference","No PCOR required","SB2 fee of $75 applies"],rejections:["Lender signed instead of trustee","Original DOT recording reference wrong","PCOR incorrectly included"]},
+          easement:     {steps:["Confirm easement type — appurtenant or in gross","Describe location, width, and purpose specifically","Grantor signs before notary","PCOR required"],rejections:["Easement description too vague","PCOR missing"]},
+          dotmod:       {steps:["Both trustor AND beneficiary must sign","Confirm original DOT recording reference","No PCOR required","SB2 fee applies"],rejections:["Only one party signed","Original DOT reference incorrect"]},
+          trustees:     {steps:["Confirm Trustee's Sale properly conducted under CC §2924","Trustee (not lender) executes","DTT: amount bid minus senior liens or cite R&T §11922","PCOR required"],rejections:["PCOR missing","DTT calculation incorrect","Trustee capacity wrong"]},
+          sheriff:      {steps:["Obtain certified Writ of Execution from court file","Sheriff or Deputy Sheriff signs","PCOR required"],rejections:["Court information incorrect","PCOR missing"]},
+        };
+
+        const DEFAULT_MASTER = {
+          firmName:"", firmAddress:"", firmCity:"", firmState:"California", firmZip:"",
+          defaultTrustee:"First American Title Insurance Company",
+          lateChargeDays:"10", lateChargePercent:"6", defaultDueOnSale:true,
+          standardCovenants:"", defaultExemptReason:"R&T §11930 — transfer to/from trust",
+          prepaymentLanguage:"This Deed of Trust may be prepaid in whole or in part at any time without penalty.",
+        };
 
         const recHdr = (m) => `RECORDING REQUESTED BY:\n\n${(m&&m.firmName)||"[FIRM NAME]"}\n\nAND WHEN RECORDED MAIL TO:\n\n${(m&&m.firmName)||"[FIRM NAME]"}\n${(m&&m.firmAddress)||"[FIRM ADDRESS]"}\n${(m&&m.firmCity)?`${m.firmCity}, ${m.firmState||"CA"} ${m.firmZip||""}`:"[CITY, STATE ZIP]"}\n\n                    Space above this line for Recorder's use only`;
 
-        const genGrant = (f,m) => { const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting; const dttLine = f.exemptFromTax ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}` : `Documentary Transfer Tax: $${f.dtt||"___________"}`; return `${recHdr(m)}\n______________________________________________________________________________________________\n\n                                  GRANT DEED\n\nMAIL TAX STATEMENTS TO:                    THE UNDERSIGNED GRANTOR(S) DECLARE(S):\n${f.grantee||"[GRANTEE NAME]"}             ${dttLine}\n${f.granteeAddress||"[GRANTEE ADDRESS]"}   Building Homes and Jobs Act Fee: $-0-\n                                            GC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\nAPN: ${f.apn||"_______________"}     County: ${f.county||"[COUNTY]"}${f.cityOfProperty?`     City: ${f.cityOfProperty}`:""}\n\n${f.grantor||"[GRANTOR NAME AND VESTING]"}, hereby GRANTS to\n\n${f.grantee||"[GRANTEE NAME]"},\n${v},\n\nthe following described real property in the County of ${f.county||"[COUNTY]"}, State of California:\n\n${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}\n\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nDated: ______________________________\n\n_______________________________\n${f.grantor||"[GRANTOR NAME]"}\n${f.grantorCapacity||"Individual"}\n\n\n${NOTARY[f.grantorCapacity] || NOTARY["Individual"]}`; };
-
-        const DEFAULT_MASTER = { firmName:"", firmAddress:"", firmCity:"", firmState:"California", firmZip:"" };
-
-        function App() {
-          const [docType, setDocType] = useState("grant");
-          const [step, setStep] = useState(0);
-          const [output, setOutput] = useState("");
-          const [master, setMaster] = useState(DEFAULT_MASTER);
-
-          const [form, setForm] = useState({
-            grantor:"", grantorCapacity:"Individual", apn:"", county:"Los Angeles",
-            propertyAddress:"", granteeAddress:"", legalDescription:"", cityOfProperty:"",
-            exemptFromTax:true, exemptReason:"R&T §11930 — transfer to/from trust", dtt:"",
-            grantee:"", granteeVesting:VESTING[0], customVesting:"",
-            dotModPosition:"first", dotModTerms:"", dotModNewAmount:"", 
-            dotModNewMaturity:"", dotModNewRate:"" 
-          });
-
-          const upd = (k,v) => setForm(p=>({...p,[k]:v}));
-
-          const handleGenerate = () => {
-            setOutput(genGrant(form, master));
-            setStep(3);
-          };
-
-          return (
-            <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-              <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`,padding:"14px 28px",display:"flex",alignItems:"center",justifyContent:"between"}}>
-                <div>
-                  <span style={{fontFamily:"monospace",fontSize:11,color:C.gold,letterSpacing:3,textTransform:"uppercase"}}>Dottie Deeds</span>
-                </div>
-              </div>
-              <div style={{maxWidth:740,margin:"0 auto",padding:"28px 20px 48px",width:"100%"}}>
-                {step===0&&(
-                  <div>
-                    <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:18}}>Step 1: Property Location</h2>
-                    <Field label="Property Street Address"><input value={form.propertyAddress} onChange={e=>upd("propertyAddress",e.target.value)} placeholder="e.g. 24 Seabluff" style={ST.inp}/></Field>
-                    <Field label="City"><input value={form.cityOfProperty} onChange={e=>upd("cityOfProperty",e.target.value)} placeholder="e.g. Newport Beach" style={ST.inp}/></Field>
-                    <Field label="County"><select value={form.county} onChange={e=>upd("county",e.target.value)} style={ST.inp}>{COUNTIES.map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
-                    <Field label="APN / Parcel ID"><input value={form.apn} onChange={e=>upd("apn",e.target.value)} placeholder="e.g. 123-456-78" style={ST.inp}/></Field>
-                    <button onClick={()=>setStep(1)} style={ST.btnP}>Next Step →</button>
-                  </div>
-                )}
-                {step===1&&(
-                  <div>
-                    <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:18}}>Step 2: Grantor & Grantee</h2>
-                    <Field label="Grantor Name"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} style={ST.inp}/></Field>
-                    <Field label="Grantee Name"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} style={ST.inp}/></Field>
-                    <Field label="Vesting Title Manner"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}</select></Field>
-                    <Field label="Legal Description Verbatim"><textarea value={form.legalDescription} onChange={e=>upd("legalDescription",e.target.value)} rows={4} style={ST.inp}/></Field>
-                    <div style={{display:"flex",gap:10}}><button onClick={()=>setStep(0)} style={ST.btnS}>← Back</button><button onClick={handleGenerate} style={ST.btnP}>Generate Deed →</button></div>
-                  </div>
-                )}
-                {step===3&&(
-                  <div>
-                    <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:14}}>Draft Document Preview</h2>
-                    <div style={{background:"#fff",border:"1px solid #bbb",padding:24,fontFamily:"monospace",fontSize:11,whiteSpace:"pre-wrap",marginBottom:16}}>{output}</div>
-                    <button onClick={() => setStep(0)} style={ST.btnS}>Draft Another</button>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        }
-
-        window.addEventListener('load', () => {
-            const root = ReactDOM.createRoot(document.getElementById('root'));
-            root.render(<App />);
-        });
-    </script>
-</body>
-</html>
+        // Include document generators 
+        const genGrant = (f,m) => { const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting; const dttLine = f.exemptFromTax ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}` : `Documentary Transfer Tax: $${f.dtt||"___________"}`; return `${recHdr(m)}\n______________________________________________________________________________________________\n\n                                  GRANT DEED\n\nMAIL TAX STATEMENTS TO:                    THE UNDERSIGNED GRANTOR(S) DECLARE(S):\n${f.grantee||"[GRANTEE NAME]"}             ${dttLine}\n${f.granteeAddress||"[GRANTEE ADDRESS]"}   Building Homes and Jobs Act Fee: $-0-\n                                            GC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\nAPN: ${f.apn||"_______________"}     County: ${f.county||"[COUNTY]"}${f.cityOfProperty?`     City: ${f.cityOfProperty}`:""}\n\n${f.grantor||"[GRANTOR NAME AND VESTING]"}, hereby GRANTS to\n\n${f.grantee||"[GRANTEE NAME]"},\n${v},\n\nthe following described real property in the County of ${f.county||"[COUNTY]"}, State of California:\n\n${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}\n\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nDated: ______________________________\n\n_______________________________\n${f.grantor||"[GRANTOR NAME]"}\n${f.grantorCapacity||"Individual"}\n\n\n${nb(f.grantorCapacity||"Individual")}`; };
+        const genTrust = (f,m) => { const yr = new Date().getFullYear(); const isInto = ["T1","T3","T5"].includes(f.trustTransferReason); const reasons = {T1:"Transfer into trust by settlor",T2:"Distribution to beneficiary",T3:"Transfer between trusts",T4:"Transfer upon death of settlor — successor trustee",T5:"Refinance — out then back into trust"}; const granteeLine = isInto ? `${f.trusteeName||"[TRUSTEE NAME(S)]"}, as Trustee of the ${f.trustName||"[TRUST NAME]"}${f.trustDate ? `, dated ${f.trustDate}` : ""}${f.isAmended ? ", as amended" : ""}` : (f.beneficiaryName||"[BENEFICIARY NAME]"); const prop19Labels = {P1:"Parent to Child — Primary Residence (R&T §63.1)",P2:"Child to Parent (R&T §63.1)",P3:"Grandparent to Grandchild — Both Parents Deceased (R&T §63.1)"}; return `${recHdr(m)}\n______________________________________________________________________________________________\n\n                                  GRANT DEED\n                           (Transfer ${isInto ? "Into" : "Out of"} Trust)\n\nTHE UNDERSIGNED GRANTOR(S) DECLARE(S):\nDocumentary Transfer Tax: $0\nR&T §11930 — transfer to/from Living Trust     Not Pursuant to Sale\nBuilding Homes and Jobs Act Fee: $-0-     GC §27388.1(a)(2)(B)\n\nMAIL TAX STATEMENTS TO:\n${isInto ? (f.trusteeName||"[TRUSTEE]") : (f.beneficiaryName||"[GRANTEE]")}\n${f.granteeAddress||"[GRANTEE ADDRESS]"}\n______________________________________________________________________________________________\n\nAPN: ${f.apn||"_______________"}     County: ${f.county||"[COUNTY]"}${f.cityOfProperty ? `     City: ${f.cityOfProperty}` : ""}\n\n${f.grantor||"[GRANTOR NAME AND VESTING]"}, \n\nFOR VALUABLE CONSIDERATION, receipt of which is hereby acknowledged, hereby GRANTS to\n\n${granteeLine},\n\nthe real property in the County of ${f.county||"[COUNTY]"}, State of California, described as:\n\n${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\n${f.cityOfProperty ? `Commonly known as: ${f.propertyAddress||""}, ${f.cityOfProperty}, CA` : ""}\n\nTrust: ${f.trustName||"[TRUST NAME]"}${f.trustDate ? `, dated ${f.trustDate}` : ""}\nSettlor(s): ${f.settlorName||"[SETTLOR NAME]"}\nReason: ${reasons[f.trustTransferReason]||""}\n${f.isSettlorDeceased ? `\nNOTE: ${f.settlorName||"The Settlor"} died on ${f.dateOfDeath||"[DATE OF DEATH]"}. Executed by Successor Trustee pursuant to trust terms.\n` : ""}${f.prop19 !== "P4" ? `\nCLAIM FOR REASSESSMENT EXCLUSION — Proposition 19\nBasis: ${prop19Labels[f.prop19]||""}\n` : ""}${f.certify19100 ? `\nPursuant to Probate Code §18100.5, the Trustee certifies that the trust has not been revoked, modified, or amended in any manner that would cause the representations herein to be incorrect.\n` : ""}\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.grantor||"[TRUSTEE NAME]"}, as Trustee of\n${f.trustName||"[TRUST NAME]"}${f.trustDate ? `, dated ${f.trustDate}` : ""}${f.isAmended ? ", as amended" : ""}\n\n\n${nb("Trustee")}`; };
+        const genDOT = (f,m) => { const isSecond = f.dotPosition==="second"; const yr = new Date().getFullYear(); const lateChDays = f.lateChargeDays||(m&&m.lateChargeDays)||"10"; const latePct = f.lateChargePercent||(m&&m.lateChargePercent)||"6"; const partA = (m&&m.standardCovenants)||`To protect the security of this Deed of Trust, Trustor covenants and agrees as follows:\n\n1. Payment of Principal and Interest. To promptly pay when due the principal of and interest on the Note, including any prepayment charges, late fees, and all other sums secured by this Deed of Trust.\n\n2. Payment of Taxes and Assessments. To pay, prior to delinquency, all taxes, assessments, charges, and liens now or hereafter levied or assessed upon the property.\n\n3. Insurance. To keep the improvements insured against damage by fire and such other hazards as Beneficiar${isSecond?"y":"ies"} may require, in amounts sufficient to cover all sums secured by this Deed of Trust.\n\n4. Defense of Title. To appear in and defend any action or proceeding purporting to affect the security hereof or the rights or powers of Beneficiar${isSecond?"y":"ies"} or Trustee.\n\n5. Maintenance and Repair of Property. To keep the property in good condition and repair; not to remove or demolish any buildings without prior written consent of Beneficiar${isSecond?"y":"ies"}.\n\n6. Compliance with Law. To comply with all applicable laws, ordinances, regulations, covenants, conditions, and restrictions affecting the property.\n\n7. Costs, Fees, and Expenses. To pay when due all costs, fees, and expenses of this trust, including reasonable compensation of the Trustee.\n\n8. Further Assurances. Upon written request of Beneficiar${isSecond?"y":"ies"}, to make and deliver any instruments reasonably requested to carry out the intent and purpose of this Deed of Trust.`; const partB = `The following provisions are an integral part of this Deed of Trust:\n\n1. Trustee's Obligations Upon Payment in Full. Upon written request of Beneficiar${isSecond?"y":"ies"} stating that all sums secured hereby have been paid in full, and upon surrender of this Deed of Trust and the Note to Trustee, Trustee shall reconvey, without warranty, the property then held hereunder.\n\n2. Trustee's Authority; Acceptance of Trust. Trustee accepts this trust when this Deed of Trust, duly executed and acknowledged, is made a public record as provided by law.\n\n3. Trustee's Fees and Costs. Trustee shall be entitled to reasonable compensation for all services rendered in the administration of this trust.\n\n4. Substitution of Trustee. Beneficiar${isSecond?"y":"ies"} may substitute a successor Trustee by instrument in writing duly acknowledged and recorded.\n\n5. Authority to Collect Rents, Issues, and Profits. Upon default by Trustor, Beneficiar${isSecond?"y":"ies"} shall have the right to collect the rents, issues, and profits of the property.\n\n6. Acceleration Upon Default; Power of Sale. Upon default, Beneficiar${isSecond?"y":"ies"} may declare all sums secured hereby immediately due and payable and shall cause Trustee to execute a written notice of default and election to sell.\n\n7. Trustee's Deed Upon Sale. Trustee shall deliver to the purchaser its deed conveying the property, without any covenant or warranty, express or implied.\n\n8. Application of Proceeds of Sale. After deducting all costs, fees, and expenses, Trustee shall apply proceeds to: (a) sums secured hereby; (b) all other sums secured; and (c) the remainder to persons legally entitled.\n\n9. Inspection of Property. Beneficiar${isSecond?"y":"ies"} may make reasonable entries and inspections of the property upon reasonable prior written notice.\n\n10. Condemnation. The proceeds of any condemnation award are hereby assigned to Beneficiar${isSecond?"y":"ies"}.`; if (isSecond) { return `${recHdr(m)}\n\nAND WHEN RECORDED MAIL TO:\n${f
