@@ -47,19 +47,16 @@
   .pricing-tag { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: #b8960c; margin-bottom: 12px; font-family: monospace; }
   .pricing h2 { font-size: 32px; font-weight: 300; margin-bottom: 48px; }
   .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 700px; }
-  .pricing-card { background: #fff; border: 1px solid #e0d8c8; border-radius: 2px; padding: 36px 32px; }
-  .pricing-card.featured { border-color: #b8960c; border-width: 2px; }
+  .pricing-card { background: #fff; border: 1px solid #e0d8c8; border-radius: 2px; padding: 36px 32px; display: flex; flex-direction: column; }
+  .pricing-card.featured { background: #fff; }
   .pricing-badge { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #b8960c; margin-bottom: 8px; font-family: monospace; }
   .pricing-name { font-size: 18px; font-weight: bold; margin-bottom: 6px; }
   .pricing-price { font-size: 36px; color: #b8960c; margin-bottom: 4px; }
   .pricing-price span { font-size: 14px; color: #7a7060; }
   .pricing-desc { font-size: 12px; color: #7a7060; margin-bottom: 24px; line-height: 1.6; }
-  .pricing-features { list-style: none; margin-bottom: 28px; }
+  .pricing-features { list-style: none; margin-bottom: 28px; flex: 1; }
   .pricing-features li { font-size: 13px; padding: 6px 0; border-bottom: 1px solid #f0ece4; display: flex; gap: 10px; }
   .pricing-features li::before { content: "✓"; color: #b8960c; flex-shrink: 0; }
-  .trial-banner { background: #1a1710; color: #d4c49a; text-align: center; padding: 48px 40px; }
-  .trial-banner h2 { font-size: 28px; font-weight: 300; margin-bottom: 12px; }
-  .trial-banner p { font-size: 14px; color: #8a7a5a; margin-bottom: 28px; }
   .footer { background: #fff; border-top: 1px solid #e0d8c8; padding: 32px 40px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #7a7060; }
   @media (max-width: 768px) {
     .hero { grid-template-columns: 1fr; padding: 40px 20px; }
@@ -83,7 +80,7 @@
     <a href="#features">Features</a>
     <a href="#documents">Documents</a>
     <a href="#pricing">Pricing</a>
-    <a href="app.html" class="btn-primary">Open App</a>
+    <a href="/app.html" class="btn-primary">Open App</a>
   </div>
 </nav>
 <div class="nav-bar"></div>
@@ -95,7 +92,7 @@
     <h1>Deed drafting.<br/>Done <span class="gold">right.</span></h1>
     <p>Dottie drafts all 14 California deed and transfer document types — with AI extraction from your uploaded prior deed, correct notary blocks every time, and a paralegal guide for every county.</p>
     <div class="hero-btns">
-      <a href="app.html" class="btn-primary">Start Free 60-Day Trial →</a>
+      <a href="/app.html" class="btn-primary">Open App →</a>
       <a href="#features" class="btn-secondary">See Features</a>
     </div>
   </div>
@@ -210,9 +207,9 @@
   <h2>Simple, transparent pricing.</h2>
   <div class="pricing-grid">
     <div class="pricing-card">
-      <div class="pricing-badge">Solo Attorney</div>
+      
       <div class="pricing-name">Solo</div>
-      <div class="pricing-price">$79<span>/month</span></div>
+      <div class="pricing-price">$149<span>/month</span></div>
       <div class="pricing-desc">For solo practitioners and small real estate practices.</div>
       <ul class="pricing-features">
         <li>All 14 document types</li>
@@ -222,31 +219,28 @@
         <li>Word + text export</li>
         <li>Firm master settings</li>
       </ul>
-      <a href="app.html" class="btn-secondary" style="width:100%;text-align:center;">Start Free Trial</a>
+      <a href="/app.html?trial=true" class="btn-primary" style="width:100%;text-align:center;">Start Free Trial</a>
     </div>
-    <div class="pricing-card featured">
-      <div class="pricing-badge">Most Popular</div>
+    <div class="pricing-card">
+      
       <div class="pricing-name">Small Firm</div>
-      <div class="pricing-price">$149<span>/month</span></div>
+      <div class="pricing-price">$249<span>/month</span></div>
       <div class="pricing-desc">For firms with multiple attorneys and paralegals.</div>
       <ul class="pricing-features">
-        <li>Everything in Solo</li>
+        <li>All 14 document types</li>
+        <li>AI deed extraction</li>
+        <li>PCOR generation</li>
+        <li>58-county paralegal guide</li>
+        <li>Word + text export</li>
         <li>Up to 5 users</li>
-        <li>Shared firm settings</li>
-        <li>Priority support</li>
-        <li>Early access to new features</li>
       </ul>
-      <a href="app.html" class="btn-primary" style="width:100%;text-align:center;">Start Free Trial</a>
+      <a href="/app.html?trial=true" class="btn-primary" style="width:100%;text-align:center;">Start Free Trial</a>
     </div>
   </div>
+
 </section>
 
-<!-- TRIAL BANNER -->
-<section class="trial-banner">
-  <h2>60 days free. No credit card required.</h2>
-  <p>Try every document type with your real matters. Cancel anytime.</p>
-  <a href="app.html" class="btn-primary">Start Drafting Now →</a>
-</section>
+
 
 <!-- FOOTER -->
 <footer class="footer">
@@ -257,7 +251,7 @@
   <div style="display:flex;gap:24px;">
     <a href="#" style="color:#7a7060;text-decoration:none;">Terms of Service</a>
     <a href="#" style="color:#7a7060;text-decoration:none;">Privacy Policy</a>
-    <a href="app.html" style="color:#b8960c;text-decoration:none;">Open App →</a>
+    <a href="/app.html" style="color:#b8960c;text-decoration:none;">Open App →</a>
   </div>
 </footer>
 
