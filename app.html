@@ -57,7 +57,14 @@ const RT_EXEMPTIONS = [
   { code:"custom", label:"Custom — type your own exemption language", text:"" },
 ];
 
-const juratBlock = (name) => `A Notary Public or other officer completing this certificate verifies only the identity of the individual who signed the document to which this certificate is attached, and not the truthfulness, accuracy, or validity of that document.
+const juratBlock = (name) => `
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ A notary public or other officer completing this certificate verifies only the  │
+│ identity of the individual who signed the document to which this certificate is │
+│ attached, and not the truthfulness, accuracy, or validity of that document.     │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+                                    JURAT
 
 State of California     )
                         ) ss.
@@ -65,7 +72,8 @@ County of _______________     )
 
 Subscribed and sworn to (or affirmed) before me on this __________ day of _________________, ${new Date().getFullYear()}, by ${name||"_________________________"}, proved to me on the basis of satisfactory evidence to be the person(s) who appeared before me.
 
-_______________________________
+
+_______________________________          (Seal)
 Notary Public`;
 
 const NOTARY = {
@@ -335,20 +343,11 @@ MAIL TAX STATEMENTS AS DIRECTED ABOVE`;
 const genADJT = (f,m) => {
   const aka = f.deceasedJointTenantAKA ? `\n(Also known as ${f.deceasedJointTenantAKA})` : "";
   return `${recHdr(m)}
-
-Mail Tax Statements To:
-
-${f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]"}
-${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`\n${f.cityOfProperty}, CA`:""}
-
-APN: ${f.apn||"_______________"}
 ______________________________________________________________________________________________
 
-                         AFFIDAVIT OF DEATH OF JOINT TENANT
+                         **AFFIDAVIT OF DEATH OF JOINT TENANT**
 
-STATE OF CALIFORNIA             )
-                                ) SS.
-COUNTY OF ${(f.county||"_______________").toUpperCase()}              )
+______________________________________________________________________________________________
 
 I, ${f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]"}, being duly sworn, say:
 
@@ -1245,15 +1244,16 @@ function DottieDeeds() {
 
             <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
               <button onClick={()=>{
+                const printWindow = window.open('','_blank');
+                printWindow.document.write(`<!DOCTYPE html><html><head><title>PCOR - ${form.apn||"draft"}</title><style>body{font-family:'Courier New',monospace;font-size:10pt;line-height:1.6;margin:1in;white-space:pre-wrap;}@media print{body{margin:0.75in;}}</style></head><body>${pcorOutput.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</body></html>`);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(()=>printWindow.print(),500);
+              }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Save PCOR as PDF</button>
+              <button onClick={()=>{
                 navigator.clipboard.writeText(pcorOutput).catch(()=>{});
-                const blob=new Blob([pcorOutput],{type:"text/plain"});
-                const url=URL.createObjectURL(blob);
-                const a=document.createElement("a");
-                a.href=url; a.download=`PCOR_${form.apn||"draft"}.txt`; a.click();
-                URL.revokeObjectURL(url);
                 setPcorCopied(true); setTimeout(()=>setPcorCopied(false),2500);
-              }} style={{...ST.btnP,background:pcorCopied?"#5a9a5a":C.gold}}>{pcorCopied?"✓ Copied & Downloaded":"Copy + Download PCOR .txt"}</button>
-              <button onClick={()=>generateWordDoc(pcorOutput,"PCOR",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Download PCOR Word .doc</button>
+              }} style={{...ST.btnP,background:pcorCopied?"#5a9a5a":C.gold}}>{pcorCopied?"✓ Copied":"Copy PCOR Text"}</button>
               <button onClick={()=>setStep(3)} style={ST.btnS}>← Back to Deed</button>
               <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setPcorOutput("");setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
             </div>
