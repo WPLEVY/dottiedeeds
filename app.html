@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -805,9 +806,22 @@ function DottieDeeds() {
   return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <Header subtitle={null} onHome={()=>setScreen("home")} rightContent={
-        <div style={{display:"flex",alignItems:"center"}}>
-          <div style={{display:"flex",marginRight:16}}>{STEPS.map((s,i)=>(<div key={i} onClick={()=>i<step&&setStep(i)} style={{padding:"0 12px",height:56,display:"flex",alignItems:"center",fontSize:10,letterSpacing:2,textTransform:"uppercase",color:i===step?C.gold:i<step?"#6a5a3a":"#bbb",borderBottom:i===step?`2px solid ${C.gold}`:"2px solid transparent",cursor:i<step?"pointer":"default",fontFamily:"'DM Mono',monospace"}}>{i<step?"✓ ":""}{s}</div>))}</div>
-          <div style={{fontSize:12,color:C.muted,fontStyle:"italic",marginRight:12}}>{dt?.icon} {dt?.label}</div>
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {STEPS.slice(0,4).map((s,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{width:22,height:22,borderRadius:"50%",background:i<step?"#3a7a3a":i===step?C.gold:"#e0d8c8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:i<=step?"#fff":"#a09070",fontFamily:"'DM Mono',monospace",flexShrink:0}}>
+                    {i<step?"✓":i+1}
+                  </div>
+                  <span style={{fontSize:10,letterSpacing:1,textTransform:"uppercase",color:i===step?C.gold:i<step?"#6a5a3a":"#bbb",fontFamily:"'DM Mono',monospace",display:window.innerWidth<600?"none":"inline"}}>{s}</span>
+                </div>
+                {i<3&&<div style={{width:20,height:1,background:i<step?"#3a7a3a":"#e0d8c8"}}/>}
+              </div>
+            ))}
+          </div>
+          <div style={{width:1,height:24,background:C.rule}}/>
+          <div style={{fontSize:12,color:C.muted,fontStyle:"italic"}}>{dt?.icon} {dt?.label}</div>
           <button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"7px 14px",fontSize:10}}>← Documents</button>
         </div>
       }/>
@@ -1166,10 +1180,3 @@ function DottieDeeds() {
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
