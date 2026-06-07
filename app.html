@@ -605,7 +605,7 @@ const Header = ({subtitle, onHome, rightContent}) => (
 );
 
 function DottieDeeds() {
-  const [screen, setScreen] = useState(() => { try { const isTrial = new URLSearchParams(window.location.search).get("trial")==="true"; const r = localStorage.getItem("dd_registered"); if(isTrial && !r) return "intake"; const m = localStorage.getItem("dd_master"); return (m&&JSON.parse(m).firmName)?"home":"onboard"; } catch { return "onboard"; } });
+  const [screen, setScreen] = useState(() => { try { const isTrial = new URLSearchParams(window.location.search).get("trial")==="true"; const r = localStorage.getItem("dd_registered"); const validReg = r && JSON.parse(r).email && JSON.parse(r).email.includes("@"); if(isTrial && !validReg) return "intake"; const m = localStorage.getItem("dd_master"); return (m&&JSON.parse(m).firmName)?"home":"onboard"; } catch { return "onboard"; } });
   const [intakeForm, setIntakeForm] = useState({name:"",firm:"",email:"",role:"Attorney"});
   const [intakeSubmitting, setIntakeSubmitting] = useState(false);
   const [intakeError, setIntakeError] = useState("");
