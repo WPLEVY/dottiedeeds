@@ -605,7 +605,10 @@ const Header = ({subtitle, onHome, rightContent}) => (
 );
 
 function DottieDeeds() {
-  const [screen, setScreen] = useState(() => { try { const m = localStorage.getItem("dd_master"); return (m&&JSON.parse(m).firmName)?"home":"onboard"; } catch { return "onboard"; } });
+  const [screen, setScreen] = useState(() => { try { const isTrial = new URLSearchParams(window.location.search).get("trial")==="true"; const r = localStorage.getItem("dd_registered"); if(isTrial && !r) return "intake"; const m = localStorage.getItem("dd_master"); return (m&&JSON.parse(m).firmName)?"home":"onboard"; } catch { return "onboard"; } });
+  const [intakeForm, setIntakeForm] = useState({name:"",firm:"",email:"",role:"Attorney"});
+  const [intakeSubmitting, setIntakeSubmitting] = useState(false);
+  const [intakeError, setIntakeError] = useState("");
   const [docType, setDocType] = useState("grant");
   const [step, setStep] = useState(0);
   const [extracting, setExtracting] = useState(false);
@@ -726,6 +729,97 @@ function DottieDeeds() {
       </select>
       <textarea value={form.exemptReason} onChange={e=>upd("exemptReason",e.target.value)} rows={3} placeholder="Exemption language (auto-fills when you select above)" style={{...ST.inp,resize:"vertical",fontSize:12,lineHeight:1.6}}/>
     </>
+  );
+
+  // ── Intake / Registration ──────────────────────────────────────────────────
+  if (screen==="intake") return (
+    <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`}}>
+        <div style={{height:58,padding:"0 28px",display:"flex",alignItems:"center"}}>
+          <div style={{display:"flex",flexDirection:"column",borderRight:`1px solid ${C.rule}`,paddingRight:18,marginRight:18}}>
+            <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Dottie</div>
+            <div style={{fontFamily:"monospace",fontSize:9,color:C.ink,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Deeds</div>
+          </div>
+          <div style={{fontSize:12,color:C.muted,fontStyle:"italic"}}>California deed drafting. Done right.</div>
+        </div>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.gold},${C.goldlt},${C.gold})`}}/>
+      </div>
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"40px 20px"}}>
+        <div style={{maxWidth:480,width:"100%"}}>
+          <div style={{textAlign:"center",marginBottom:36}}>
+            <div style={{fontSize:11,letterSpacing:4,textTransform:"uppercase",color:C.gold,fontFamily:"monospace",marginBottom:12}}>60-Day Free Trial</div>
+            <h2 style={{fontSize:30,fontWeight:300,marginBottom:12,lineHeight:1.3}}>Start drafting California deeds today</h2>
+            <p style={{fontSize:14,color:C.muted,lineHeight:1.8}}>No credit card required. Full access to all 14 document types for 60 days.</p>
+          </div>
+          <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:4,padding:"32px 36px",boxShadow:"0 4px 20px rgba(0,0,0,0.06)"}}>
+            <div style={{marginBottom:18}}>
+              <label style={ST.lbl}>Your name <span style={{color:C.gold}}>*</span></label>
+              <input value={intakeForm.name} onChange={e=>setIntakeForm(p=>({...p,name:e.target.value}))} placeholder="e.g. Jane Smith" style={ST.inp}/>
+            </div>
+            <div style={{marginBottom:18}}>
+              <label style={ST.lbl}>Firm name <span style={{color:C.gold}}>*</span></label>
+              <input value={intakeForm.firm} onChange={e=>setIntakeForm(p=>({...p,firm:e.target.value}))} placeholder="e.g. Smith & Jones, APC" style={ST.inp}/>
+            </div>
+            <div style={{marginBottom:18}}>
+              <label style={ST.lbl}>Email address <span style={{color:C.gold}}>*</span></label>
+              <input value={intakeForm.email} onChange={e=>setIntakeForm(p=>({...p,email:e.target.value}))} placeholder="e.g. jane@smithjones.com" type="email" style={ST.inp}/>
+            </div>
+            <div style={{marginBottom:24}}>
+              <label style={ST.lbl}>Your role</label>
+              <select value={intakeForm.role} onChange={e=>setIntakeForm(p=>({...p,role:e.target.value}))} style={ST.inp}>
+                <option>Attorney</option>
+                <option>Paralegal</option>
+                <option>Legal Assistant</option>
+                <option>Office Manager</option>
+                <option>Other</option>
+              </select>
+            </div>
+            {intakeError&&<div style={{...ST.err,marginBottom:16}}>{intakeError}</div>}
+            <button
+              disabled={!intakeForm.name||!intakeForm.firm||!intakeForm.email||intakeSubmitting}
+              onClick={async()=>{
+                if(!intakeForm.email.includes("@")){setIntakeError("Please enter a valid email address.");return;}
+                setIntakeSubmitting(true);
+                try {
+                  // Submit to Formspree
+                  const res = await fetch("https://formspree.io/f/maqzeewn", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                      name: intakeForm.name,
+                      firm: intakeForm.firm,
+                      email: intakeForm.email,
+                      role: intakeForm.role,
+                      trialStart: new Date().toISOString(),
+                      source: "Dottie Deeds App"
+                    })
+                  });
+                  // Save to localStorage regardless of Formspree result
+                  localStorage.setItem("dd_registered", JSON.stringify({...intakeForm, trialStart: new Date().toISOString()}));
+                  const existing = localStorage.getItem("dd_master");
+                  const master = existing ? JSON.parse(existing) : {};
+                  localStorage.setItem("dd_master", JSON.stringify({...master, firmName: intakeForm.firm}));
+                  setScreen("onboard");
+                } catch(e) {
+                  // Still let them in even if Formspree fails
+                  localStorage.setItem("dd_registered", JSON.stringify({...intakeForm, trialStart: new Date().toISOString()}));
+                  setScreen("onboard");
+                }
+                setIntakeSubmitting(false);
+              }}
+              style={{...ST.btnP,width:"100%",padding:"14px",fontSize:12,opacity:(!intakeForm.name||!intakeForm.firm||!intakeForm.email)?0.5:1,cursor:(!intakeForm.name||!intakeForm.firm||!intakeForm.email)?"not-allowed":"pointer"}}
+            >{intakeSubmitting?"Starting your trial...":"Start My Free 60-Day Trial →"}</button>
+            <div style={{textAlign:"center",marginTop:16,fontSize:11,color:C.muted,lineHeight:1.8}}>
+              By continuing you agree to our <span style={{color:C.gold}}>Terms of Service</span>.<br/>
+              Your 60-day trial begins today. No credit card required.
+            </div>
+          </div>
+          <div style={{textAlign:"center",marginTop:24,fontSize:12,color:C.muted}}>
+            Already registered? <span style={{color:C.gold,cursor:"pointer",textDecoration:"underline"}} onClick={()=>{ try{localStorage.setItem("dd_registered","returning");}catch{} setScreen("home"); }}>Go to app →</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
   // ── Onboarding ─────────────────────────────────────────────────────────────
