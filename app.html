@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -433,14 +432,14 @@ const getPCORReason = (docType, f) => {
   return {box:"other", desc:"Other transfer — see deed"};
 };
 
-const genPCOR = (docType, f, m) => {
+const genPCOR = (docType, f, m, pf={}) => {
   const yr = new Date().getFullYear();
   const reason = getPCORReason(docType, f);
   const isSale = !f.exemptFromTax && docType==="grant";
   const isSpouseDeath = docType==="sscp" || (docType==="adjt" && f.survivingSpouse);
   const isTrustTransfer = docType==="granttrust";
   const isInterspousal = docType==="interspousal";
-  const buyer = f.grantee||f.spouseName||f.survivingJointTenant||f.grantor||"";
+  const buyer = pf.buyerName||f.grantee||f.spouseName||f.survivingJointTenant||f.grantor||"";
   const seller = f.grantor||"";
   const addr = f.propertyAddress||"";
   const city = f.cityOfProperty||"";
@@ -448,17 +447,17 @@ const genPCOR = (docType, f, m) => {
   const apn = f.apn||"";
 
   // Part 1 checkboxes
-  const p1a = isSpouseDeath||isInterspousal ? "YES" : "NO";
-  const p1d = docType==="adjt" ? "YES" : "NO";
-  const p1l1 = (isTrustTransfer&&["T1","T5"].includes(f.trustTransferReason)) ? "YES" : "NO";
-  const p1l2 = (isTrustTransfer&&["T2"].includes(f.trustTransferReason)) ? "YES" : "NO";
-  const p1n = (isTrustTransfer) ? "YES" : "NO";
+  const p1a = pf.p1a||(isSpouseDeath||isInterspousal ? "YES" : "NO");
+  const p1d = pf.p1d||(docType==="adjt" ? "YES" : "NO");
+  const p1l1 = pf.p1l1||((isTrustTransfer&&["T1","T5"].includes(f.trustTransferReason)) ? "YES" : "NO");
+  const p1l2 = pf.p1l2||((isTrustTransfer&&["T2"].includes(f.trustTransferReason)) ? "YES" : "NO");
+  const p1n = pf.p1n||((isTrustTransfer) ? "YES" : "NO");
 
   // Part 2 transfer type
-  let transferType = "Other";
-  if (isSale) transferType = "Purchase";
-  if (docType==="adjt"||docType==="sscp") transferType = "Inheritance";
-  if (docType==="trustees"||docType==="sheriff") transferType = "Foreclosure";
+  let transferType = pf.transferType||"Other";
+  if (!pf.transferType && isSale) transferType = "Purchase";
+  if (!pf.transferType && (docType==="adjt"||docType==="sscp")) transferType = "Inheritance";
+  if (!pf.transferType && (docType==="trustees"||docType==="sheriff")) transferType = "Foreclosure";
 
   const cb = (val) => val==="YES"
     ? `<span style="display:inline-block;width:14px;height:14px;border:1px solid #000;background:#000;color:#fff;font-size:9px;text-align:center;line-height:14px;margin-right:4px;">✓</span>`
@@ -781,6 +780,24 @@ function DottieDeeds() {
   const [copied, setCopied] = useState(false);
   const [pcorOutput, setPcorOutput] = useState("");
   const [pcorCopied, setPcorCopied] = useState(false);
+  const [pcorStep, setPcorStep] = useState(1);
+  const [pcorForm, setPcorForm] = useState({
+    buyerName:"", buyerAddress:"", buyerCity:"", buyerState:"CA", buyerZip:"",
+    buyerPhone:"", buyerEmail:"",
+    isPrimaryResidence:"NO", occupancyDate:"",
+    isDisabledVet:"NO",
+    mailTaxName:"", mailTaxAddress:"", mailTaxCity:"", mailTaxState:"CA", mailTaxZip:"",
+    p1a:"NO", p1b:"NO", p1c:"NO", p1d:"NO", p1e:"NO", p1f:"NO", p1g:"NO",
+    p1h:"NO", p1i:"NO", p1j:"NO", p1k:"NO", p1l1:"NO", p1l2:"NO",
+    p1m:"NO", p1n:"NO", p1o:"NO", p1p:"NO", p1q:"NO", p1qDesc:"",
+    dateOfTransfer:"", transferType:"Other", transferTypeOther:"",
+    inheritanceDate:"", partialInterest:"NO", partialPct:"",
+    totalPurchasePrice:"", downPayment:"",
+    propertyType:"Single-family residence", hasPersonalProperty:"NO",
+    hasManufacturedHome:"NO", producesIncome:"NO",
+    propertyCondition:"Good", conditionDesc:""
+  });
+  const updPcor = (k,v) => setPcorForm(p=>({...p,[k]:v}));
   const [dragOver, setDragOver] = useState(false);
   const [masterSaved, setMasterSaved] = useState(false);
   const [oStep, setOStep] = useState(0);
@@ -793,9 +810,9 @@ function DottieDeeds() {
     grantor:"", grantorCapacity:"Individual", apn:"", county:"Los Angeles", countyOfResidence:"",
     propertyAddress:"", granteeAddress:"", grantorPronoun:"his/her", rtCodeKey:"",
     trustorAddress:"", loanAmountWords:"", seniorLienRecordingDate:"",
-    seniorLienType:"DEED OF TRUST", spouseCurrentVesting:"", isAmended:true,
+    seniorLienType:"DEED OF TRUST", spouseCurrentVesting:"", isAmended:false,
     legalDescription:"", cityOfProperty:"",
-    exemptFromTax:true, exemptReason:((m&&m.defaultExemptReason)||"R&T §11930 — transfer to/from trust"), dtt:"",
+    exemptFromTax:false, exemptReason:((m&&m.defaultExemptReason)||"R&T §11930 — transfer to/from trust"), dtt:"",
     grantee:"", granteeVesting:VESTING[0], customVesting:"",
     trustName:"", trustDate:"", trustType:"Revocable Living Trust", settlorName:"",
     trusteeName:"", trustTransferReason:"T1", beneficiaryName:"",
@@ -805,13 +822,13 @@ function DottieDeeds() {
     beneficiaryLenderName:"", beneficiaryLenderAddress:"",
     dotTrustee:((m&&m.defaultTrustee)||""), loanAmount:"",
     dueOnSale:((m&&m.defaultDueOnSale)!==false), lateChargeDays:"", lateChargePercent:"",
-    businessPurpose:true, customRiders:"", requestNOD:true,
+    businessPurpose:false, customRiders:"", requestNOD:false,
     seniorLienHolder:"", seniorLienAmount:"", seniorLienRecording:"",
     spouseName:"", spouseVesting:VESTING[2], interspousalReason:"I1",
     survivingJointTenant:"", deceasedJointTenant:"", deceasedJointTenantAKA:"", originalDeedType:"Grant Deed", dateOfDeathJT:"", placeOfDeath:"",
     originalDeedDate:"", originalDeedRecording:"", originalDeedGrantor:"", originalDeedRecordingDate:"",
     deceasedTrusteeName:"", successorTrusteeName:"", dateOfDeathTrustee:"",
-    decedentName:"", sscp_isPrimaryResidence:false, sscp_sb2Exempt:true,
+    decedentName:"", sscp_isPrimaryResidence:false, sscp_sb2Exempt:false,
     todOwner:"", todOwnerVesting:VESTING[0], todOwnerZip:"", todBeneficiaryType:"Individual",
     todEntityName:"", todBeneficiaryRelationship:"",
     todBeneficiary:"", todBeneficiary2:"", todTrustName:"", todTrustDate:"", todTrusteeName:"",
@@ -993,7 +1010,7 @@ function DottieDeeds() {
         <div style={{maxWidth:500,width:"100%"}}>
           {oStep===0&&(<div style={{textAlign:"center"}}><div style={{fontSize:52,marginBottom:16}}>✍️</div><h2 style={{fontFamily:"Georgia,serif",fontSize:30,fontWeight:300,marginBottom:14,lineHeight:1.2}}>Welcome to Dottie Deeds</h2><p style={{fontSize:14,color:C.muted,lineHeight:1.85,marginBottom:32}}>Dottie drafts all 14 California deed and transfer document types — with AI extraction from your uploaded prior deed and the correct notary block every time.</p><button onClick={()=>setOStep(1)} style={{...ST.btnP,padding:"14px 44px",fontSize:13}}>Get Started →</button><div style={{marginTop:14}}><button onClick={()=>setScreen("home")} style={{...ST.btnG,textDecoration:"underline",fontSize:12}}>Skip — I'll configure later</button></div></div>)}
           {oStep===1&&(<div><h2 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:300,marginBottom:20}}>Your firm details</h2><Field label="Firm name" required><input value={oForm.firmName} onChange={e=>oUpd("firmName",e.target.value)} placeholder="e.g. Smith & Jones, APC" style={ST.inp}/></Field><Field label="Street address"><input value={oForm.firmAddress} onChange={e=>oUpd("firmAddress",e.target.value)} placeholder="e.g. 123 Main Street, Suite 100" style={ST.inp}/></Field><div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:12}}><Field label="City"><input value={oForm.firmCity} onChange={e=>oUpd("firmCity",e.target.value)} style={ST.inp}/></Field><Field label="State"><input value={oForm.firmState} onChange={e=>oUpd("firmState",e.target.value)} style={ST.inp}/></Field><Field label="Zip"><input value={oForm.firmZip} onChange={e=>oUpd("firmZip",e.target.value)} style={ST.inp}/></Field></div><div style={{display:"flex",gap:12}}><button onClick={()=>setOStep(0)} style={ST.btnS}>← Back</button><button onClick={()=>setOStep(2)} disabled={!oForm.firmName} style={{...ST.btnP,opacity:oForm.firmName?1:0.5}}>Continue →</button></div></div>)}
-          {oStep===2&&(<div><h2 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:300,marginBottom:8}}>Default trustee for Deeds of Trust</h2><p style={{fontSize:14,color:C.muted,marginBottom:20,lineHeight:1.8}}>Pre-loaded on every DOT — override per deal.</p><Field label="Default trustee"><input value={oForm.defaultTrustee} onChange={e=>oUpd("defaultTrustee",e.target.value)} style={ST.inp}/></Field><div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>{["First American Title Insurance Company","Chicago Title Company","Fidelity National Title","Old Republic Title","Stewart Title"].map(t=>(<button key={t} onClick={()=>oUpd("defaultTrustee",t)} style={{background:oForm.defaultTrustee===t?C.ink:"none",color:oForm.defaultTrustee===t?"#d4c49a":C.muted,border:`1px solid ${C.rule}`,padding:"6px 12px",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2}}>{t}</button>))}</div><div style={{display:"flex",gap:12}}><button onClick={()=>setOStep(1)} style={ST.btnS}>← Back</button><button onClick={()=>setOStep(3)} style={ST.btnP}>Continue →</button></div></div>)}
+          {oStep===2&&(<div><h2 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:300,marginBottom:8}}>Default trustee for Deeds of Trust</h2><p style={{fontSize:14,color:C.muted,marginBottom:20,lineHeight:1.8}}>Pre-loaded on every DOT — override per deal.</p><Field label="Default trustee"><input value={oForm.defaultTrustee} onChange={e=>oUpd("defaultTrustee",e.target.value)} style={ST.inp}/></Field><div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>{["First American Title Insurance Company","Chicago Title Company","Fidelity National Title","Old Republic Title","Stewart Title of California","North American Title Company","Placer Title Company","Cal-Sierra Title Company","Lawyer's Title Company","Land America","Pacific Coast Title","Ticor Title Company","Western Progressive LLC","Barrett Daffin Frappier Treder & Weiss, LLP","T.D. Service Company","National Default Servicing Corporation","Quality Loan Service Corporation","Clear Recon Corp"].map(t=>(<button key={t} onClick={()=>oUpd("defaultTrustee",t)} style={{background:oForm.defaultTrustee===t?C.ink:"none",color:oForm.defaultTrustee===t?"#d4c49a":C.muted,border:`1px solid ${C.rule}`,padding:"6px 12px",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2}}>{t}</button>))}</div><div style={{display:"flex",gap:12}}><button onClick={()=>setOStep(1)} style={ST.btnS}>← Back</button><button onClick={()=>setOStep(3)} style={ST.btnP}>Continue →</button></div></div>)}
           {oStep===3&&(<div style={{textAlign:"center"}}><div style={{fontSize:52,marginBottom:16}}>🎉</div><h2 style={{fontFamily:"Georgia,serif",fontSize:30,fontWeight:300,marginBottom:16}}>Dottie is ready.</h2><div style={{...ST.card,textAlign:"left",marginBottom:28}}>{[["Firm",oForm.firmName],["Address",`${oForm.firmAddress}${oForm.firmCity?`, ${oForm.firmCity}, ${oForm.firmState} ${oForm.firmZip}`:""}`],["Trustee",oForm.defaultTrustee]].map(([l,v])=>(<div key={l} style={{display:"flex",gap:16,padding:"7px 0",borderBottom:`1px solid ${C.cream}`,fontSize:13}}><span style={{color:C.muted,minWidth:70,fontSize:10,letterSpacing:1,textTransform:"uppercase",paddingTop:2}}>{l}</span><span>{v||"—"}</span></div>))}</div><button onClick={finish} style={{...ST.btnP,padding:"14px 44px",fontSize:13}}>Start Drafting →</button></div>)}
         </div>
       </div>
@@ -1014,7 +1031,7 @@ function DottieDeeds() {
         <div style={ST.card}><div style={{fontSize:13,marginBottom:8}}>Phone: <strong>{gci.phone}</strong></div>{gci.eRecord&&<div style={{fontSize:13,marginBottom:8}}>e-Recording: <strong>{gci.vendors.join(", ")}</strong></div>}{gci.url&&<div style={{fontSize:13,marginBottom:8}}><a href={gci.url} target="_blank" rel="noreferrer" style={{color:C.gold}}>Open recorder website ↗</a></div>}</div>
         <div style={ST.sec}>Common rejection reasons</div>
         {gcl.rejections.map((r,i)=>(<div key={i} style={{...ST.err,display:"flex",gap:10}}><span style={{color:C.red,flexShrink:0}}>✕</span><span>{r}</span></div>))}
-        <div style={{marginTop:20,...ST.warn}}>⚠ <strong>Attorney supervision required.</strong> Dottie does not confirm title. Verify fees with county recorder before submitting.</div>
+        <div style={{marginTop:20,...ST.warn}}><strong>Attorney supervision required.</strong> Dottie does not confirm title. Verify fees with county recorder before submitting.</div>
       </div>
     </div>
   );
@@ -1102,16 +1119,16 @@ function DottieDeeds() {
         {step===1&&(
           <div>
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:8}}>{extracted?"Confirm extracted data":"Property details"}</h2>
-            {extracted&&<div style={{...ST.warn,marginBottom:20}}>⚠ <strong>Review every field carefully.</strong> Verify the legal description character by character against the original deed before continuing.</div>}
+            {extracted&&<div style={{...ST.warn,marginBottom:20}}><strong>Review every field carefully.</strong> Verify the legal description character by character against the original deed before continuing.</div>}
 
             {docType!=="adjt"&&docType!=="adtr"&&docType!=="sscp"&&(
               <Field label={docType==="dot"?"Trustor (borrower) — name and vesting":"Grantor — name and vesting exactly as on current recorded deed"}>
                 <div><input value={docType==="dot"?form.trustorName:form.grantor} onChange={e=>upd(docType==="dot"?"trustorName":"grantor",e.target.value)} placeholder="Full name and vesting exactly as it appears" style={ST.inp}/>{extracted&&<ConfBadge level={extractConf.grantor||"medium"}/>}</div>
               </Field>
             )}
-            {docType!=="adjt"&&docType!=="adtr"&&docType!=="sscp"&&docType!=="interspousal"&&(
+            {docType!=="adjt"&&docType!=="adtr"&&docType!=="sscp"&&docType!=="interspousal"&&docType!=="dot"&&(
               <Field label="Signing capacity">
-                <select value={docType==="dot"?form.trustorCapacity:form.grantorCapacity} onChange={e=>upd(docType==="dot"?"trustorCapacity":"grantorCapacity",e.target.value)} style={ST.inp}>
+                <select value={form.grantorCapacity} onChange={e=>upd("grantorCapacity",e.target.value)} style={ST.inp}>
                   {(docType==="granttrust"
                     ? ["Trustee","Attorney-in-Fact"]
                     : CAPACITY
@@ -1119,9 +1136,10 @@ function DottieDeeds() {
                 </select>
               </Field>
             )}
-            {docType==="interspousal"&&<div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:18}}>Signing capacity: <strong>Individual</strong> — Acknowledgment notary block will be used.</div>}
-            {docType==="adtr"&&<div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:18}}>Signing capacity: <strong>Trustee</strong> — Jurat notary block will be used.</div>}
-            {(docType==="adjt"||docType==="sscp")&&<div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:18}}>Signing capacity: <strong>Individual</strong> — Jurat notary block will be used.</div>}
+            
+            
+            
+            
 
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               <Field label="APN"><div><input value={form.apn} onChange={e=>upd("apn",e.target.value)} placeholder="e.g. 123-456-789" style={ST.inp}/>{extracted&&<ConfBadge level={extractConf.apn||"medium"}/>}</div></Field>
@@ -1132,7 +1150,7 @@ function DottieDeeds() {
             <Field label="Legal description">
               <textarea value={form.legalDescription} onChange={e=>upd("legalDescription",e.target.value)} rows={5} placeholder="Complete legal description verbatim" style={{...ST.inp,resize:"vertical",lineHeight:1.65,fontFamily:"'Courier New',monospace",fontSize:12,borderColor:extracted&&extractConf.legalDescription==="low"?"#e09080":C.rule}}/>
               {extracted&&<ConfBadge level={extractConf.legalDescription||"medium"}/>}
-              {extracted&&extractConf.legalDescription==="low"&&<div style={{...ST.err,marginTop:8}}>⚠ Dottie had difficulty reading the legal description. Enter manually from the original document.</div>}
+              {extracted&&extractConf.legalDescription==="low"&&<div style={{...ST.err,marginTop:8}}>Dottie had difficulty reading the legal description. Enter manually from the original document.</div>}
             </Field>
             {extracted&&(
               <div style={{background:"#f0f8f0",border:"1px solid #b0d090",borderLeft:`3px solid ${C.green}`,padding:"14px 16px",borderRadius:2,marginBottom:20}}>
@@ -1193,7 +1211,7 @@ function DottieDeeds() {
             </>}
 
             {docType==="quitclaim"&&<>
-              <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:16}}>ℹ A Quitclaim Deed releases whatever interest the grantor holds — with no warranties of title.</div>
+              <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:16}}>A Quitclaim Deed releases whatever interest the grantor holds — with no warranties of title.</div>
               <Field label="Grantee — full name"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. Jane Doe, an unmarried woman" style={ST.inp}/></Field>
               <Field label="How grantee takes title"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
               <Field label="Grantee mailing address"><input value={form.granteeAddress} onChange={e=>upd("granteeAddress",e.target.value)} placeholder="e.g. 123 Main Street, Oakland, CA 94601" style={ST.inp}/></Field>
@@ -1201,9 +1219,9 @@ function DottieDeeds() {
             </>}
 
             {docType==="interspousal"&&<>
-              <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:18}}>Signing capacity: <strong>Individual</strong> — both parties sign as individuals. Acknowledgment notary block will be used.</div>
+              
               <Field label="Reason for transfer"><select value={form.interspousalReason} onChange={e=>upd("interspousalReason",e.target.value)} style={ST.inp}><option value="I1">Adding spouse to title</option><option value="I2">Removing spouse from title (refinance)</option><option value="I3">Divorce / marital settlement</option><option value="I4">Transmutation — separate to community property</option><option value="I5">Transmutation — community to separate property</option><option value="I6">Estate planning purposes</option></select></Field>
-              {["I4","I5"].includes(form.interspousalReason)&&<div style={ST.warn}>⚠ Transmutation requires Family Code §852 express declaration. Confirm both spouses understand the legal effect.</div>}
+              {["I4","I5"].includes(form.interspousalReason)&&<div style={ST.warn}>Transmutation requires Family Code §852 express declaration. Confirm both spouses understand the legal effect.</div>}
               <Field label="Transferring spouse (grantor)"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. John Smith, a married man" style={ST.inp}/></Field>
               <Field label="Receiving spouse (grantee)"><input value={form.spouseName} onChange={e=>upd("spouseName",e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/></Field>
               <Field label="Transferring spouse current vesting"><input value={form.spouseCurrentVesting} onChange={e=>upd("spouseCurrentVesting",e.target.value)} placeholder="e.g. a married man, as his sole and separate property" style={ST.inp}/></Field>
@@ -1213,7 +1231,7 @@ function DottieDeeds() {
             </>}
 
             {docType==="adjt"&&<>
-              <div style={ST.warn}>⚠ A certified copy of the death certificate must accompany this affidavit. Submit both together as one recording package.</div>
+              <div style={ST.warn}>A certified copy of the death certificate must accompany this affidavit. Submit both together as one recording package.</div>
               <Field label="Surviving joint tenant name"><input value={form.survivingJointTenant} onChange={e=>upd("survivingJointTenant",e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/></Field>
               <Field label="Deceased joint tenant — name as it appears on the death certificate"><input value={form.deceasedJointTenant} onChange={e=>upd("deceasedJointTenant",e.target.value)} placeholder="e.g. Allen Joel Blair" style={ST.inp}/></Field>
               <Field label="AKA — name as it appears on the original deed (if different from death certificate)" hint="If the death certificate name differs from how they were vested on title, enter the deed name here to add an AKA clause"><input value={form.deceasedJointTenantAKA} onChange={e=>upd("deceasedJointTenantAKA",e.target.value)} placeholder="e.g. Allen J. Blair (leave blank if same as above)" style={ST.inp}/></Field>
@@ -1225,7 +1243,7 @@ function DottieDeeds() {
             </>}
 
             {docType==="adtr"&&<>
-              <div style={ST.warn}>⚠ A certified copy of the death certificate must accompany this affidavit.</div>
+              <div style={ST.warn}>A certified copy of the death certificate must accompany this affidavit.</div>
               <Field label="Trust name"><input value={form.trustName} onChange={e=>upd("trustName",e.target.value)} placeholder="e.g. The Smith Family Revocable Trust dated March 5, 2015" style={ST.inp}/></Field>
               <Field label="Trust date"><input value={form.trustDate} onChange={e=>upd("trustDate",e.target.value)} placeholder="e.g. March 5, 2015" style={ST.inp}/></Field>
               <Field label="Deceased trustee name"><input value={form.deceasedTrusteeName} onChange={e=>upd("deceasedTrusteeName",e.target.value)} placeholder="e.g. John Smith" style={ST.inp}/></Field>
@@ -1243,7 +1261,7 @@ function DottieDeeds() {
                 </label>
                 {form.sscp_isPrimaryResidence&&<div style={{fontSize:12,color:"#3a6010",marginTop:8,lineHeight:1.7}}>✓ SB2 Building Homes & Jobs Act fee will be marked <strong>$-0- exempt</strong> on the document.</div>}
               </div>
-              <div style={ST.warn}>⚠ A certified copy of the death certificate must accompany this affidavit. 40 days must have passed since date of death before recording.</div>
+              <div style={ST.warn}>A certified copy of the death certificate must accompany this affidavit. 40 days must have passed since date of death before recording.</div>
               <Field label="Surviving spouse (affiant)"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/></Field>
               <Field label="Deceased spouse — exactly as on death certificate"><input value={form.decedentName} onChange={e=>upd("decedentName",e.target.value)} placeholder="e.g. John Robert Smith" style={ST.inp}/></Field>
               <Field label="Original deed grantor(s)" hint="Both spouses as vested on the original deed — e.g. 'John Smith and Jane Smith'"><input value={form.originalDeedGrantor} onChange={e=>upd("originalDeedGrantor",e.target.value)} placeholder="e.g. John Robert Smith and Jane Smith" style={ST.inp}/></Field>
@@ -1253,20 +1271,20 @@ function DottieDeeds() {
             </>}
 
             {docType==="tod"&&<>
-              <div style={{background:"#fff0f0",border:"1px solid #e09080",borderLeft:`3px solid ${C.red}`,padding:"12px 16px",marginBottom:16,fontSize:13,color:"#5a1010",lineHeight:1.8}}>⚠ <strong>MUST BE RECORDED WITHIN 60 DAYS OF NOTARIZATION</strong> — otherwise void. Two witnesses required in addition to notary.</div>
-              <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:16}}>ℹ Exempt from PCOR (R&T §480.3) and Documentary Transfer Tax (R&T §11930). No PCOR required.</div>
+              <div style={{background:"#fff0f0",border:"1px solid #e09080",borderLeft:`3px solid ${C.red}`,padding:"12px 16px",marginBottom:16,fontSize:13,color:"#5a1010",lineHeight:1.8}}><strong>MUST BE RECORDED WITHIN 60 DAYS OF NOTARIZATION</strong> — otherwise void. Two witnesses required in addition to notary.</div>
+              <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:16}}>Exempt from PCOR (R&T §480.3) and Documentary Transfer Tax (R&T §11930). No PCOR required.</div>
               <Field label="Owner (transferor) full name" hint="Must exactly match name shown on title documents"><input value={form.todOwner} onChange={e=>upd("todOwner",e.target.value)} placeholder="e.g. John Robert Smith" style={ST.inp}/></Field>
               <Field label="Owner zip code"><input value={form.todOwnerZip} onChange={e=>upd("todOwnerZip",e.target.value)} placeholder="e.g. 90024" style={ST.inp}/></Field>
               <Field label="Beneficiary type"><select value={form.todBeneficiaryType} onChange={e=>upd("todBeneficiaryType",e.target.value)} style={ST.inp}><option value="Individual">Individual person</option><option value="Two individuals as joint tenants">Two individuals as joint tenants</option><option value="Two individuals as tenants in common">Two individuals as tenants in common</option><option value="Trustee of a trust">Trustee of a trust</option><option value="Entity">Private or public entity</option></select></Field>
               {form.todBeneficiaryType==="Trustee of a trust"?<><Field label="Trustee name(s)"><input value={form.todTrusteeName} onChange={e=>upd("todTrusteeName",e.target.value)} style={ST.inp}/></Field><Field label="Trust name"><input value={form.todTrustName} onChange={e=>upd("todTrustName",e.target.value)} style={ST.inp}/></Field><Field label="Trust date"><input value={form.todTrustDate} onChange={e=>upd("todTrustDate",e.target.value)} style={ST.inp}/></Field></>:form.todBeneficiaryType==="Entity"?<Field label="Entity name" hint="State precisely — exactly as the entity is legally named"><input value={form.todEntityName||""} onChange={e=>upd("todEntityName",e.target.value)} placeholder="e.g. Los Angeles County Museum of Art" style={ST.inp}/></Field>:<><Field label={form.todBeneficiaryType.includes("Two")?"Beneficiary 1 — full name":"Beneficiary full name"} hint="Full legal name — do NOT use general terms like 'my children'"><input value={form.todBeneficiary} onChange={e=>upd("todBeneficiary",e.target.value)} placeholder="e.g. Sarah Jane Smith" style={ST.inp}/></Field>{form.todBeneficiaryType.includes("Two")&&<Field label="Beneficiary 2 — full name"><input value={form.todBeneficiary2} onChange={e=>upd("todBeneficiary2",e.target.value)} placeholder="e.g. Michael Robert Smith" style={ST.inp}/></Field>}</>}
               <Field label="Beneficiary's relationship to owner" hint="Optional — e.g. daughter, son, spouse, friend"><input value={form.todBeneficiaryRelationship||""} onChange={e=>upd("todBeneficiaryRelationship",e.target.value)} placeholder="e.g. daughter" style={ST.inp}/></Field>
-              <div style={{background:"#fff8f0",border:`1px solid #e8c060`,borderLeft:`3px solid ${C.gold}`,padding:"12px 16px",fontSize:12,color:"#5a4010",lineHeight:1.8,marginBottom:18}}>⚠ <strong>Two witnesses required.</strong> Both must be present at the same time when the owner signs. Witnesses do not need their signatures notarized.</div>
+              <div style={{background:"#fff8f0",border:`1px solid #e8c060`,borderLeft:`3px solid ${C.gold}`,padding:"12px 16px",fontSize:12,color:"#5a4010",lineHeight:1.8,marginBottom:18}}><strong>Two witnesses required.</strong> Both must be present at the same time when the owner signs. Witnesses do not need their signatures notarized.</div>
             </>}
 
             {docType==="recon"&&<>
               <Field label="Reconveyance type"><div style={{display:"flex",gap:10}}>{[["standard","Standard Full Reconveyance"],["sub_and_recon","Substitution of Trustee + Reconveyance"]].map(([val,lbl])=>(<div key={val} onClick={()=>upd("reconType",val)} style={{flex:1,padding:"11px 14px",border:`2px solid ${form.reconType===val?C.gold:C.rule}`,borderRadius:2,cursor:"pointer",background:form.reconType===val?C.cream:"#fff",fontSize:12,color:form.reconType===val?C.ink:C.muted,transition:"all .15s"}}>{lbl}</div>))}</div></Field>
-              {form.reconType==="sub_and_recon"&&<div style={ST.warn}>⚠ Use when original trustee unavailable and beneficiary substitutes themselves as trustee before reconveying.</div>}
-              {form.reconType==="standard"&&<div style={ST.warn}>⚠ The Deed of Trust TRUSTEE executes this reconveyance — not the lender. Confirm loan is fully paid.</div>}
+              
+              {form.reconType==="standard"&&<div style={ST.warn}>The Deed of Trust TRUSTEE executes this reconveyance — not the lender. Confirm loan is fully paid.</div>}
               <Field label="Original trustor (borrower)"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. Jane Smith, a married woman" style={ST.inp}/></Field>
               <Field label="Original trustee"><input value={form.reconType==="sub_and_recon"?form.reconOriginalTrustee:form.reconTrustee} onChange={e=>upd(form.reconType==="sub_and_recon"?"reconOriginalTrustee":"reconTrustee",e.target.value)} placeholder="e.g. Placer Title Company" style={ST.inp}/></Field>
               <Field label="Original beneficiary (lender)"><input value={form.reconBeneficiary} onChange={e=>upd("reconBeneficiary",e.target.value)} placeholder="e.g. John Doe, Trustee of the Doe Family Trust" style={ST.inp}/></Field>
@@ -1289,7 +1307,7 @@ function DottieDeeds() {
             </>}
 
             {docType==="dotmod"&&<>
-              <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:16}}>ℹ Both trustor AND beneficiary must sign this modification. No PCOR required.</div>
+              <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:16}}>Both trustor AND beneficiary must sign this modification. No PCOR required.</div>
               <Field label="Lien position of original DOT"><div style={{display:"flex",gap:10}}>{["first","second"].map(pos=>(<div key={pos} onClick={()=>upd("dotModPosition",pos)} style={{flex:1,padding:"11px 16px",border:`2px solid ${form.dotModPosition===pos?C.gold:C.rule}`,borderRadius:2,cursor:"pointer",background:form.dotModPosition===pos?C.cream:"#fff",fontSize:13,color:form.dotModPosition===pos?C.ink:C.muted,textAlign:"center",textTransform:"capitalize",transition:"all .15s"}}>{pos} DOT</div>))}</div></Field>
               <Field label="Trustor (borrower)"><input value={form.trustorName} onChange={e=>upd("trustorName",e.target.value)} placeholder="e.g. Jane Smith, a married woman" style={ST.inp}/></Field>
               <Field label="Beneficiary (lender)"><input value={form.beneficiaryLenderName} onChange={e=>upd("beneficiaryLenderName",e.target.value)} placeholder="e.g. John Doe, an unmarried man" style={ST.inp}/></Field>
@@ -1303,7 +1321,7 @@ function DottieDeeds() {
             </>}
 
             {docType==="trustees"&&<>
-              <div style={ST.warn}>⚠ Trustee's Deed Upon Sale is issued following a non-judicial foreclosure under Civil Code §2924 et seq. Attorney review required before recording.</div>
+              
               <Field label="Trustee (foreclosing trustee) name"><input value={form.reconTrustee} onChange={e=>upd("reconTrustee",e.target.value)} placeholder="e.g. First American Title Insurance Company" style={ST.inp}/></Field>
               <Field label="Purchaser at sale (grantee)"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. ABC Investments LLC, a California limited liability company" style={ST.inp}/></Field>
               <Field label="How purchaser takes title"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
@@ -1316,7 +1334,7 @@ function DottieDeeds() {
             </>}
 
             {docType==="sheriff"&&<>
-              <div style={ST.warn}>⚠ Sheriff's Deed is issued following a court-ordered judicial sale. Obtain certified copies of the Writ of Execution and Judgment before drafting. Attorney review required.</div>
+              <div style={ST.warn}>Sheriff's Deed is issued following a court-ordered judicial sale. Obtain certified copies of the Writ of Execution and Judgment before drafting.</div>
               <Field label="Sheriff's name"><input value={form.sheriffName} onChange={e=>upd("sheriffName",e.target.value)} placeholder="e.g. Robert Luna" style={ST.inp}/></Field>
               <Field label="Court name"><input value={form.courtName} onChange={e=>upd("courtName",e.target.value)} placeholder="e.g. Superior Court of the State of California, County of Los Angeles" style={ST.inp}/></Field>
               <Field label="Case number"><input value={form.caseNumber} onChange={e=>upd("caseNumber",e.target.value)} placeholder="e.g. 24STCV12345" style={ST.inp}/></Field>
@@ -1363,64 +1381,266 @@ function DottieDeeds() {
                     <div style={{fontSize:13,fontWeight:"bold",color:"#2a5010",marginBottom:4}}>📋 PCOR Required for this deed</div>
                     <div style={{fontSize:12,color:"#3a6010",lineHeight:1.7}}>A Preliminary Change of Ownership Report must be filed with the county assessor.<br/>Without it, the recorder charges an additional <strong>$25.00 fee</strong> and requires supplemental information after recording.</div>
                   </div>
-                  <button onClick={()=>{ const html=genPCOR(docType,form,master); setPcorOutput(html); setStep(4); }} style={{...ST.btnP,background:"#3a7a3a",whiteSpace:"nowrap"}}>Generate PCOR →</button>
+                  <button onClick={()=>{
+              const reason = getPCORReason(docType,form);
+              const isSpouseDeath = docType==="sscp"||(docType==="adjt");
+              const isTrust = docType==="granttrust";
+              const isInter = docType==="interspousal";
+              const buyer = form.grantee||form.spouseName||form.survivingJointTenant||form.grantor||"";
+              setPcorForm(p=>({...p,
+                buyerName: buyer,
+                buyerAddress: form.granteeAddress||"",
+                mailTaxName: buyer,
+                mailTaxAddress: form.granteeAddress||"",
+                mailTaxCity: form.cityOfProperty||"",
+                isPrimaryResidence: form.sscp_isPrimaryResidence?"YES":"NO",
+                p1a: (isSpouseDeath||isInter)?"YES":"NO",
+                p1d: docType==="adjt"?"YES":"NO",
+                p1l1: (isTrust&&["T1","T5"].includes(form.trustTransferReason))?"YES":"NO",
+                p1l2: (isTrust&&["T2"].includes(form.trustTransferReason))?"YES":"NO",
+                p1n: isTrust?"YES":"NO",
+                transferType: (docType==="adjt"||docType==="sscp")?"Inheritance":
+                              (docType==="trustees"||docType==="sheriff")?"Foreclosure":
+                              (!form.exemptFromTax&&docType==="grant")?"Purchase":"Other",
+                inheritanceDate: form.dateOfDeathJT||form.dateOfDeath||"",
+                transferTypeOther: form.exemptReason||"",
+              }));
+              setPcorStep(1);
+              setStep(4);
+            }} style={{...ST.btnP,background:"#3a7a3a",whiteSpace:"nowrap"}}>Generate PCOR →</button>
                 </div>
               </div>
             )}
-            <div style={{padding:"14px 18px",background:"#1a0e08",border:"1px solid #3a2010",fontSize:12,color:"#8a6040",lineHeight:1.8,borderRadius:2}}>⚠ <strong style={{color:"#c08050"}}>Attorney review required.</strong> Dottie generates draft documents only. The supervising attorney must verify all legal descriptions, vesting, notary blocks, and statutory language before execution and recordation. <strong>Dottie does not confirm vesting of title.</strong></div>
+            <div style={{padding:"14px 18px",background:"#1a0e08",border:"1px solid #3a2010",fontSize:12,color:"#8a6040",lineHeight:1.8,borderRadius:2}}><strong style={{color:"#c08050"}}>Attorney review required.</strong> Dottie generates draft documents only. The supervising attorney must verify all legal descriptions, vesting, notary blocks, and statutory language before execution and recordation. <strong>Dottie does not confirm vesting of title.</strong></div>
           </div>
         )}
 
         {step===4&&(
           <div>
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:4}}>PCOR — Preliminary Change of Ownership Report</h2>
-            <div style={{fontSize:12,color:C.muted,marginBottom:8,letterSpacing:1}}>{dt?.label} · {form.county} County · BOE-502-A</div>
-            <div style={{...ST.warn,marginBottom:16}}>⚠ Review all pre-filled information carefully. Complete all blank fields before submitting to the county assessor. File this report at the time of recording to avoid a <strong>$25.00 additional fee</strong>.</div>
+            <div style={{fontSize:12,color:C.muted,marginBottom:16,letterSpacing:1}}>{dt?.label} · {form.county} County · BOE-502-A</div>
 
-            <div style={{background:"#fff",border:"1px solid #bbb",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",marginBottom:16}}>
-              <div style={{background:"#f5f0e8",borderBottom:`1px solid ${C.rule}`,padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{fontSize:11,letterSpacing:2,textTransform:"uppercase",color:C.gold,fontFamily:"'DM Mono',monospace"}}>BOE-502-A · Preliminary Change of Ownership Report</div>
-                <div style={{fontSize:11,color:C.muted}}>Pre-filled from deed data</div>
-              </div>
-              <div style={{padding:"16px 20px",fontSize:12,color:C.muted,fontStyle:"italic",textAlign:"center"}}>
-                PCOR formatted as official BOE-502-A — click below to open and print
-              </div>
+            {/* Progress indicator */}
+            <div style={{display:"flex",gap:0,marginBottom:28,border:`1px solid ${C.rule}`,borderRadius:2,overflow:"hidden"}}>
+              {["Buyer & Property","Transfer Info","Property Details","Review & Print"].map((s,i)=>(
+                <div key={i} onClick={()=>i+1<pcorStep&&setPcorStep(i+1)} style={{flex:1,padding:"10px 8px",textAlign:"center",fontSize:10,letterSpacing:1,textTransform:"uppercase",fontFamily:"monospace",background:i+1===pcorStep?C.gold:i+1<pcorStep?"#3a7a3a":"#fff",color:i+1<=pcorStep?"#fff":C.muted,borderRight:i<3?`1px solid ${C.rule}`:"none",cursor:i+1<pcorStep?"pointer":"default"}}>
+                  {i+1<pcorStep?"✓ ":""}{s}
+                </div>
+              ))}
             </div>
 
-            <div style={{marginBottom:16}}>
-              <div style={{fontSize:11,color:C.muted,marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>Fields to complete before filing:</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            {/* PCOR Step 1 — Buyer & Property Info */}
+            {pcorStep===1&&(
+              <div>
+                <div style={ST.sec}>Buyer / Transferee Information</div>
+                <Field label="Buyer / transferee full name" required><input value={pcorForm.buyerName} onChange={e=>updPcor("buyerName",e.target.value)} style={ST.inp}/></Field>
+                <Field label="Buyer mailing address"><input value={pcorForm.buyerAddress} onChange={e=>updPcor("buyerAddress",e.target.value)} placeholder="Street address" style={ST.inp}/></Field>
+                <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:12}}>
+                  <Field label="City"><input value={pcorForm.buyerCity} onChange={e=>updPcor("buyerCity",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="State"><input value={pcorForm.buyerState} onChange={e=>updPcor("buyerState",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="Zip"><input value={pcorForm.buyerZip} onChange={e=>updPcor("buyerZip",e.target.value)} style={ST.inp}/></Field>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <Field label="Buyer daytime phone"><input value={pcorForm.buyerPhone} onChange={e=>updPcor("buyerPhone",e.target.value)} placeholder="(___) ___-____" style={ST.inp}/></Field>
+                  <Field label="Buyer email"><input value={pcorForm.buyerEmail} onChange={e=>updPcor("buyerEmail",e.target.value)} placeholder="email@firm.com" style={ST.inp}/></Field>
+                </div>
+
+                <div style={ST.sec}>Mail Property Tax Information To</div>
+                <Field label="Name" hint="If same as buyer, leave as is"><input value={pcorForm.mailTaxName} onChange={e=>updPcor("mailTaxName",e.target.value)} style={ST.inp}/></Field>
+                <Field label="Address"><input value={pcorForm.mailTaxAddress} onChange={e=>updPcor("mailTaxAddress",e.target.value)} style={ST.inp}/></Field>
+                <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:12}}>
+                  <Field label="City"><input value={pcorForm.mailTaxCity} onChange={e=>updPcor("mailTaxCity",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="State"><input value={pcorForm.mailTaxState} onChange={e=>updPcor("mailTaxState",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="Zip"><input value={pcorForm.mailTaxZip} onChange={e=>updPcor("mailTaxZip",e.target.value)} style={ST.inp}/></Field>
+                </div>
+
+                <div style={ST.sec}>Principal Residence</div>
+                <div style={{...ST.card,marginBottom:16}}>
+                  <div style={{fontSize:13,marginBottom:12}}>Is this property intended as the buyer's principal residence?</div>
+                  <div style={{display:"flex",gap:24,marginBottom:12}}>
+                    {["YES","NO"].map(v=>(
+                      <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.isPrimaryResidence===v?"bold":"normal"}}>
+                        <input type="radio" name="isPrimaryResidence" value={v} checked={pcorForm.isPrimaryResidence===v} onChange={()=>updPcor("isPrimaryResidence",v)} style={{width:15,height:15}}/>
+                        {v}
+                      </label>
+                    ))}
+                  </div>
+                  {pcorForm.isPrimaryResidence==="YES"&&<Field label="Date of occupancy or intended occupancy"><input value={pcorForm.occupancyDate} onChange={e=>updPcor("occupancyDate",e.target.value)} placeholder="e.g. 07/01/2026" style={ST.inp}/></Field>}
+                </div>
+
+                <div style={{...ST.card,marginBottom:24}}>
+                  <div style={{fontSize:13,marginBottom:12}}>Are you a 100% rated disabled veteran compensated at 100% by the Department of Veterans Affairs, or an unmarried surviving spouse of such a veteran?</div>
+                  <div style={{display:"flex",gap:24}}>
+                    {["YES","NO"].map(v=>(
+                      <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.isDisabledVet===v?"bold":"normal"}}>
+                        <input type="radio" name="isDisabledVet" value={v} checked={pcorForm.isDisabledVet===v} onChange={()=>updPcor("isDisabledVet",v)} style={{width:15,height:15}}/>
+                        {v}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{display:"flex",gap:12}}>
+                  <button onClick={()=>setStep(3);setPcorStep(1);} style={ST.btnS}>← Back to Deed</button>
+                  <button onClick={()=>setPcorStep(2)} style={ST.btnP}>Continue →</button>
+                </div>
+              </div>
+            )}
+
+            {/* PCOR Step 2 — Transfer Information (Part 1) */}
+            {pcorStep===2&&(
+              <div>
+                <div style={ST.sec}>Part 1 — Transfer Information</div>
+                <div style={{...ST.warn,marginBottom:16}}>Review each item. Items pre-checked based on your deed type — verify before printing.</div>
+
                 {[
-                  ["Date of transfer","Fill in actual recording date"],
-                  ["Buyer phone and email","Required by assessor"],
-                  ["Is property principal residence?","Verify with client"],
-                  ["Purchase price (if sale)","Enter if applicable"],
-                  ["HOA information","If applicable"],
-                  ["Partial interest %","If partial transfer only"],
-                ].map(([field,note])=>(
-                  <div key={field} style={{background:"#fff8f0",border:`1px solid #e8c060`,padding:"10px 14px",borderRadius:2,fontSize:12}}>
-                    <div style={{fontWeight:"bold",color:"#5a4010",marginBottom:2}}>{field}</div>
-                    <div style={{color:"#8a6020",fontSize:11}}>{note}</div>
+                  {key:"p1a", label:"A. This transfer is solely between spouses (addition or removal of a spouse, death of a spouse, divorce settlement, etc.)."},
+                  {key:"p1b", label:"B. This transfer is solely between domestic partners currently registered with the California Secretary of State."},
+                  {key:"p1d", label:"D. This transfer is the result of a cotenant's death."},
+                  {key:"p1e", label:"E. This transaction is to replace a principal residence owned by a person 55 years of age or older."},
+                  {key:"p1f", label:"F. This transaction is to replace a principal residence by a person who is severely disabled."},
+                  {key:"p1g", label:"G. This transaction is to replace a principal residence substantially damaged or destroyed by a wildfire or natural disaster."},
+                  {key:"p1h", label:"H. This transaction is only a correction of the name(s) of the person(s) holding title to the property."},
+                  {key:"p1i", label:"I. The recorded document creates, terminates, or reconveys a lender's interest in the property."},
+                  {key:"p1j", label:"J. This transaction is recorded only as a requirement for financing purposes or to create, terminate, or reconvey a security interest."},
+                  {key:"p1k", label:"K. The recorded document substitutes a trustee of a trust, mortgage, or other similar document."},
+                  {key:"p1l1", label:"L1. Transfer to/from a revocable trust that may be revoked by the transferor for the benefit of the transferor and/or transferor's spouse."},
+                  {key:"p1l2", label:"L2. Transfer to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor's spouse."},
+                  {key:"p1n", label:"N. Transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel remain exactly the same after the transfer."},
+                ].map(({key,label})=>(
+                  <div key={key} style={{...ST.card,marginBottom:8,padding:"12px 16px"}}>
+                    <div style={{display:"flex",alignItems:"flex-start",gap:16}}>
+                      <div style={{display:"flex",gap:16,flexShrink:0,paddingTop:2}}>
+                        {["YES","NO"].map(v=>(
+                          <label key={v} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:12,fontWeight:pcorForm[key]===v?"bold":"normal",color:pcorForm[key]===v&&v==="YES"?C.green:pcorForm[key]===v&&v==="NO"?C.muted:"inherit"}}>
+                            <input type="radio" name={key} value={v} checked={pcorForm[key]===v} onChange={()=>updPcor(key,v)} style={{width:14,height:14}}/>
+                            {v}
+                          </label>
+                        ))}
+                      </div>
+                      <div style={{fontSize:13,lineHeight:1.7,flex:1}}>{label}</div>
+                    </div>
+                    {key==="p1d"&&pcorForm.p1d==="YES"&&(
+                      <div style={{marginTop:8,paddingLeft:80}}>
+                        <Field label="Date of death"><input value={pcorForm.inheritanceDate} onChange={e=>updPcor("inheritanceDate",e.target.value)} placeholder="e.g. 01/15/2026" style={{...ST.inp,marginTop:4}}/></Field>
+                      </div>
+                    )}
                   </div>
                 ))}
+
+                <div style={{display:"flex",gap:12,marginTop:8}}>
+                  <button onClick={()=>setPcorStep(1)} style={ST.btnS}>← Back</button>
+                  <button onClick={()=>setPcorStep(3)} style={ST.btnP}>Continue →</button>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
-              <button onClick={()=>{
-                const printWindow = window.open('','_blank');
-                printWindow.document.write(pcorOutput);
-                printWindow.document.close();
-                printWindow.focus();
-                setTimeout(()=>printWindow.print(),800);
-              }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Open & Print PCOR (BOE-502-A)</button>
-              <button onClick={()=>setStep(3)} style={ST.btnS}>← Back to Deed</button>
-              <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setPcorOutput("");setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
-            </div>
+            {/* PCOR Step 3 — Type of Transfer & Property Details */}
+            {pcorStep===3&&(
+              <div>
+                <div style={ST.sec}>Part 2 — Type of Transfer</div>
+                <Field label="Date of transfer (if different from recording date)"><input value={pcorForm.dateOfTransfer} onChange={e=>updPcor("dateOfTransfer",e.target.value)} placeholder="Leave blank if same as recording date" style={ST.inp}/></Field>
+                <Field label="Type of transfer">
+                  <select value={pcorForm.transferType} onChange={e=>updPcor("transferType",e.target.value)} style={ST.inp}>
+                    {["Purchase","Foreclosure","Gift","Trade or exchange","Inheritance","Sale/leaseback","Other"].map(t=><option key={t} value={t}>{t}</option>)}
+                  </select>
+                  {pcorForm.transferType==="Inheritance"&&<Field label="Date of death" hint="Enter date of death for inheritance transfers"><input value={pcorForm.inheritanceDate} onChange={e=>updPcor("inheritanceDate",e.target.value)} placeholder="e.g. 01/15/2026" style={{...ST.inp,marginTop:8}}/></Field>}
+                  {pcorForm.transferType==="Other"&&<input value={pcorForm.transferTypeOther} onChange={e=>updPcor("transferTypeOther",e.target.value)} placeholder="Please describe the transfer" style={{...ST.inp,marginTop:8}}/>}
+                </Field>
+                <Field label="Was only a partial interest in the property transferred?">
+                  <div style={{display:"flex",gap:24,marginBottom:pcorForm.partialInterest==="YES"?12:0}}>
+                    {["YES","NO"].map(v=>(
+                      <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13}}>
+                        <input type="radio" name="partialInterest" value={v} checked={pcorForm.partialInterest===v} onChange={()=>updPcor("partialInterest",v)} style={{width:15,height:15}}/>{v}
+                      </label>
+                    ))}
+                  </div>
+                  {pcorForm.partialInterest==="YES"&&<input value={pcorForm.partialPct} onChange={e=>updPcor("partialPct",e.target.value)} placeholder="Percentage transferred e.g. 50%" style={ST.inp}/>}
+                </Field>
 
-            <div style={{padding:"14px 18px",background:"#1a0e08",border:"1px solid #3a2010",fontSize:12,color:"#8a6040",lineHeight:1.8,borderRadius:2}}>
-              ⚠ <strong style={{color:"#c08050"}}>Attorney review required.</strong> This PCOR is pre-filled from deed data as a drafting aid only. The supervising attorney must verify all information before submission to the county assessor. Dottie does not provide tax advice.
-            </div>
+                {pcorForm.transferType==="Purchase"&&<>
+                  <div style={ST.sec}>Part 3 — Purchase Price</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                    <Field label="Total purchase price ($)"><input value={pcorForm.totalPurchasePrice} onChange={e=>updPcor("totalPurchasePrice",e.target.value)} placeholder="e.g. 850,000" style={ST.inp}/></Field>
+                    <Field label="Cash down payment ($)"><input value={pcorForm.downPayment} onChange={e=>updPcor("downPayment",e.target.value)} placeholder="e.g. 170,000" style={ST.inp}/></Field>
+                  </div>
+                </>}
+
+                <div style={ST.sec}>Part 4 — Property Information</div>
+                <Field label="Type of property transferred">
+                  <select value={pcorForm.propertyType} onChange={e=>updPcor("propertyType",e.target.value)} style={ST.inp}>
+                    {["Single-family residence","Multiple-family residence (2-4 units)","Condominium","Co-op/Own-your-own","Manufactured home","Unimproved lot","Timeshare","Commercial/Industrial","Other"].map(t=><option key={t} value={t}>{t}</option>)}
+                  </select>
+                </Field>
+                <Field label="Does the property produce rental or other income?">
+                  <div style={{display:"flex",gap:24}}>
+                    {["YES","NO"].map(v=>(
+                      <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13}}>
+                        <input type="radio" name="producesIncome" value={v} checked={pcorForm.producesIncome===v} onChange={()=>updPcor("producesIncome",v)} style={{width:15,height:15}}/>{v}
+                      </label>
+                    ))}
+                  </div>
+                </Field>
+                <Field label="Condition of property at time of transfer">
+                  <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+                    {["Good","Average","Fair","Poor"].map(v=>(
+                      <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.propertyCondition===v?"bold":"normal"}}>
+                        <input type="radio" name="propertyCondition" value={v} checked={pcorForm.propertyCondition===v} onChange={()=>updPcor("propertyCondition",v)} style={{width:15,height:15}}/>{v}
+                      </label>
+                    ))}
+                  </div>
+                  {["Fair","Poor"].includes(pcorForm.propertyCondition)&&<input value={pcorForm.conditionDesc} onChange={e=>updPcor("conditionDesc",e.target.value)} placeholder="Brief description of condition" style={{...ST.inp,marginTop:8}}/>}
+                </Field>
+
+                <div style={{display:"flex",gap:12,marginTop:8}}>
+                  <button onClick={()=>setPcorStep(2)} style={ST.btnS}>← Back</button>
+                  <button onClick={()=>setPcorStep(4)} style={ST.btnP}>Review & Print →</button>
+                </div>
+              </div>
+            )}
+
+            {/* PCOR Step 4 — Review & Print */}
+            {pcorStep===4&&(
+              <div>
+                <div style={ST.sec}>Review Before Printing</div>
+                <div style={{...ST.card,marginBottom:16,fontSize:13,lineHeight:2}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    {[
+                      ["Buyer/Transferee", pcorForm.buyerName],
+                      ["APN", form.apn],
+                      ["Property", `${form.propertyAddress}${form.cityOfProperty?`, ${form.cityOfProperty}`:""}${form.county?`, ${form.county} County`:""}`],
+                      ["Seller/Transferor", form.grantor],
+                      ["Transfer type", pcorForm.transferType],
+                      ["Principal residence", pcorForm.isPrimaryResidence],
+                      ["Property type", pcorForm.propertyType],
+                      ["Mail tax to", pcorForm.mailTaxName],
+                    ].map(([label,val])=>(
+                      <div key={label} style={{borderBottom:`1px solid ${C.cream}`,paddingBottom:4}}>
+                        <div style={{fontSize:10,color:C.muted,letterSpacing:1,textTransform:"uppercase"}}>{label}</div>
+                        <div style={{fontSize:13}}>{val||"—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={ST.warn}>Review all information above before printing. The PCOR must be filed with the county assessor at or before recording. Missing PCOR results in a $20 additional recording fee.</div>
+                <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+                  <button onClick={()=>{
+                    const html = genPCOR(docType,form,master,pcorForm);
+                    const printWindow = window.open("","_blank");
+                    printWindow.document.write(html);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    setTimeout(()=>printWindow.print(),800);
+                  }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Open & Print PCOR (BOE-502-A)</button>
+                  <button onClick={()=>setPcorStep(3)} style={ST.btnS}>← Edit</button>
+                  <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setPcorOutput("");setPcorStep(1);setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
+                </div>
+                <div style={{padding:"14px 18px",background:"#1a0e08",border:"1px solid #3a2010",fontSize:12,color:"#8a6040",lineHeight:1.8,borderRadius:2}}>
+                  <strong style={{color:"#c08050"}}>Attorney review required.</strong> This PCOR is pre-filled as a drafting aid only. The supervising attorney must verify all information before submission to the county assessor. Dottie does not provide tax advice.
+                </div>
+              </div>
+            )}
+
           </div>
         )}
       </div>
