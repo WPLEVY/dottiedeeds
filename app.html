@@ -437,116 +437,278 @@ const genPCOR = (docType, f, m) => {
   const yr = new Date().getFullYear();
   const reason = getPCORReason(docType, f);
   const isSale = !f.exemptFromTax && docType==="grant";
-  return `PRELIMINARY CHANGE OF OWNERSHIP REPORT
-(BOE-502-A — To be completed by the transferee prior to transfer of subject property)
-State Board of Equalization — California
+  const isSpouseDeath = docType==="sscp" || (docType==="adjt" && f.survivingSpouse);
+  const isTrustTransfer = docType==="granttrust";
+  const isInterspousal = docType==="interspousal";
+  const buyer = f.grantee||f.spouseName||f.survivingJointTenant||f.grantor||"";
+  const seller = f.grantor||"";
+  const addr = f.propertyAddress||"";
+  const city = f.cityOfProperty||"";
+  const county = f.county||"";
+  const apn = f.apn||"";
 
-SELLER/TRANSFEROR: ${f.grantor||"[GRANTOR NAME]"}
-BUYER/TRANSFEREE: ${f.grantee||f.spouseName||f.survivingJointTenant||f.grantor||"[GRANTEE NAME]"}
-ASSESSOR'S PARCEL NUMBER: ${f.apn||"_______________"}
-PROPERTY ADDRESS: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}
-COUNTY: ${f.county||"[COUNTY]"}
-MAIL TAX STATEMENTS TO: ${f.grantee||f.spouseName||"[GRANTEE NAME]"}
-                         ${f.granteeAddress||"[GRANTEE ADDRESS]"}
+  // Part 1 checkboxes
+  const p1a = isSpouseDeath||isInterspousal ? "YES" : "NO";
+  const p1d = docType==="adjt" ? "YES" : "NO";
+  const p1l1 = (isTrustTransfer&&["T1","T5"].includes(f.trustTransferReason)) ? "YES" : "NO";
+  const p1l2 = (isTrustTransfer&&["T2"].includes(f.trustTransferReason)) ? "YES" : "NO";
+  const p1n = (isTrustTransfer) ? "YES" : "NO";
 
-DATE OF TRANSFER: ______________________________
+  // Part 2 transfer type
+  let transferType = "Other";
+  if (isSale) transferType = "Purchase";
+  if (docType==="adjt"||docType==="sscp") transferType = "Inheritance";
+  if (docType==="trustees"||docType==="sheriff") transferType = "Foreclosure";
 
-______________________________________________________________________________________________
+  const cb = (val) => val==="YES"
+    ? `<span style="display:inline-block;width:14px;height:14px;border:1px solid #000;background:#000;color:#fff;font-size:9px;text-align:center;line-height:14px;margin-right:4px;">✓</span>`
+    : `<span style="display:inline-block;width:14px;height:14px;border:1px solid #000;margin-right:4px;"></span>`;
 
-PART 1 — TRANSFER INFORMATION
-Please complete all statements.
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>PCOR - ${apn||"draft"}</title>
+<style>
+  @page { size: 8.5in 11in; margin: 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 9pt; color: #000; background: #fff; }
+  .page { max-width: 7.5in; margin: 0 auto; padding: 8px; }
+  .title-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+  .title-left { flex: 1; }
+  .title-right { width: 120px; border: 1px solid #000; padding: 4px; font-size: 7pt; text-align: center; }
+  h1 { font-size: 13pt; font-weight: bold; margin-bottom: 4px; }
+  .subtitle { font-size: 8pt; line-height: 1.5; }
+  .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #000; margin-bottom: 4px; }
+  .header-left { border-right: 1px solid #000; padding: 4px; min-height: 80px; }
+  .header-right { padding: 4px; }
+  .field-label { font-size: 7pt; font-style: italic; color: #333; display: block; margin-bottom: 1px; }
+  .field-value { font-size: 9pt; border-bottom: 1px solid #000; min-height: 16px; padding: 1px 2px; margin-bottom: 6px; }
+  .full-row { border: 1px solid #000; border-top: none; padding: 4px; margin-bottom: 4px; }
+  .yn-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px solid #eee; }
+  .yn-boxes { display: flex; gap: 4px; align-items: center; flex-shrink: 0; white-space: nowrap; }
+  .yn-label { font-size: 8pt; flex: 1; line-height: 1.4; }
+  .yn-label em { font-style: italic; }
+  .part-header { background: #000; color: #fff; padding: 3px 6px; font-size: 9pt; font-weight: bold; margin: 6px 0 4px; display: flex; justify-content: space-between; align-items: center; }
+  .part-sub { font-size: 8pt; font-weight: normal; font-style: italic; }
+  .cb-row { display: flex; align-items: flex-start; gap: 6px; padding: 2px 0; font-size: 8pt; line-height: 1.4; }
+  .cb-label { flex: 1; }
+  .cb-label em { font-style: italic; }
+  .indent { margin-left: 20px; }
+  .sig-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-top: 6px; }
+  .sig-grid2 { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 8px; margin-top: 6px; }
+  .sig-field { border-bottom: 1px solid #000; min-height: 20px; margin-bottom: 2px; }
+  .sig-label { font-size: 7pt; }
+  .notice { font-size: 7.5pt; border: 1px solid #000; padding: 4px 6px; margin: 6px 0; line-height: 1.5; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .p2-checks { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0; font-size: 8pt; }
+  .p2-check { display: flex; align-items: center; gap: 4px; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head><body><div class="page">
 
-This transfer is solely between spouses (addition or removal of spouse, death of spouse, interspousal transaction):
-[ ${reason.box==="A"?"X":" "} ] A.  YES — exempt from reassessment under R&T §63
+<div class="title-row">
+  <div class="title-left">
+    <div style="font-size:7pt;margin-bottom:2px;">BOE-502-A (P1) REV. 18 (05-23) ASSR-70 (REV. 5-24)</div>
+    <h1>PRELIMINARY CHANGE OF OWNERSHIP REPORT</h1>
+    <div class="subtitle">To be completed by the transferee (buyer) prior to a transfer of subject property, in accordance with section 480.3 of the Revenue and Taxation Code. A Preliminary Change of Ownership Report must be <strong>filed with each conveyance in the County Recorder's office for the county where the property is located.</strong></div>
+  </div>
+  <div class="title-right">
+    <div style="font-size:7pt;font-weight:bold;margin-bottom:4px;">FOR RECORDER'S USE ONLY</div>
+    <div style="font-size:7pt;">DOCUMENT NO. / RECORDING DATE</div>
+    <div style="height:40px;border-top:1px solid #000;margin-top:4px;"></div>
+  </div>
+</div>
 
-This is a transfer between: [ ] Parent and child [ ] Grandparent and grandchild
-[ ${reason.box==="B"?"X":" "} ] B.  Claim for Reassessment Exclusion — file BOE-19-B separately
+<div class="header-grid">
+  <div class="header-left">
+    <span class="field-label">NAME AND MAILING ADDRESS OF BUYER/TRANSFEREE<br><em>(Make necessary corrections to the printed name and mailing address)</em></span>
+    <div class="field-value">${buyer}</div>
+    <div class="field-value">${f.granteeAddress||""}</div>
+    <div class="field-value"></div>
+  </div>
+  <div class="header-right">
+    <span class="field-label">ASSESSOR'S PARCEL NUMBER</span>
+    <div class="field-value">${apn}</div>
+    <span class="field-label">SELLER/TRANSFEROR</span>
+    <div class="field-value">${seller}</div>
+    <span class="field-label">BUYER'S DAYTIME TELEPHONE NUMBER</span>
+    <div class="field-value">( )</div>
+    <span class="field-label">BUYER'S EMAIL ADDRESS</span>
+    <div class="field-value"></div>
+  </div>
+</div>
 
-This transaction is to replace a principal residence by a person 55 years of age or older:
-[ ${reason.box==="C"?"X":" "} ] C.  Claim for Base Year Value Transfer — file BOE-19-V separately
+<div class="full-row">
+  <span class="field-label">STREET ADDRESS OR PHYSICAL LOCATION OF REAL PROPERTY</span>
+  <div class="field-value">${addr}${city?", "+city:""}${county?", "+county+" County, CA":""}</div>
+</div>
 
-This is a transfer of the first $1 million of real property between co-owners who are not spouses:
-[ ${reason.box==="E"?"X":" "} ] E.  Please refer to instructions
+<div style="border:1px solid #000;border-top:none;padding:4px;margin-bottom:4px;">
+  <div class="yn-row">
+    <div class="yn-boxes">${cb(f.sscp_isPrimaryResidence?"YES":"NO")} YES &nbsp; ${cb(!f.sscp_isPrimaryResidence?"YES":"NO")} NO</div>
+    <div class="yn-label">This property is intended as my principal residence. If YES, please indicate the date of occupancy or intended occupancy.
+      <span style="margin-left:8px;font-size:7pt;">MO _____ DAY _____ YEAR _____</span>
+    </div>
+  </div>
+  <div class="yn-row" style="border-bottom:none;">
+    <div class="yn-boxes">${cb("NO")} YES &nbsp; ${cb("YES")} NO</div>
+    <div class="yn-label">Are you a 100% rated disabled veteran who was compensated at 100% by the Department of Veterans Affairs or an unmarried surviving spouse of a 100% rated disabled veteran?</div>
+  </div>
+</div>
 
-This property is being transferred to a revocable trust by the original transferor of the property:
-[ ${(docType==="granttrust"&&["T1","T5"].includes(f.trustTransferReason))?"X":" "} ] L1. Transfer into revocable trust — R&T §62(d)
+<div style="border:1px solid #000;border-top:none;padding:4px;margin-bottom:6px;">
+  <div style="display:grid;grid-template-columns:1fr 2fr 1fr 1fr;gap:4px;align-items:end;">
+    <div><span class="field-label">MAIL PROPERTY TAX INFORMATION TO (NAME)</span><div class="field-value">${buyer}</div></div>
+    <div><span class="field-label">MAIL PROPERTY TAX INFORMATION TO (ADDRESS)</span><div class="field-value">${f.granteeAddress||""}</div></div>
+    <div><span class="field-label">CITY</span><div class="field-value">${city}</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+      <div><span class="field-label">STATE</span><div class="field-value">CA</div></div>
+      <div><span class="field-label">ZIP</span><div class="field-value"></div></div>
+    </div>
+  </div>
+</div>
 
-This property is being transferred from a revocable trust to the original transferor:
-[ ${(docType==="granttrust"&&["T2"].includes(f.trustTransferReason))?"X":" "} ] L2. Transfer out of revocable trust — R&T §62(d)
+<div class="part-header">PART 1. TRANSFER INFORMATION <span class="part-sub">Please complete all statements.</span></div>
+<div style="font-size:7.5pt;margin-bottom:4px;font-style:italic;">This section contains possible exclusions from reassessment for certain types of transfers.</div>
 
-Other — please describe: ${reason.box==="other"?reason.desc:""}
-[ ${reason.box==="other"?"X":" "} ] Other: _______________________________________________
+<div style="display:grid;grid-template-columns:40px 1fr;gap:0;font-size:8pt;">
+  <div style="font-weight:bold;padding:2px 4px;">YES &nbsp; NO</div><div></div>
 
-______________________________________________________________________________________________
+  <div style="padding:2px 4px;">${cb(p1a)} ${cb(p1a==="YES"?"NO":"YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">A. This transfer is solely between spouses <em>(addition or removal of a spouse, death of a spouse, divorce settlement, etc.)</em>.</div>
 
-PART 2 — OTHER TRANSFER INFORMATION
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">B. This transfer is solely between domestic partners currently registered with the California Secretary of State <em>(addition or removal of a partner, death of a partner, termination settlement, etc.)</em>.</div>
 
-A. Date of transfer (if other than recording date): ______________________________
-B. Type of transfer:
-   [ ${isSale?"X":" "} ] Purchase   [ ] Foreclosure   [ ] Gift   [ ] Trade or Exchange
-   [ ] Merger/Corporate Reorganization   [ ] Contract of Sale (specify date obligation arose): ________
-   [ ${(f.exemptFromTax&&!["interspousal","adjt","sscp","granttrust"].includes(docType))?"X":" "} ] Other (explain): ${f.exemptReason||""}
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">C. This is a transfer: ${cb("NO")} between parent(s) and child(ren) &nbsp; ${cb("NO")} between grandparent(s) and grandchild(ren).<br>
+  <span class="indent">Was this the transferor/grantor's principal residence? ${cb("NO")} YES ${cb("YES")} NO</span><br>
+  <span class="indent">Is this a family farm? ${cb("NO")} YES ${cb("YES")} NO</span></div>
 
-C. Was only a partial interest in the property transferred?  [ ] Yes  [ X ] No
-   If yes, indicate the percentage transferred: _______%
+  <div style="padding:2px 4px;">${cb(p1d)} ${cb(p1d==="YES"?"NO":"YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* D. This transfer is the result of a cotenant's death. Date of death: ${f.dateOfDeathJT||"___________________"}</div>
 
-______________________________________________________________________________________________
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* E. This transaction is to replace a principal residence owned by a person 55 years of age or older.</div>
 
-PART 3 — PURCHASE PRICE AND TERMS OF SALE
-(Complete only if transfer was a purchase)
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* F. This transaction is to replace a principal residence by a person who is severely disabled.</div>
 
-A. Total purchase price:  $${isSale?(f.salePrice||"_______________"):"N/A — Not a purchase"}
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* G. This transaction is to replace a principal residence substantially damaged or destroyed by a wildfire or natural disaster for which the Governor proclaimed a state of emergency.</div>
 
-B. Personal property included in purchase price:  [ ] Yes  [ X ] No
-   If yes, enter value of personal property: $_______________
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">H. This transaction is only a correction of the name(s) of the person(s) holding title to the property. If YES, please explain: _______________</div>
 
-C. Was the seller paid a commission?  [ ] Yes  [ ] No   Amount: $_______________
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">I. The recorded document creates, terminates, or reconveys a lender's interest in the property.</div>
 
-D. Type of financing:
-   [ ] All cash   [ ] New loan   [ ] Assumption of existing loan
-   [ ] Seller financing   [ ] Other: _______________
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">J. This transaction is recorded only as a requirement for financing purposes or to create, terminate, or reconvey a security interest <em>(e.g., cosigner)</em>. If YES, please explain: _______________</div>
 
-E. If a new loan was obtained, what was the amount?  $_______________
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">K. The recorded document substitutes a trustee of a trust, mortgage, or other similar document.</div>
 
-F. Please explain any special terms, seller concessions, financing, or other items
-   that would affect the purchase price: _______________________________________________
+  <div style="padding:2px 4px;">${cb(p1l1)} ${cb(p1l1==="YES"?"NO":"YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">L. This is a transfer of property:<br>
+  <span class="indent">1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor, and/or ${cb(p1l1)} the transferor's spouse ${cb("NO")} registered domestic partner.</span><br>
+  <span class="indent">2. to/from an irrevocable trust for the benefit of the ${cb(p1l2)} creator/grantor/trustor and/or ${cb("NO")} grantor's/trustor's spouse ${cb("NO")} grantor's/trustor's registered domestic partner.</span></div>
 
-______________________________________________________________________________________________
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">M. This property is subject to a lease with a remaining lease term of 35 years or more including written options.</div>
 
-PART 4 — PROPERTY INFORMATION
+  <div style="padding:2px 4px;">${cb(p1n)} ${cb(p1n==="YES"?"NO":"YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">N. This is a transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel being transferred remain exactly the same after the transfer.</div>
 
-A. Type of property transferred:
-   [ X ] Single-family residence   [ ] Multiple-family (2-4 units)   [ ] Commercial/Industrial
-   [ ] Condominium   [ ] Vacant land   [ ] Agricultural   [ ] Other: _______________
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">O. This is a transfer subject to subsidized low-income housing requirements with governmentally imposed restrictions.</div>
 
-B. Is this property the principal residence of the buyer/transferee?
-   [ ${f.sscp_isPrimaryResidence?"X":" "} ] Yes   [ ${!f.sscp_isPrimaryResidence?"X":" "} ] No
-   If yes, the buyer/transferee intends to occupy the property within 60 days of transfer.
+  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* P. This transfer is to the first purchaser of a new building containing a ${cb("NO")} leased ${cb("NO")} owned active solar energy system.</div>
 
-C. Is the property subject to a lease or rental agreement?  [ ] Yes  [ X ] No
-   If yes, monthly rental: $_______________   Lease expiration: _______________
+  <div style="padding:2px 4px;">${cb(reason.box==="other"?"YES":"NO")} ${cb(reason.box==="other"?"NO":"YES")}</div>
+  <div class="cb-label" style="padding:2px 0;">Q. Other. This transfer is to: ${reason.box==="other"?reason.desc:""}</div>
+</div>
 
-D. Is there a homeowners' association?  [ ] Yes  [ ] No
-   HOA dues: $_______________  per _______________
+<div style="font-size:7.5pt;margin:4px 0;font-style:italic;">* Please refer to the instructions for Part 1.</div>
+<div style="font-size:7.5pt;font-weight:bold;margin-bottom:6px;">Please provide any other information that will help the Assessor understand the nature of the transfer.</div>
+<div style="text-align:center;border:1px solid #000;padding:3px;font-size:8pt;font-weight:bold;margin-bottom:8px;">THIS DOCUMENT IS NOT SUBJECT TO PUBLIC INSPECTION</div>
 
-______________________________________________________________________________________________
+<div style="font-size:7pt;margin-bottom:2px;">BOE-502-A (P2) REV. 18 (05-23) ASSR-70 (REV. 5-24)</div>
+<div class="part-header">PART 2. OTHER TRANSFER INFORMATION <span class="part-sub">Check and complete as applicable.</span></div>
 
-CERTIFICATION
+<div style="margin-bottom:4px;">
+  <div style="font-size:8pt;font-weight:bold;margin-bottom:4px;">A. Date of transfer, if other than recording date: ___________________________</div>
+  <div style="font-size:8pt;font-weight:bold;margin-bottom:4px;">B. Type of transfer:</div>
+  <div class="p2-checks">
+    <div class="p2-check">${cb(transferType==="Purchase")} Purchase</div>
+    <div class="p2-check">${cb(transferType==="Foreclosure")} Foreclosure</div>
+    <div class="p2-check">${cb("NO")} Gift</div>
+    <div class="p2-check">${cb("NO")} Merger, stock, or partnership acquisition (Form BOE-100-B)</div>
+    <div class="p2-check">${cb("NO")} Contract of sale. Date of contract: ___________</div>
+    <div class="p2-check">${cb(transferType==="Inheritance")} Inheritance. Date of death: ${f.dateOfDeathJT||f.dateOfDeath||"___________"}</div>
+    <div class="p2-check">${cb("NO")} Sale/leaseback. Date lease began: ___________</div>
+    <div class="p2-check">${cb("NO")} Trade or exchange</div>
+    <div class="p2-check">${cb("NO")} Creation of a lease &nbsp; ${cb("NO")} Assignment of a lease &nbsp; ${cb("NO")} Termination of a lease</div>
+    <div class="p2-check">${cb(transferType==="Other")} Other. Please explain: ${transferType==="Other"?(f.exemptReason||""):""}</div>
+  </div>
+  <div style="font-size:8pt;margin-top:4px;">C. Only a partial interest in the property was transferred. ${cb("NO")} YES &nbsp; ${cb("YES")} NO &nbsp; If YES, indicate the percentage transferred: _______% </div>
+</div>
 
-I certify (or declare) that the foregoing and all information hereon, including any accompanying statements or documents, is true and correct to the best of my knowledge and belief.
+<div class="part-header">PART 3. PURCHASE PRICE AND TERMS OF SALE <span class="part-sub">Check and complete as applicable.</span></div>
+<div style="font-size:8pt;padding:4px 0;color:#444;font-style:italic;">Complete only if this was a purchase transaction. For transfers exempt from documentary transfer tax, skip this section.</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:8pt;margin-bottom:4px;">
+  <div><span class="field-label">A. Total purchase price</span><div class="field-value">${isSale?(f.salePrice||"$_______________"):"N/A"}</div></div>
+  <div><span class="field-label">B. Cash down payment or value of trade or exchange</span><div class="field-value">${isSale?"$_______________":"N/A"}</div></div>
+</div>
 
-Signed: ___________________________________   Date: ___________________________
+<div class="part-header">PART 4. PROPERTY INFORMATION <span class="part-sub">Check and complete as applicable.</span></div>
+<div style="font-size:8pt;padding:4px 0;">
+  <div style="margin-bottom:4px;font-weight:bold;">A. Type of property transferred:</div>
+  <div class="p2-checks">
+    <div class="p2-check">${cb("YES")} Single-family residence</div>
+    <div class="p2-check">${cb("NO")} Co-op/Own-your-own</div>
+    <div class="p2-check">${cb("NO")} Manufactured home</div>
+    <div class="p2-check">${cb("NO")} Multiple-family residence</div>
+    <div class="p2-check">${cb("NO")} Condominium</div>
+    <div class="p2-check">${cb("NO")} Unimproved lot</div>
+    <div class="p2-check">${cb("NO")} Timeshare</div>
+    <div class="p2-check">${cb("NO")} Commercial/Industrial</div>
+    <div class="p2-check">${cb("NO")} Other: _______________</div>
+  </div>
+  <div class="yn-row" style="margin-top:4px;">
+    <div class="yn-boxes">${cb("NO")} YES &nbsp; ${cb("YES")} NO</div>
+    <div class="yn-label">B. Personal/business property, or incentives, provided by seller to buyer are included in the purchase price.</div>
+  </div>
+  <div class="yn-row">
+    <div class="yn-boxes">${cb("NO")} YES &nbsp; ${cb("YES")} NO</div>
+    <div class="yn-label">C. A manufactured home is included in the purchase price.</div>
+  </div>
+  <div class="yn-row">
+    <div class="yn-boxes">${cb("NO")} YES &nbsp; ${cb("YES")} NO</div>
+    <div class="yn-label">D. The property produces rental or other income.</div>
+  </div>
+  <div style="margin-top:4px;">E. The condition of the property at the time of sale was: ${cb("YES")} Good &nbsp; ${cb("NO")} Average &nbsp; ${cb("NO")} Fair &nbsp; ${cb("NO")} Poor</div>
+</div>
 
-Printed Name: _____________________________   Phone: _________________________
+<div style="border-top:2px solid #000;margin-top:8px;padding-top:6px;">
+  <div style="font-size:8.5pt;font-weight:bold;margin-bottom:6px;">CERTIFICATION</div>
+  <div style="font-size:7.5pt;margin-bottom:6px;">I certify (or declare) that the foregoing and all information hereon, including any accompanying statements or documents, is true and correct to the best of my knowledge and belief.</div>
+  <div class="sig-grid">
+    <div><div class="sig-field"></div><div class="sig-label">SIGNATURE OF BUYER/TRANSFEREE OR CORPORATE OFFICER</div></div>
+    <div><div class="sig-field"></div><div class="sig-label">DATE</div></div>
+    <div><div class="sig-field"></div><div class="sig-label">TELEPHONE ( )</div></div>
+  </div>
+  <div class="sig-grid2" style="margin-top:8px;">
+    <div><div class="sig-field">${buyer}</div><div class="sig-label">NAME OF BUYER/TRANSFEREE (PLEASE PRINT)</div></div>
+    <div><div class="sig-field"></div><div class="sig-label">TITLE</div></div>
+    <div><div class="sig-field"></div><div class="sig-label">EMAIL ADDRESS</div></div>
+  </div>
+  <div style="font-size:7.5pt;margin-top:6px;font-style:italic;">The Assessor's office may contact you for additional information regarding this transaction.</div>
+</div>
 
-Email: ____________________________________
-
-______________________________________________________________________________________________
-
-NOTE: A Preliminary Change of Ownership Report must be filed with each conveyance of real property.
-If this report is not filed at time of recording, the county recorder will collect a $25.00 additional recording fee.
-BOE-502-A (Rev. 12-2021)`;
+</div></body></html>`;
 };
+
 
 const generateDoc = (docType, f, m) => {
   switch(docType) {
@@ -1201,7 +1363,7 @@ function DottieDeeds() {
                     <div style={{fontSize:13,fontWeight:"bold",color:"#2a5010",marginBottom:4}}>📋 PCOR Required for this deed</div>
                     <div style={{fontSize:12,color:"#3a6010",lineHeight:1.7}}>A Preliminary Change of Ownership Report must be filed with the county assessor.<br/>Without it, the recorder charges an additional <strong>$25.00 fee</strong> and requires supplemental information after recording.</div>
                   </div>
-                  <button onClick={()=>{ setPcorOutput(genPCOR(docType,form,master)); setStep(4); }} style={{...ST.btnP,background:"#3a7a3a",whiteSpace:"nowrap"}}>Generate PCOR →</button>
+                  <button onClick={()=>{ const html=genPCOR(docType,form,master); setPcorOutput(html); setStep(4); }} style={{...ST.btnP,background:"#3a7a3a",whiteSpace:"nowrap"}}>Generate PCOR →</button>
                 </div>
               </div>
             )}
@@ -1220,7 +1382,9 @@ function DottieDeeds() {
                 <div style={{fontSize:11,letterSpacing:2,textTransform:"uppercase",color:C.gold,fontFamily:"'DM Mono',monospace"}}>BOE-502-A · Preliminary Change of Ownership Report</div>
                 <div style={{fontSize:11,color:C.muted}}>Pre-filled from deed data</div>
               </div>
-              <div style={{padding:"16px 20px",maxHeight:420,overflowY:"auto",whiteSpace:"pre-wrap",fontFamily:"'Courier New',monospace",fontSize:"10px",lineHeight:1.7,color:"#000"}}>{pcorOutput}</div>
+              <div style={{padding:"16px 20px",fontSize:12,color:C.muted,fontStyle:"italic",textAlign:"center"}}>
+                PCOR formatted as official BOE-502-A — click below to open and print
+              </div>
             </div>
 
             <div style={{marginBottom:16}}>
@@ -1245,15 +1409,11 @@ function DottieDeeds() {
             <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
               <button onClick={()=>{
                 const printWindow = window.open('','_blank');
-                printWindow.document.write(`<!DOCTYPE html><html><head><title>PCOR - ${form.apn||"draft"}</title><style>body{font-family:'Courier New',monospace;font-size:10pt;line-height:1.6;margin:1in;white-space:pre-wrap;}@media print{body{margin:0.75in;}}</style></head><body>${pcorOutput.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</body></html>`);
+                printWindow.document.write(pcorOutput);
                 printWindow.document.close();
                 printWindow.focus();
-                setTimeout(()=>printWindow.print(),500);
-              }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Save PCOR as PDF</button>
-              <button onClick={()=>{
-                navigator.clipboard.writeText(pcorOutput).catch(()=>{});
-                setPcorCopied(true); setTimeout(()=>setPcorCopied(false),2500);
-              }} style={{...ST.btnP,background:pcorCopied?"#5a9a5a":C.gold}}>{pcorCopied?"✓ Copied":"Copy PCOR Text"}</button>
+                setTimeout(()=>printWindow.print(),800);
+              }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Open & Print PCOR (BOE-502-A)</button>
               <button onClick={()=>setStep(3)} style={ST.btnS}>← Back to Deed</button>
               <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setPcorOutput("");setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
             </div>
