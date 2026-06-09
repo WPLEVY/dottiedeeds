@@ -1113,7 +1113,10 @@ function DottieDeeds() {
             </div>
             {extracting&&<div style={{textAlign:"center",marginTop:24,color:C.muted,fontSize:12,letterSpacing:3,textTransform:"uppercase"}}>Reading deed...</div>}
             {extractError&&<div style={{marginTop:12,...ST.err}}>{extractError}</div>}
-            <div style={{marginTop:20,textAlign:"center"}}><button onClick={()=>setStep(1)} style={{...ST.btnG,textDecoration:"underline",fontSize:12}}>Skip — I'll enter details manually</button></div>
+            <div style={{marginTop:20,display:"flex",justifyContent:"center",gap:24}}>
+              <button onClick={()=>setScreen("home")} style={{...ST.btnG,fontSize:12}}>← All Documents</button>
+              <button onClick={()=>setStep(1)} style={{...ST.btnG,textDecoration:"underline",fontSize:12}}>Skip — I'll enter details manually</button>
+            </div>
           </div>
         )}
 
@@ -1176,7 +1179,7 @@ function DottieDeeds() {
 
             {(docType==="grant"||docType==="granttrust")&&<>
               <Field label="Grantee — full name"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. Jane Doe and Robert Doe" style={ST.inp}/></Field>
-              <Field label="How the grantee takes title" warn="Advise client on tax and legal consequences before selection."><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom vesting...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting language" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="How the grantee takes title" ><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom vesting...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting language" style={{...ST.inp,marginTop:8}}/>}</Field>
               <Field label="Grantee mailing address"><input value={form.granteeAddress} onChange={e=>upd("granteeAddress",e.target.value)} placeholder="e.g. 123 Main Street, Los Angeles, CA 90001" style={ST.inp}/></Field>
               <Field label="Documentary Transfer Tax"><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:10,fontSize:13,color:C.muted}}><input type="checkbox" checked={form.exemptFromTax} onChange={e=>upd("exemptFromTax",e.target.checked)} style={{width:15,height:15}}/>Exempt from Documentary Transfer Tax</label>{form.exemptFromTax?<RTDropdown/>:<input value={form.dtt} onChange={e=>upd("dtt",e.target.value)} placeholder="e.g. 935.00" style={ST.inp}/>}</Field>
               {docType==="granttrust"&&<>
@@ -1226,7 +1229,7 @@ function DottieDeeds() {
               <Field label="Transferring spouse (grantor)"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. John Smith, a married man" style={ST.inp}/></Field>
               <Field label="Receiving spouse (grantee)"><input value={form.spouseName} onChange={e=>upd("spouseName",e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/></Field>
               <Field label="Transferring spouse current vesting"><input value={form.spouseCurrentVesting} onChange={e=>upd("spouseCurrentVesting",e.target.value)} placeholder="e.g. a married man, as his sole and separate property" style={ST.inp}/></Field>
-              <Field label="How grantee takes title" warn="Confirm vesting intent — community vs. separate has significant legal and tax consequences."><select value={form.spouseVesting} onChange={e=>upd("spouseVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}</select></Field>
+              <Field label="How grantee takes title" ><select value={form.spouseVesting} onChange={e=>upd("spouseVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}</select></Field>
               <Field label="Grantor pronoun"><select value={form.grantorPronoun} onChange={e=>upd("grantorPronoun",e.target.value)} style={ST.inp}><option value="his/her">his/her</option><option value="his">his</option><option value="her">her</option><option value="their">their</option></select></Field>
               <Field label="Grantee mailing address"><input value={form.granteeAddress} onChange={e=>upd("granteeAddress",e.target.value)} placeholder="e.g. 1535 Forest Way, Del Mar, CA 92014" style={ST.inp}/></Field>
             </>}
