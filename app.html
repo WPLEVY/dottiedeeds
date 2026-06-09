@@ -1113,9 +1113,11 @@ function DottieDeeds() {
             </div>
             {extracting&&<div style={{textAlign:"center",marginTop:24,color:C.muted,fontSize:12,letterSpacing:3,textTransform:"uppercase"}}>Reading deed...</div>}
             {extractError&&<div style={{marginTop:12,...ST.err}}>{extractError}</div>}
-            <div style={{marginTop:20,display:"flex",justifyContent:"center",gap:24}}>
-              <button onClick={()=>setScreen("home")} style={{...ST.btnG,fontSize:12}}>← All Documents</button>
+            <div style={{marginTop:20,textAlign:"center"}}>
               <button onClick={()=>setStep(1)} style={{...ST.btnG,textDecoration:"underline",fontSize:12}}>Skip — I'll enter details manually</button>
+            </div>
+            <div style={{marginTop:32,borderTop:`1px solid ${C.rule}`,paddingTop:16,textAlign:"center"}}>
+              <button onClick={()=>setScreen("home")} style={{...ST.btnG,fontSize:11,color:C.muted,letterSpacing:1}}>← Back to all documents</button>
             </div>
           </div>
         )}
