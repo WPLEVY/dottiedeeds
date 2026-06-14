@@ -597,10 +597,15 @@ const genADTR = (f,m) => {
   const firmName = (m&&m.firmName)||"[FIRM NAME]";
   const firmAddr = (m&&m.firmAddress)||"[FIRM ADDRESS]";
   const firmCity = (m&&m.firmCity)?(m.firmCity+", "+(m.firmState||"CA")+" "+(m.firmZip||"")):"[CITY, STATE ZIP]";
-  const sb2Line = "Building Homes and Jobs Act Fee: $-0-\n  GC §27388.1(a)(2)(B)";
+  const successor = f.successorTrusteeName||"[SUCCESSOR TRUSTEE NAME]";
+  const trust = f.trustName||"[TRUST NAME]";
+  const propAddr = f.propertyAddress||"[PROPERTY ADDRESS]";
+  const city = f.cityOfProperty?f.cityOfProperty+", CA":"";
   return `Recording Requested By:
 
 ${firmName}
+${firmAddr}
+${firmCity}
 
 And When Recorded Mail To:
 
@@ -608,46 +613,45 @@ ${firmName}
 ${firmAddr}
 ${firmCity}
 
-______________________________________________________________________________________________
-                    Space above this line for Recorder's use only
-______________________________________________________________________________________________
+__________________________________________________________________________
+Space above this line for Recorder's use only
+__________________________________________________________________________
 
-And When Recorded Mail To:
-
-${f.successorTrusteeName||"[SUCCESSOR TRUSTEE NAME]"}, Trustee
-${f.propertyAddress||"[PROPERTY ADDRESS]"}
-${f.cityOfProperty?f.cityOfProperty+", CA":""}
+And When Recorded Mail To:              MAIL TAX STATEMENTS TO:
+                                        THE UNDERSIGNED DECLARE(S):
+${successor}, Trustee                   ${successor}
+${propAddr}                             ${propAddr}
+${city}                                 ${city}
+                                        Documentary Transfer Tax: $0
+                                        Building Homes and Jobs Act Fee: $-0-
+                                        GC §27388.1(a)(2)(B)
 
                          AFFIDAVIT OF DEATH OF TRUSTEE
 
-MAIL TAX STATEMENTS TO:                    THE UNDERSIGNED DECLARE(S):
-${f.successorTrusteeName||"[SUCCESSOR TRUSTEE]"}     Documentary Transfer Tax: $0
-${f.propertyAddress||"[PROPERTY ADDRESS]"}            ${sb2Line}
-${f.cityOfProperty?f.cityOfProperty+", CA":""}
 ______________________________________________________________________________________________
 
-${f.successorTrusteeName||"[SUCCESSOR TRUSTEE NAME]"}, Trustee of the ${f.trustName||"[TRUST NAME]"}, of legal age, being first duly sworn, deposes and says:
+${successor}, Trustee of the ${trust}, of legal age, being first duly sworn, deposes and says:
 
-That ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}, the decedent mentioned in the attached certified copy of the Certificate of Death, is the same person as ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"} named as one of the parties, to wit, Trustee of the ${f.trustName||"[TRUST NAME]"}, in that certain Grant Deed dated ${f.trustDate||"[DEED DATE]"}, recorded as Document Number ${f.originalDeedRecording||"[DOCUMENT NUMBER]"}, of Official Records of the ${f.county||"[COUNTY]"} County Recorder, covering the real property situated in the County of ${f.county||"[COUNTY]"}, State of California, more fully described as follows:
+That ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}, the decedent mentioned in the attached certified copy of the Certificate of Death, is the same person as ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"} named as one of the parties, to wit, Trustee of the ${trust}, in that certain Grant Deed dated ${f.trustDate||"[DEED DATE]"}, recorded as Document Number ${f.originalDeedRecording||"[DOCUMENT NUMBER]"}, of Official Records of the ${f.county||"[COUNTY]"} County Recorder, covering the real property situated in the County of ${f.county||"[COUNTY]"}, State of California, more fully described as follows:
 
 ${f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF'}
 
       Assessor's Parcel Number: ${f.apn||"_______________"}
 
       Commonly known as:
-      ${f.propertyAddress||"[PROPERTY ADDRESS]"}
-      ${f.cityOfProperty?f.cityOfProperty+", CA":""}
+      ${propAddr}
+      ${city}
 
-As a result of the death of ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}, I, ${f.successorTrusteeName||"[SUCCESSOR TRUSTEE NAME]"}, am the current acting Trustee of the ${f.trustName||"[TRUST NAME]"} and by this instrument, I accept that office. The ${f.trustName||"[TRUST NAME]"} has not been revoked and was in full force and effect upon the death of ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}. The Trust remains in full force and effect.
+As a result of the death of ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}, I, ${successor}, am the current acting Trustee of the ${trust} and by this instrument, I accept that office. The ${trust} has not been revoked and was in full force and effect upon the death of ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}. The Trust remains in full force and effect.
 
 I declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.
 
 Executed this __________ day of ______________________, ${yr}, at _____________________, California.
 
 
-                    _______________________________
-                    ${f.successorTrusteeName||"[SUCCESSOR TRUSTEE NAME]"}, Trustee of the
-                    ${f.trustName||"[TRUST NAME]"}
+_______________________________
+${successor}, Trustee of the
+${trust}
 
 
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -662,14 +666,14 @@ State of California     )
                         ) ss.
 County of _______________     )
 
-Subscribed and sworn to (or affirmed) before me on this __________ day of _________________, ${yr}, by ${f.successorTrusteeName||"_________________________"}, proved to me on the basis of satisfactory evidence to be the person(s) who appeared before me.
+Subscribed and sworn to (or affirmed) before me on this __________ day of _________________, ${yr}, by ${successor}, proved to me on the basis of satisfactory evidence to be the person(s) who appeared before me.
 
 
 _______________________________          (Seal)
 Notary Public
 
 Affidavit-Death of Trustee for property commonly known as:
-${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?", "+f.cityOfProperty+", CA":""}
+${propAddr}${f.cityOfProperty?", "+f.cityOfProperty+", CA":""}
 Assessor's Parcel Number: ${f.apn||"_______________"}
 
 MAIL TAX STATEMENTS AS DIRECTED ABOVE`;
