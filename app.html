@@ -1086,7 +1086,7 @@ const docPageCSS = `
 `;
 
 const wrapDocHTML = (bodyHTML, docLabel, apn) => {
-  return \`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>\${docLabel} — \${apn||"draft"}</title><style>\${docPageCSS}</style></head><body><div class="doc-wrap">\${bodyHTML}<div class="footer-note">DOCUMENT DRAFTING SOFTWARE FOR LEGAL PROFESSIONALS — ATTORNEY REVIEW REQUIRED BEFORE EXECUTION AND RECORDATION</div></div></body></html>\`;
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + (docLabel||"") + ' — ' + (apn||"draft") + '</title><style>' + docPageCSS + '</style></head><body><div class="doc-wrap">' + bodyHTML + '<div class="footer-note">DOCUMENT DRAFTING SOFTWARE FOR LEGAL PROFESSIONALS — ATTORNEY REVIEW REQUIRED BEFORE EXECUTION AND RECORDATION</div></div></body></html>';
 };
 
 const generateWordDoc = (docHTML, docLabel, apn) => {
@@ -1110,13 +1110,13 @@ const recHdrHTML = (m) => {
   const fn = (m&&m.firmName)||"[FIRM NAME]";
   const fa = (m&&m.firmAddress)||"[FIRM ADDRESS]";
   const fc = (m&&m.firmCity)?(m.firmCity+", "+(m.firmState||"CA")+" "+(m.firmZip||"")):"[CITY, STATE ZIP]";
-  return \`<div class="rec-hdr">Recording Requested By:</div>
+  return `<div class="rec-hdr">Recording Requested By:</div>
 <div class="rec-hdr">\${fn}<br>\${fa}<br>\${fc}</div>
 <div class="rec-hdr" style="margin-top:8pt">And When Recorded Mail To:</div>
 <div class="rec-hdr">\${fn}<br>\${fa}<br>\${fc}</div>
 <hr class="rec-rule">
 <div class="rec-space">Space above this line for Recorder's use only</div>
-<hr class="rec-rule">\`;
+<hr class="rec-rule">`;
 };
 
 const notaryBoxHTML = (cap, f) => {
@@ -1129,11 +1129,11 @@ const notaryBoxHTML = (cap, f) => {
   const lines = text.split("\n").map(l => l.trim());
   const disclaimer = lines[0];
   const rest = lines.slice(2).join("<br>");
-  return \`<div class="notary-box">\${disclaimer}</div>
-<div class="jurat-block">\${rest.replace(/State of California/,"State of California").replace(/County of/g,"County of")}</div>\`;
+  return `<div class="notary-box">\${disclaimer}</div>
+<div class="jurat-block">\${rest.replace(/State of California/,"State of California").replace(/County of/g,"County of")}</div>`;
 };
 
-const juratBoxHTML = (name, yr) => \`
+const juratBoxHTML = (name, yr) => `
 <div class="notary-box">A notary public or other officer completing this certificate verifies only the identity of the individual who signed the document to which this certificate is attached, and not the truthfulness, accuracy, or validity of that document.</div>
 <div class="jurat-title">JURAT</div>
 <div class="jurat-block">
@@ -1144,7 +1144,7 @@ Subscribed and sworn to (or affirmed) before me on this __________ day of ______
 <br>
 _______________________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Seal)<br>
 Notary Public
-</div>\`;
+</div>`;
 
 const Header = ({subtitle, onHome, rightContent}) => (
   <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`,flexShrink:0}}>
