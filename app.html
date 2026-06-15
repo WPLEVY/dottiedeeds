@@ -389,41 +389,35 @@ const genGrant = (f,m) => {
   const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
   const yr = new Date().getFullYear();
   const dttLine = f.exemptFromTax
-    ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}`
+    ? `Documentary Transfer Tax: $0<br>${f.exemptReason||"R&T §11911"}`
     : `Documentary Transfer Tax: $${f.dtt||"___________"}`;
-  return `${recHdr(m)}
-______________________________________________________________________________________________
-
-                                  GRANT DEED
-
-MAIL TAX STATEMENTS TO:                    THE UNDERSIGNED GRANTOR(S) DECLARE(S):
-${f.grantee||"[GRANTEE NAME]"}             ${dttLine}
-${f.granteeAddress||"[GRANTEE ADDRESS]"}   Building Homes and Jobs Act Fee: $-0-
-                                            GC §27388.1(a)(2)(B)
-______________________________________________________________________________________________
-
-APN: ${f.apn||"_______________"}     County: ${f.county||"[COUNTY]"}${f.cityOfProperty?`     City: ${f.cityOfProperty}`:""}
-
-${grantorLine(f)}, hereby GRANTS to
-
-${f.grantee||"[GRANTEE NAME]"},
-${v},
-
-the following described real property in the County of ${f.county||"[COUNTY]"}, State of California:
-
-${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}
-
-Commonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}
-
-Dated: ______________________________
-
-_______________________________
-${grantorLine(f)}
-
-
-${nbFull(f)}`;
+  return `${recHdrHTML(m)}
+<div class="two-col" style="margin:10pt 0;">
+  <div class="col-l">
+    <div class="col-label">Mail Tax Statements To:</div>
+    <div>${f.grantee||"[GRANTEE NAME]"}<br>${f.granteeAddress||"[GRANTEE ADDRESS]"}</div>
+  </div>
+  <div class="col-r" style="font-size:10pt;">
+    <div class="col-label">The Undersigned Grantor(s) Declare(s):</div>
+    <div>${dttLine}<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>
+  </div>
+</div>
+<hr class="rule">
+<div class="doc-title">GRANT DEED</div>
+<div class="body-text">APN: ${f.apn||"_______________"} &nbsp;&nbsp;&nbsp; County: ${f.county||"[COUNTY]"}${f.cityOfProperty?` &nbsp;&nbsp;&nbsp; City: ${f.cityOfProperty}`:""}</div>
+<hr class="rule">
+<div class="body-text">${grantorLine(f)}, hereby GRANTS to</div>
+<div class="body-text">${f.grantee||"[GRANTEE NAME]"},<br>${v},</div>
+<div class="body-text">the following described real property in the County of ${f.county||"[COUNTY]"}, State of California:</div>
+<div class="body-text indent" style="font-family:'Courier New',monospace;font-size:10pt;">${f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF'}</div>
+<div class="body-text">Commonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}</div>
+<div class="body-text">Dated: ______________________________</div>
+<div class="sig-block">
+  <div class="sig-line"></div><br>
+  <div class="sig-name">${grantorLine(f)}</div>
+</div>
+${notaryBoxHTML(f.grantorCapacity||"Individual", f)}`;
 };
-
 const genTrust = (f,m) => {
   const yr = new Date().getFullYear();
   const isInto = ["T1","T3","T5"].includes(f.trustTransferReason);
@@ -504,94 +498,88 @@ const genDOT = (f,m) => {
 const genQuitclaim = (f,m) => {
   const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
   const yr = new Date().getFullYear();
-  const dttLine = f.exemptFromTax ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}` : `Documentary Transfer Tax: $${f.dtt||"___________"}`;
-  return `${recHdr(m)}\n\nQUITCLAIM DEED\n\nMAIL TAX STATEMENTS TO:                    THE UNDERSIGNED GRANTOR(S) DECLARE(S):\n${f.grantee||"[GRANTEE NAME]"}             ${dttLine}\n${f.granteeAddress||"[GRANTEE ADDRESS]"}   Building Homes and Jobs Act Fee: $-0-\n                                            AB1466 Fee: $-0-\n                                            GC §27388.1(a)(2)(B) and GC §27388.2(b)\n______________________________________________________________________________________________\n\n${f.grantor||"[GRANTOR NAME AND VESTING]"},\n\nFOR NO CONSIDERATION, does hereby REMISE, RELEASE, AND QUITCLAIM to\n\n${f.grantee||"[GRANTEE NAME]"},\n${v},\n\nany and all right, title and interest which Grantor now holds or may hereafter acquire in and to the real property in the City of ${f.cityOfProperty||"_______________"}, County of ${f.county||"[COUNTY]"}, State of California, described as:\n\n${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\n\nCommonly known as:\n${f.propertyAddress||"[PROPERTY ADDRESS]"}\n${f.cityOfProperty?`${f.cityOfProperty}, CA`:""}\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.grantor||"[GRANTOR NAME]"}\n\n\n${nb(f.grantorCapacity||"Individual")}`;
+  const dttLine = f.exemptFromTax
+    ? `Documentary Transfer Tax: $0<br>${f.exemptReason||"R&T §11911"}`
+    : `Documentary Transfer Tax: $${f.dtt||"___________"}`;
+  return `${recHdrHTML(m)}
+<div class="two-col" style="margin:10pt 0;">
+  <div class="col-l">
+    <div class="col-label">Mail Tax Statements To:</div>
+    <div>${f.grantee||"[GRANTEE NAME]"}<br>${f.granteeAddress||"[GRANTEE ADDRESS]"}</div>
+  </div>
+  <div class="col-r" style="font-size:10pt;">
+    <div class="col-label">The Undersigned Grantor(s) Declare(s):</div>
+    <div>${dttLine}<br>Building Homes and Jobs Act Fee: $-0-<br>AB1466 Fee: $-0-<br>GC §27388.1(a)(2)(B) and GC §27388.2(b)</div>
+  </div>
+</div>
+<hr class="rule">
+<div class="doc-title">QUITCLAIM DEED</div>
+<hr class="rule">
+<div class="body-text">${f.grantor||"[GRANTOR NAME AND VESTING]"},</div>
+<div class="body-text">FOR NO CONSIDERATION, does hereby REMISE, RELEASE, AND QUITCLAIM to</div>
+<div class="body-text">${f.grantee||"[GRANTEE NAME]"},<br>${v},</div>
+<div class="body-text">any and all right, title and interest which Grantor now holds or may hereafter acquire in and to the real property in the City of ${f.cityOfProperty||"_______________"}, County of ${f.county||"[COUNTY]"}, State of California, described as:</div>
+<div class="body-text indent" style="font-family:'Courier New',monospace;font-size:10pt;">${f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF'}</div>
+<div class="body-text">Assessor's Parcel Number: ${f.apn||"_______________"}</div>
+<div class="body-text">Commonly known as:<br>${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`<br>${f.cityOfProperty}, CA`:""}</div>
+<div class="body-text">Executed this __________ day of ______________________, ${yr}, at _____________________, California.</div>
+<div class="sig-block">
+  <div class="sig-line"></div><br>
+  <div class="sig-name">${grantorLine(f)}</div>
+</div>
+${notaryBoxHTML(f.grantorCapacity||"Individual", f)}`;
 };
-
 const genInterspousal = (f,m) => {
   const yr = new Date().getFullYear();
   const isTransmutation = ["I4","I5"].includes(f.interspousalReason);
   const reasons = {I1:"Adding spouse to title",I2:"Removing spouse from title (refinance)",I3:"Divorce / marital settlement",I4:"Transmutation — separate to community property",I5:"Transmutation — community to separate property",I6:"Estate planning purposes"};
-  return `${recHdr(m)}
-______________________________________________________________________________________________
-MAIL TAX STATEMENTS AS DIRECTED ABOVE
-
-                           INTERSPOUSAL QUITCLAIM DEED
-
-THE UNDERSIGNED GRANTOR(S) DECLARE(S):
-Documentary Transfer Tax: $0
-This conveyance is solely between spouses and is exempt from Documentary Transfer Tax
-pursuant to R&T §§11930 and 11911. This is an Interspousal Transfer and not a change
-in ownership under R&T §63. Not Pursuant to Sale.
-Building Homes and Jobs Act Fee: $75.00     AB1466 Fee: $-0-     GC §27388.2(b)
-______________________________________________________________________________________________
-
-${f.grantor||"[TRANSFERRING SPOUSE NAME]"}, Spouse of
-${f.spouseName||"[RECEIVING SPOUSE NAME]"}, ${f.spouseCurrentVesting||"a married person, as his/her sole and separate property"},
-
-FOR NO CONSIDERATION, does hereby REMISE, RELEASE, AND QUITCLAIM any and all of ${f.grantorPronoun||"his/her"} right, title and interest in and to the real property to
-
-${f.spouseName||"[RECEIVING SPOUSE NAME]"},
-${f.spouseVesting||"a married person, as his/her sole and separate property"},
-${isTransmutation ? `
-TRANSMUTATION DECLARATION: Pursuant to California Family Code §852, this instrument constitutes an express declaration that the character of the above-described property is hereby changed as stated above.
-` : ""}
-the real property in the City of ${f.cityOfProperty||"_______________"}, County of ${f.county||"[COUNTY]"}, State of California, described as:
-
-${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}
-
-Assessor's Parcel Number: ${f.apn||"_______________"}
-
-Commonly known as:
-${f.propertyAddress||"[PROPERTY ADDRESS]"}
-${f.cityOfProperty ? `${f.cityOfProperty}, CA` : ""}
-
-Reason for Transfer: ${reasons[f.interspousalReason]||""}
-
-Executed this __________ day of ______________________, ${yr}, at _____________________, California.
-
-
-_______________________________
-${f.grantor||"[TRANSFERRING SPOUSE NAME]"}
-
-
-${nb("Individual")}
-
-Interspousal Quitclaim Deed for property commonly known as:
-${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty ? `, ${f.cityOfProperty}, CA` : ""}
-Assessor's Parcel Number: ${f.apn||"_______________"}
-
-MAIL TAX STATEMENTS AS DIRECTED ABOVE`;
+  return `${recHdrHTML(m)}
+<div class="body-text" style="text-align:center;font-size:9pt;">MAIL TAX STATEMENTS AS DIRECTED ABOVE</div>
+<div class="doc-title">INTERSPOUSAL QUITCLAIM DEED</div>
+<div class="body-text" style="font-size:10pt;">Documentary Transfer Tax: $0<br>
+This conveyance is solely between spouses and is exempt from Documentary Transfer Tax pursuant to R&amp;T §§11930 and 11911. This is an Interspousal Transfer and not a change in ownership under R&amp;T §63. Not Pursuant to Sale.<br>
+Building Homes and Jobs Act Fee: $75.00 &nbsp;&nbsp; AB1466 Fee: $-0- &nbsp;&nbsp; GC §27388.2(b)</div>
+<hr class="rule">
+<div class="body-text">${f.grantor||"[TRANSFERRING SPOUSE NAME]"}, Spouse of<br>
+${f.spouseName||"[RECEIVING SPOUSE NAME]"}, ${f.spouseCurrentVesting||"a married person, as his/her sole and separate property"},</div>
+<div class="body-text">FOR NO CONSIDERATION, does hereby REMISE, RELEASE, AND QUITCLAIM any and all of ${f.grantorPronoun||"his/her"} right, title and interest in and to the real property to</div>
+<div class="body-text">${f.spouseName||"[RECEIVING SPOUSE NAME]"},<br>${f.spouseVesting||"a married person, as his/her sole and separate property"},</div>
+${isTransmutation?`<div class="body-text"><strong>TRANSMUTATION DECLARATION:</strong> Pursuant to California Family Code §852, this instrument constitutes an express declaration that the character of the above-described property is hereby changed as stated above.</div>`:""}
+<div class="body-text">the real property in the City of ${f.cityOfProperty||"_______________"}, County of ${f.county||"[COUNTY]"}, State of California, described as:</div>
+<div class="body-text indent" style="font-family:'Courier New',monospace;font-size:10pt;">${f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF'}</div>
+<div class="body-text">Assessor's Parcel Number: ${f.apn||"_______________"}</div>
+<div class="body-text">Commonly known as:<br>${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`<br>${f.cityOfProperty}, CA`:""}</div>
+<div class="body-text">Reason for Transfer: ${reasons[f.interspousalReason]||""}</div>
+<div class="body-text">Executed this __________ day of ______________________, ${yr}, at _____________________, California.</div>
+<div class="sig-block">
+  <div class="sig-line"></div><br>
+  <div class="sig-name">${f.grantor||"[TRANSFERRING SPOUSE NAME]"}</div>
+</div>
+${notaryBoxHTML("Individual", f)}
+<div class="body-text">Interspousal Quitclaim Deed for property commonly known as:<br>${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}<br>Assessor's Parcel Number: ${f.apn||"_______________"}</div>
+<div class="body-text"><strong>MAIL TAX STATEMENTS AS DIRECTED ABOVE</strong></div>`;
 };
-
 const genADJT = (f,m) => {
-  const aka = f.deceasedJointTenantAKA ? `\n(Also known as ${f.deceasedJointTenantAKA})` : "";
-  return `${recHdr(m)}
-______________________________________________________________________________________________
-
-                         **AFFIDAVIT OF DEATH OF JOINT TENANT**
-
-______________________________________________________________________________________________
-
-I, ${f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]"}, being duly sworn, say:
-
-I am over the age of 18 years. The decedent described in the attached certified copy of Certificate of Death is the same person as ${f.deceasedJointTenant||"[DECEASED JOINT TENANT NAME]"}${aka}, who is named as one of the parties in that certain ${f.originalDeedType||"Grant Deed"} dated ${f.originalDeedDate||"[DEED DATE]"}, executed by ${f.originalDeedGrantor||"[ORIGINAL GRANTOR(S)]"}, to ${f.grantor||"[BOTH JOINT TENANTS AS VESTED]"}, as Joint Tenants, recorded on ${f.originalDeedRecordingDate||"[RECORDING DATE]"} as Instrument No. ${f.originalDeedRecording||"[RECORDING NUMBER]"}, in the Official Records of ${f.county||"[COUNTY]"} County, California, covering the property situated in the ${f.cityOfProperty?`City of ${f.cityOfProperty}, `:""}${f.county||"[COUNTY]"} County, California, described as follows:
-
-${f.legalDescription||"[LEGAL DESCRIPTION]"}
-
-Commonly known as ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}${f.apn?`\nAssessor's Parcel Number: ${f.apn}`:""}
-
-Date: ______________________________     _______________________________
-                                          ${f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]"}
-                                          Affiant
-
-
-${juratBlock(f.survivingJointTenant)}
-
-ATTACH CERTIFIED COPY OF DEATH CERTIFICATE`;
+  const yr = new Date().getFullYear();
+  const aka = f.deceasedJointTenantAKA ? `<br>(Also known as ${f.deceasedJointTenantAKA})` : "";
+  return `${recHdrHTML(m)}
+<hr class="rule">
+<div class="doc-title">AFFIDAVIT OF DEATH OF JOINT TENANT</div>
+<hr class="rule">
+<div class="body-text">I, ${f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]"}, being duly sworn, say:</div>
+<div class="body-text">I am over the age of 18 years. The decedent described in the attached certified copy of Certificate of Death is the same person as ${f.deceasedJointTenant||"[DECEASED JOINT TENANT NAME]"}${aka}, who is named as one of the parties in that certain ${f.originalDeedType||"Grant Deed"} dated ${f.originalDeedDate||"[DEED DATE]"}, executed by ${f.originalDeedGrantor||"[ORIGINAL GRANTOR(S)]"}, to ${f.grantor||"[BOTH JOINT TENANTS AS VESTED]"}, as Joint Tenants, recorded on ${f.originalDeedRecordingDate||"[RECORDING DATE]"} as Instrument No. ${f.originalDeedRecording||"[RECORDING NUMBER]"}, in the Official Records of ${f.county||"[COUNTY]"} County, California, covering the property situated in the ${f.cityOfProperty?`City of ${f.cityOfProperty}, `:""}${f.county||"[COUNTY]"} County, California, described as follows:</div>
+<div class="body-text indent" style="font-family:'Courier New',monospace;font-size:10pt;">${f.legalDescription||"[LEGAL DESCRIPTION]"}</div>
+<div class="body-text">Commonly known as ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}${f.apn?`<br>Assessor's Parcel Number: ${f.apn}`:""}</div>
+<div class="two-col" style="margin:20pt 0 8pt;">
+  <div class="col-l">Date: ______________________________</div>
+  <div class="col-r">
+    <div class="sig-line"></div><br>
+    <div class="sig-name">${f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]"}<br>Affiant</div>
+  </div>
+</div>
+${juratBoxHTML(f.survivingJointTenant, yr)}
+<div class="body-text"><strong>ATTACH CERTIFIED COPY OF DEATH CERTIFICATE</strong></div>`;
 };
-
-
 const genADTR = (f,m) => {
   const yr = new Date().getFullYear();
   const firmName = (m&&m.firmName)||"[FIRM NAME]";
@@ -601,89 +589,98 @@ const genADTR = (f,m) => {
   const trust = f.trustName||"[TRUST NAME]";
   const propAddr = f.propertyAddress||"[PROPERTY ADDRESS]";
   const city = f.cityOfProperty?f.cityOfProperty+", CA":"";
-  return `Recording Requested By:
+  const deceased = f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]";
+  return `<div class="rec-hdr">Recording Requested By:</div>
+<div class="rec-hdr">${firmName}<br>${firmAddr}<br>${firmCity}</div>
+<div class="rec-hdr" style="margin-top:8pt">And When Recorded Mail To:</div>
+<div class="rec-hdr">${firmName}<br>${firmAddr}<br>${firmCity}</div>
+<hr class="rec-rule">
+<div class="rec-space">Space above this line for Recorder's use only</div>
+<hr class="rec-rule">
 
-${firmName}
-${firmAddr}
-${firmCity}
+<div class="two-col" style="margin:12pt 0;">
+  <div class="col-l">
+    <div class="col-label">And When Recorded Mail To:</div>
+    <div>${successor}, Trustee<br>${propAddr}<br>${city}</div>
+  </div>
+  <div class="col-r" style="font-size:10pt;">
+    <div class="col-label">Mail Tax Statements To: &nbsp;&nbsp;&nbsp; The Undersigned Declare(s):</div>
+    <div>${successor}<br>${propAddr}<br>${city}<br><br>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>
+  </div>
+</div>
 
-And When Recorded Mail To:
+<hr class="rule">
+<div class="doc-title">AFFIDAVIT OF DEATH OF TRUSTEE</div>
+<hr class="rule">
 
-${firmName}
-${firmAddr}
-${firmCity}
+<div class="body-text">${successor}, Trustee of the ${trust}, of legal age, being first duly sworn, deposes and says:</div>
 
-__________________________________________________________________________
-Space above this line for Recorder's use only
-__________________________________________________________________________
+<div class="body-text">That ${deceased}, the decedent mentioned in the attached certified copy of the Certificate of Death, is the same person as ${deceased} named as one of the parties, to wit, Trustee of the ${trust}, in that certain Grant Deed dated ${f.trustDate||"[DEED DATE]"}, recorded as Document Number ${f.originalDeedRecording||"[DOCUMENT NUMBER]"}, of Official Records of the ${f.county||"[COUNTY]"} County Recorder, covering the real property situated in the County of ${f.county||"[COUNTY]"}, State of California, more fully described as follows:</div>
 
-And When Recorded Mail To:              MAIL TAX STATEMENTS TO:
-                                        THE UNDERSIGNED DECLARE(S):
-${successor}, Trustee                   ${successor}
-${propAddr}                             ${propAddr}
-${city}                                 ${city}
-                                        Documentary Transfer Tax: $0
-                                        Building Homes and Jobs Act Fee: $-0-
-                                        GC §27388.1(a)(2)(B)
+<div class="body-text indent" style="font-family:'Courier New',monospace;font-size:10pt;">${f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF'}</div>
 
-                         AFFIDAVIT OF DEATH OF TRUSTEE
+<div class="body-text indent">Assessor's Parcel Number: ${f.apn||"_______________"}</div>
+<div class="body-text indent">Commonly known as:<br>${propAddr}<br>${city}</div>
 
-______________________________________________________________________________________________
+<div class="body-text">As a result of the death of ${deceased}, I, ${successor}, am the current acting Trustee of the ${trust} and by this instrument, I accept that office. The ${trust} has not been revoked and was in full force and effect upon the death of ${deceased}. The Trust remains in full force and effect.</div>
 
-${successor}, Trustee of the ${trust}, of legal age, being first duly sworn, deposes and says:
+<div class="body-text">I declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.</div>
 
-That ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}, the decedent mentioned in the attached certified copy of the Certificate of Death, is the same person as ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"} named as one of the parties, to wit, Trustee of the ${trust}, in that certain Grant Deed dated ${f.trustDate||"[DEED DATE]"}, recorded as Document Number ${f.originalDeedRecording||"[DOCUMENT NUMBER]"}, of Official Records of the ${f.county||"[COUNTY]"} County Recorder, covering the real property situated in the County of ${f.county||"[COUNTY]"}, State of California, more fully described as follows:
+<div class="body-text">Executed this __________ day of ______________________, ${yr}, at _____________________, California.</div>
 
-${f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF'}
+<div class="sig-block">
+  <div class="sig-line"></div><br>
+  <div class="sig-name">${successor}, Trustee of the<br>${trust}</div>
+</div>
 
-      Assessor's Parcel Number: ${f.apn||"_______________"}
+${juratBoxHTML(successor, yr)}
 
-      Commonly known as:
-      ${propAddr}
-      ${city}
-
-As a result of the death of ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}, I, ${successor}, am the current acting Trustee of the ${trust} and by this instrument, I accept that office. The ${trust} has not been revoked and was in full force and effect upon the death of ${f.deceasedTrusteeName||"[DECEASED TRUSTEE NAME]"}. The Trust remains in full force and effect.
-
-I declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.
-
-Executed this __________ day of ______________________, ${yr}, at _____________________, California.
-
-
-_______________________________
-${successor}, Trustee of the
-${trust}
-
-
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ A notary public or other officer completing this certificate verifies only the  │
-│ identity of the individual who signed the document to which this certificate is │
-│ attached, and not the truthfulness, accuracy, or validity of that document.     │
-└─────────────────────────────────────────────────────────────────────────────────┘
-
-                                    JURAT
-
-State of California     )
-                        ) ss.
-County of _______________     )
-
-Subscribed and sworn to (or affirmed) before me on this __________ day of _________________, ${yr}, by ${successor}, proved to me on the basis of satisfactory evidence to be the person(s) who appeared before me.
-
-
-_______________________________          (Seal)
-Notary Public
-
-Affidavit-Death of Trustee for property commonly known as:
-${propAddr}${f.cityOfProperty?", "+f.cityOfProperty+", CA":""}
-Assessor's Parcel Number: ${f.apn||"_______________"}
-
-MAIL TAX STATEMENTS AS DIRECTED ABOVE`;
+<div class="body-text" style="margin-top:16pt;">Affidavit-Death of Trustee for property commonly known as:<br>${propAddr}${f.cityOfProperty?", "+f.cityOfProperty+", CA":""}<br>Assessor's Parcel Number: ${f.apn||"_______________"}</div>
+<div class="body-text"><strong>MAIL TAX STATEMENTS AS DIRECTED ABOVE</strong></div>`;
 };
 const genSSCP = (f,m) => {
   const yr = new Date().getFullYear();
-  const sb2Line = f.sscp_isPrimaryResidence ? `Building Homes and Jobs Act Fee: $-0-\n  GC §27388.1(a)(2)(B) — Residential dwelling to owner-occupier` : `Building Homes and Jobs Act Fee: $___\n  GC §27388.1 (beginning Jan. 1, 2018)`;
-  return `${recHdr(m)}\n\nAFFIDAVIT OF DEATH\nSurviving Spouse Succeeding to Title to Community Property\n(Probate Code §13540, State of California)\n\nMAIL TAX STATEMENTS TO:                    THE UNDERSIGNED DECLARE(S):\n${f.grantor||"[SURVIVING SPOUSE NAME]"}    Documentary Transfer Tax: $0\n${f.granteeAddress||"[ADDRESS]"}           ${sb2Line}\n______________________________________________________________________________________________\n\nSTATE OF CALIFORNIA             )\n                                ) ss.\nCOUNTY OF ${(f.county||"_______________").toUpperCase()}              )\n\n${f.grantor||"[SURVIVING SPOUSE NAME]"}, of legal age, being first duly sworn, deposes and says:\n\nThat ${f.decedentName||"[DECEDENT NAME — AS ON DEATH CERTIFICATE]"}, the decedent mentioned in the attached Certificate of Death, is the same person as ${f.decedentName||"[DECEDENT NAME]"} named as one of the parties in that certain Grant Deed dated ${f.originalDeedDate||"[DEED DATE]"}, executed by ${f.originalDeedGrantor||"[ORIGINAL GRANTOR]"}, to ${f.decedentName||"[DECEDENT NAME]"} and ${f.grantor||"[SURVIVING SPOUSE NAME]"}, husband and wife as community property, recorded as Document Number ${f.originalDeedRecording||"[RECORDING NUMBER]"} on ${f.originalDeedRecordingDate||"[RECORDING DATE]"}, of Official Records of the ${f.county||"[COUNTY]"} County Recorder, covering the real property situated in the County of ${f.county||"[COUNTY]"}, State of California, more fully described as follows:\n\n${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}\n\n      Assessor's Parcel Number: ${f.apn||"_______________"}\n\n      Commonly known as:\n      ${f.propertyAddress||"[PROPERTY ADDRESS]"}\n      ${f.cityOfProperty?`${f.cityOfProperty}, CA`:""}\n\nThat ${f.grantor||"[SURVIVING SPOUSE NAME]"} was married to ${f.decedentName||"[DECEDENT NAME]"} at the time of the death of the decedent.\n\nThat the above-described property has been at all times since acquisition considered the community property of ${f.grantor||"[SURVIVING SPOUSE NAME]"} and ${f.decedentName||"[DECEDENT NAME]"}. More than forty (40) days have passed since the death of the above-named decedent, and no notice has been recorded pursuant to Probate Code §13541.\n\nThat, with respect to the above-described property, there has not been nor will there be an election filed pursuant to Probate Code §§13502 or 13503 in any probate proceedings in any court of competent jurisdiction.\n\nThat the above described property has not passed to someone other than the affiant under the decedent's will or by intestate succession. That the property has not been disposed of in trust under the decedent's will. That the decedent's will does not limit the affiant to a qualified ownership.\n\nThat this Affidavit is made for the protection and benefit of the surviving spouse, his/her successors, assigns and personal representatives and all other parties hereafter dealing with or who may acquire an interest in the above described property.\n\nI declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.grantor||"[SURVIVING SPOUSE NAME]"}\n\n\n${juratBlock(f.grantor)}\n\nAffidavit of Death for property commonly known as:\n${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\nAssessor's Parcel Number: ${f.apn||"_______________"}\n\nMAIL TAX STATEMENTS AS DIRECTED ABOVE`;
+  const sb2 = f.sscp_isPrimaryResidence
+    ? "Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B) — Residential dwelling to owner-occupier"
+    : "Building Homes and Jobs Act Fee: $___<br>GC §27388.1 (beginning Jan. 1, 2018)";
+  return `${recHdrHTML(m)}
+<div class="two-col" style="margin:10pt 0;">
+  <div class="col-l">
+    <div class="col-label">Mail Tax Statements To:</div>
+    <div>${f.grantor||"[SURVIVING SPOUSE NAME]"}<br>${f.granteeAddress||"[ADDRESS]"}</div>
+  </div>
+  <div class="col-r" style="font-size:10pt;">
+    <div class="col-label">The Undersigned Declare(s):</div>
+    <div>Documentary Transfer Tax: $0<br>${sb2}</div>
+  </div>
+</div>
+<hr class="rule">
+<div class="doc-title">AFFIDAVIT OF DEATH</div>
+<div class="doc-subtitle">Surviving Spouse Succeeding to Title to Community Property<br>(Probate Code §13540, State of California)</div>
+<hr class="rule">
+<div class="body-text">STATE OF CALIFORNIA &nbsp;&nbsp;&nbsp; )<br>
+<span class="indent">) ss.</span><br>
+COUNTY OF ${(f.county||"_______________").toUpperCase()} &nbsp;&nbsp;&nbsp; )</div>
+<div class="body-text">${f.grantor||"[SURVIVING SPOUSE NAME]"}, of legal age, being first duly sworn, deposes and says:</div>
+<div class="body-text">That ${f.decedentName||"[DECEDENT NAME]"}, the decedent mentioned in the attached Certificate of Death, is the same person as ${f.decedentName||"[DECEDENT NAME]"} named as one of the parties in that certain Grant Deed dated ${f.originalDeedDate||"[DEED DATE]"}, executed by ${f.originalDeedGrantor||"[ORIGINAL GRANTOR]"}, to ${f.decedentName||"[DECEDENT NAME]"} and ${f.grantor||"[SURVIVING SPOUSE NAME]"}, husband and wife as community property, recorded as Document Number ${f.originalDeedRecording||"[RECORDING NUMBER]"} on ${f.originalDeedRecordingDate||"[RECORDING DATE]"}, of Official Records of the ${f.county||"[COUNTY]"} County Recorder, covering the real property situated in the County of ${f.county||"[COUNTY]"}, State of California, more fully described as follows:</div>
+<div class="body-text indent" style="font-family:'Courier New',monospace;font-size:10pt;">${f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF'}</div>
+<div class="body-text indent">Assessor's Parcel Number: ${f.apn||"_______________"}</div>
+<div class="body-text indent">Commonly known as:<br>${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`<br>${f.cityOfProperty}, CA`:""}</div>
+<div class="body-text">That ${f.grantor||"[SURVIVING SPOUSE NAME]"} was married to ${f.decedentName||"[DECEDENT NAME]"} at the time of the death of the decedent.</div>
+<div class="body-text">That the above-described property has been at all times since acquisition considered the community property of ${f.grantor||"[SURVIVING SPOUSE NAME]"} and ${f.decedentName||"[DECEDENT NAME]"}. More than forty (40) days have passed since the death of the above-named decedent, and no notice has been recorded pursuant to Probate Code §13541.</div>
+<div class="body-text">That, with respect to the above-described property, there has not been nor will there be an election filed pursuant to Probate Code §§13502 or 13503 in any probate proceedings in any court of competent jurisdiction.</div>
+<div class="body-text">That the above described property has not passed to someone other than the affiant under the decedent's will or by intestate succession. That the property has not been disposed of in trust under the decedent's will. That the decedent's will does not limit the affiant to a qualified ownership.</div>
+<div class="body-text">That this Affidavit is made for the protection and benefit of the surviving spouse, his/her successors, assigns and personal representatives and all other parties hereafter dealing with or who may acquire an interest in the above described property.</div>
+<div class="body-text">I declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.</div>
+<div class="body-text">Executed this __________ day of ______________________, ${yr}, at _____________________, California.</div>
+<div class="sig-block">
+  <div class="sig-line"></div><br>
+  <div class="sig-name">${f.grantor||"[SURVIVING SPOUSE NAME]"}</div>
+</div>
+${juratBoxHTML(f.grantor, yr)}
+<div class="body-text">Affidavit of Death for property commonly known as:<br>${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}<br>Assessor's Parcel Number: ${f.apn||"_______________"}</div>
+<div class="body-text"><strong>MAIL TAX STATEMENTS AS DIRECTED ABOVE</strong></div>`;
 };
-
 const genTOD = (f,m) => {
   const btypes = {
     "Individual": f.todBeneficiary||"[BENEFICIARY FULL NAME]",
@@ -706,10 +703,30 @@ const genRecon = (f,m) => {
 const genEasement = (f,m) => {
   const yr = new Date().getFullYear();
   const et = {ingress_egress:"an easement for ingress and egress",utility:"an easement for utility purposes",access:"an access easement",appurtenant:"an appurtenant easement",drainage:"an easement for drainage",solar:"a solar access easement (Civil Code §801.5)",conservation:"a conservation easement (Civil Code §815 et seq.)",other:f.easementTypeCustom||"[DESCRIBE EASEMENT]"};
-  const dttLine = f.exemptFromTax ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}` : `Documentary Transfer Tax: $${f.dtt||"___________"}`;
-  return `${recHdr(m)}\n\nEASEMENT DEED\n\nMAIL TAX STATEMENTS TO:\n${f.grantee||"[GRANTEE NAME]"}\n${f.granteeAddress||"[GRANTEE ADDRESS]"}\n\nTHE UNDERSIGNED GRANTOR(S) DECLARE(S):\n${dttLine}\nBuilding Homes and Jobs Act Fee: $-0-\nAB1466 Fee: $-0-\nGC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\n${f.grantor||"[GRANTOR NAME AND VESTING]"},\n\nhereby GRANTS to ${f.grantee||"[GRANTEE NAME]"}, ${f.granteeVesting==="custom"?f.customVesting:f.granteeVesting||"[VESTING]"},\n\n${et[f.easementType]||et.other} over, under, and across the following described real property in the County of ${f.county||"[COUNTY]"}, State of California:\n\nSERVIENT TENEMENT:\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n${f.dominantDescription?`\nDOMINANT TENEMENT:\n${f.dominantDescription}\n`:""}\nEASEMENT DESCRIPTION:\n${f.easementDescription||"[DESCRIBE SPECIFIC LOCATION, DIMENSIONS, AND PURPOSE]"}\n${f.easementWidth?`\nWidth of easement: ${f.easementWidth} feet\n`:""}${f.easementTerms?`\nTERMS AND CONDITIONS:\n${f.easementTerms}\n`:""}\nThis easement is ${f.easementExclusive?"exclusive":"non-exclusive"} and shall run with the land.\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.grantor||"[GRANTOR NAME]"}\n\n\n${nb(f.grantorCapacity||"Individual")}`;
+  const dttLine = f.exemptFromTax ? `Documentary Transfer Tax: $0<br>${f.exemptReason||"R&T §11911"}` : `Documentary Transfer Tax: $${f.dtt||"___________"}`;
+  return `${recHdrHTML(m)}
+<div class="body-text" style="font-size:10pt;">${dttLine}<br>Building Homes and Jobs Act Fee: $-0-<br>AB1466 Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>
+<hr class="rule">
+<div class="doc-title">EASEMENT DEED</div>
+<hr class="rule">
+<div class="body-text">${f.grantor||"[GRANTOR NAME AND VESTING]"},</div>
+<div class="body-text">hereby GRANTS to ${f.grantee||"[GRANTEE NAME]"}, ${f.granteeVesting==="custom"?f.customVesting:f.granteeVesting||"[VESTING]"},</div>
+<div class="body-text">${et[f.easementType]||et.other} over, under, and across the following described real property in the County of ${f.county||"[COUNTY]"}, State of California:</div>
+<div class="body-text"><strong>SERVIENT TENEMENT:</strong></div>
+<div class="body-text indent" style="font-family:'Courier New',monospace;font-size:10pt;">${f.legalDescription||"[LEGAL DESCRIPTION]"}</div>
+<div class="body-text">Assessor's Parcel Number: ${f.apn||"_______________"}<br>Commonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}</div>
+${f.dominantDescription?`<div class="body-text"><strong>DOMINANT TENEMENT:</strong><br>${f.dominantDescription}</div>`:""}
+<div class="body-text"><strong>EASEMENT DESCRIPTION:</strong><br>${f.easementDescription||"[DESCRIBE SPECIFIC LOCATION, DIMENSIONS, AND PURPOSE]"}</div>
+${f.easementWidth?`<div class="body-text">Width of easement: ${f.easementWidth} feet</div>`:""}
+${f.easementTerms?`<div class="body-text"><strong>TERMS AND CONDITIONS:</strong><br>${f.easementTerms}</div>`:""}
+<div class="body-text">This easement is ${f.easementExclusive?"exclusive":"non-exclusive"} and shall run with the land.</div>
+<div class="body-text">Executed this __________ day of ______________________, ${yr}, at _____________________, California.</div>
+<div class="sig-block">
+  <div class="sig-line"></div><br>
+  <div class="sig-name">${grantorLine(f)}</div>
+</div>
+${notaryBoxHTML(f.grantorCapacity||"Individual", f)}`;
 };
-
 const genDOTMod = (f,m) => {
   const yr = new Date().getFullYear();
   return `${recHdr(m)}\n\nMODIFICATION OF DEED OF TRUST\n\nMAIL TAX STATEMENTS TO:\n${f.beneficiaryLenderName||"[BENEFICIARY NAME]"}\n${f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]"}\n\nTHE UNDERSIGNED DECLARE(S):\nDocumentary Transfer Tax: $0\nBuilding Homes and Jobs Act Fee: $-0-\nGC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\nTHIS MODIFICATION OF DEED OF TRUST is entered into as of ______________________, ${yr}, by and between:\n\nTRUSTOR:     ${f.trustorName||"[TRUSTOR NAME]"}, ${f.trustorVesting==="custom"?f.trustorCustomVesting:f.trustorVesting||"[VESTING]"}\nTRUSTEE:     ${f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]"}\nBENEFICIARY: ${f.beneficiaryLenderName||"[BENEFICIARY / LENDER NAME]"}\n             ${f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]"}\n\nRECITALS:\n\nA. Trustor executed that certain ${f.dotModPosition==="second"?"Second":"First"} Deed of Trust dated ${f.reconOriginalDeedDate||"[ORIGINAL DATE]"}, recorded on ${f.reconRecordingDate||"[RECORDING DATE]"} as Document Number ${f.reconRecording||"[DOCUMENT NUMBER]"} in the Official Records of ${f.county||"[COUNTY]"} County, California, encumbering the real property described as:\n\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nB. Original principal amount: $${f.reconLoanAmount||"[ORIGINAL AMOUNT]"}\n\nAGREEMENT:\n\n1. MODIFICATIONS:\n${f.dotModTerms||"[DESCRIBE SPECIFIC MODIFICATIONS]"}\n${f.dotModNewAmount?`\n2. MODIFIED LOAN AMOUNT: $${f.dotModNewAmount}\n`:""}${f.dotModNewMaturity?`\n3. MODIFIED MATURITY DATE: ${f.dotModNewMaturity}\n`:""}${f.dotModNewRate?`\n4. MODIFIED INTEREST RATE: ${f.dotModNewRate}% per annum\n`:""}\n5. RATIFICATION: Except as modified herein, all terms of the Original Deed of Trust remain in full force and effect.\n\nTRUSTOR:\n\n_______________________________\n${f.trustorName||"[TRUSTOR NAME]"}\n\nBENEFICIARY:\n\n_______________________________\n${f.beneficiaryLenderName||"[BENEFICIARY NAME]"}\n\n\n${nb(f.trustorCapacity||"Individual")}`;
@@ -1038,24 +1055,96 @@ const generateDoc = (docType, f, m) => {
   }
 };
 
-const generateWordDoc = (docText, docLabel, apn) => {
-  const lines = docText.split("\n");
-  const htmlLines = lines.map(line => {
-    const t = line.trim();
-    if (!t) return "<p style='margin:0;font-size:11pt;font-family:Times New Roman'>&nbsp;</p>";
-    if (t === t.toUpperCase() && t.length > 3 && t.length < 80 && !t.match(/^\d/) && !t.includes("$") && !t.includes("§") && !t.includes("APN") && !t.includes("GC") && !t.includes("R&T"))
-      return `<p style='text-align:center;font-weight:bold;font-size:12pt;font-family:Times New Roman;margin:6pt 0'>${t}</p>`;
-    if (t.startsWith("_____")) return `<p style='margin:12pt 0 2pt;font-size:11pt;font-family:Times New Roman'>${t}</p>`;
-    if (/^\d+\./.test(t)) return `<p style='margin:3pt 0;font-size:11pt;font-family:Times New Roman;margin-left:36pt'>${t}</p>`;
-    return `<p style='margin:1pt 0;font-size:11pt;font-family:Times New Roman'>${t}</p>`;
-  });
-  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><style>@page{size:8.5in 11in;margin:1in;}body{font-family:'Times New Roman',serif;font-size:11pt;}</style></head><body><p style='margin-bottom:144pt'>&nbsp;</p>${htmlLines.join("")}</body></html>`;
-  const blob = new Blob([html], {type:"application/msword;charset=utf-8"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href=url; a.download=`${docLabel}_${apn||"draft"}.doc`;
-  a.click(); URL.revokeObjectURL(url);
+// Wrap document HTML for print/Word download
+const docPageCSS = `
+  @page { size: 8.5in 11in; margin: 1in; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; background: #fff; line-height: 1.6; }
+  .doc-wrap { max-width: 6.5in; margin: 0 auto; }
+  .rec-hdr { font-size: 10pt; margin-bottom: 4pt; }
+  .rec-rule { border: none; border-top: 1px solid #000; margin: 6pt 0 2pt; }
+  .rec-space { font-size: 8pt; text-align: center; color: #444; margin: 0 0 6pt; }
+  .doc-title { text-align: center; font-size: 13pt; font-weight: bold; margin: 18pt 0 12pt; letter-spacing: 1px; }
+  .doc-subtitle { text-align: center; font-size: 11pt; margin: 0 0 12pt; }
+  .two-col { display: table; width: 100%; margin: 8pt 0; }
+  .col-l { display: table-cell; width: 50%; vertical-align: top; padding-right: 12pt; }
+  .col-r { display: table-cell; width: 50%; vertical-align: top; padding-left: 12pt; }
+  .col-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3pt; }
+  .rule { border: none; border-top: 1px solid #000; margin: 10pt 0; }
+  .body-text { font-size: 11pt; margin: 8pt 0; text-align: justify; line-height: 1.7; }
+  .indent { margin-left: 36pt; }
+  .sig-block { margin: 24pt 0 8pt; }
+  .sig-line { border-bottom: 1px solid #000; width: 220pt; display: inline-block; margin-bottom: 3pt; }
+  .sig-name { font-size: 11pt; }
+  .notary-box { border: 1.5pt solid #000; padding: 8pt 10pt; margin: 16pt 0 8pt; font-size: 10pt; line-height: 1.6; }
+  .jurat-title { text-align: center; font-weight: bold; font-size: 11pt; margin: 12pt 0 8pt; letter-spacing: 2px; }
+  .jurat-block { font-size: 11pt; margin: 8pt 0; line-height: 1.8; }
+  .ss-block { margin-left: 20pt; }
+  .numbered { margin: 4pt 0 4pt 36pt; font-size: 11pt; line-height: 1.7; }
+  .footer-note { font-size: 9pt; color: #444; margin-top: 24pt; border-top: 1px solid #ccc; padding-top: 6pt; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+`;
+
+const wrapDocHTML = (bodyHTML, docLabel, apn) => {
+  return \`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>\${docLabel} — \${apn||"draft"}</title><style>\${docPageCSS}</style></head><body><div class="doc-wrap">\${bodyHTML}<div class="footer-note">DOCUMENT DRAFTING SOFTWARE FOR LEGAL PROFESSIONALS — ATTORNEY REVIEW REQUIRED BEFORE EXECUTION AND RECORDATION</div></div></body></html>\`;
 };
+
+const generateWordDoc = (docHTML, docLabel, apn) => {
+  const fullHTML = wrapDocHTML(docHTML, docLabel, apn);
+  const printWindow = window.open("","_blank");
+  printWindow.document.write(fullHTML);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(()=>printWindow.print(), 800);
+};
+
+// Plain text extraction for copy button
+const htmlToText = (html) => {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.innerText||tmp.textContent||"";
+};
+
+// Shared HTML components
+const recHdrHTML = (m) => {
+  const fn = (m&&m.firmName)||"[FIRM NAME]";
+  const fa = (m&&m.firmAddress)||"[FIRM ADDRESS]";
+  const fc = (m&&m.firmCity)?(m.firmCity+", "+(m.firmState||"CA")+" "+(m.firmZip||"")):"[CITY, STATE ZIP]";
+  return \`<div class="rec-hdr">Recording Requested By:</div>
+<div class="rec-hdr">\${fn}<br>\${fa}<br>\${fc}</div>
+<div class="rec-hdr" style="margin-top:8pt">And When Recorded Mail To:</div>
+<div class="rec-hdr">\${fn}<br>\${fa}<br>\${fc}</div>
+<hr class="rec-rule">
+<div class="rec-space">Space above this line for Recorder's use only</div>
+<hr class="rec-rule">\`;
+};
+
+const notaryBoxHTML = (cap, f) => {
+  const block = NOTARY[cap] || NOTARY["Individual"];
+  let text = block;
+  if (cap==="Attorney-in-Fact" && f && f.capAifPrincipal) {
+    text = text.replace("_________________________,", f.capAifPrincipal+",");
+  }
+  // Convert plain text notary to HTML
+  const lines = text.split("\n").map(l => l.trim());
+  const disclaimer = lines[0];
+  const rest = lines.slice(2).join("<br>");
+  return \`<div class="notary-box">\${disclaimer}</div>
+<div class="jurat-block">\${rest.replace(/State of California/,"State of California").replace(/County of/g,"County of")}</div>\`;
+};
+
+const juratBoxHTML = (name, yr) => \`
+<div class="notary-box">A notary public or other officer completing this certificate verifies only the identity of the individual who signed the document to which this certificate is attached, and not the truthfulness, accuracy, or validity of that document.</div>
+<div class="jurat-title">JURAT</div>
+<div class="jurat-block">
+State of California &nbsp;&nbsp;&nbsp; )<br>
+<span class="ss-block">) ss.</span><br>
+County of _______________ &nbsp;&nbsp;&nbsp; )<br><br>
+Subscribed and sworn to (or affirmed) before me on this __________ day of _________________, \${yr}, by \${name||"_________________________"}, proved to me on the basis of satisfactory evidence to be the person(s) who appeared before me.<br><br>
+<br>
+_______________________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Seal)<br>
+Notary Public
+</div>\`;
 
 const Header = ({subtitle, onHome, rightContent}) => (
   <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`,flexShrink:0}}>
@@ -1200,8 +1289,9 @@ function DottieDeeds() {
   const onDrop = useCallback((e)=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files[0]; if(f)handleFile(f); },[handleFile]);
   const handleGenerate = () => { setOutput(generateDoc(docType,form,master)); setStep(3); };
   const copyAndDownload = () => {
-    navigator.clipboard.writeText(output).catch(()=>{});
-    const blob = new Blob([output],{type:"text/plain"}); const url = URL.createObjectURL(blob);
+    const plainText = htmlToText(output);
+    navigator.clipboard.writeText(plainText).catch(()=>{});
+    const blob = new Blob([plainText],{type:"text/plain"}); const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href=url; a.download=`${DOC_TYPES.find(d=>d.id===docType)?.label||"deed"}_${form.apn||"draft"}.txt`; a.click(); URL.revokeObjectURL(url);
     setCopied(true); setTimeout(()=>setCopied(false),2500);
   };
@@ -1752,16 +1842,12 @@ function DottieDeeds() {
           <div>
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:4}}>Document ready</h2>
             <div style={{fontSize:12,color:C.muted,marginBottom:20,letterSpacing:1}}>{dt?.label} · {form.county} County · {new Date().toLocaleDateString()}</div>
-            <div style={{background:"#fff",border:"1px solid #bbb",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",marginBottom:16}}>
-              <div style={{display:"flex",borderBottom:"1px solid #777",fontFamily:"'Times New Roman',Times,serif",fontSize:"9.5px",lineHeight:1.75}}>
-                <div style={{flex:"0 0 200px",padding:"10px 10px 8px",borderRight:"1px solid #777"}}>{output.split("\n").slice(0,7).map((l,i)=><div key={i}>{l||"\u00a0"}</div>)}</div>
-                <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"8px",color:"#999",fontFamily:"'DM Mono',monospace",letterSpacing:"0.1em",textAlign:"center",padding:8}}>SPACE ABOVE THIS LINE<br/>FOR RECORDER'S USE ONLY</div>
-              </div>
-              <div style={{padding:"14px 20px",maxHeight:360,overflowY:"auto",whiteSpace:"pre-wrap",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000"}}>{output.split("\n").slice(7).join("\n")}</div>
+            <div style={{background:"#fff",border:"1px solid #bbb",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",marginBottom:16,maxHeight:480,overflowY:"auto"}}>
+              <div style={{padding:"20px 28px",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000"}} dangerouslySetInnerHTML={{__html: wrapDocHTML(output, dt?.label||"deed", form.apn)}}/>
             </div>
             <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
               <button onClick={copyAndDownload} style={{...ST.btnP,background:copied?"#5a9a5a":C.gold}}>{copied?"✓ Copied & Downloaded":"Copy + Download .txt"}</button>
-              <button onClick={()=>generateWordDoc(output,dt?.label||"deed",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Download Word .doc</button>
+              <button onClick={()=>generateWordDoc(output,dt?.label||"deed",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Print / Save as PDF</button>
               <button onClick={()=>setScreen("guide")} style={ST.btnS}>Paralegal Guide</button>
               <button onClick={()=>setStep(2)} style={ST.btnS}>← Edit</button>
               <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
