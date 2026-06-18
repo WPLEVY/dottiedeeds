@@ -1986,11 +1986,14 @@ function DottieDeeds() {
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<DottieDeeds />);
-    </script>
-</body>
-</htmlconst juratBoxHTML = (name, yr) => {
+
+const juratBoxHTML = (name, yr) => {
   const n = name||"_________________________";
   return '<div class="notary-box">A notary public or other officer completing this certificate verifies only the identity of the individual who signed the document to which this certificate is attached, and not the truthfulness, accuracy, or validity of that document.</div>' +
     '<div class="jurat-title">JURAT</div>' +
     '<div class="jurat-block">State of California &nbsp;&nbsp;&nbsp; )<br><span class="ss-block">) ss.</span><br>County of _______________ &nbsp;&nbsp;&nbsp; )<br><br>Subscribed and sworn to (or affirmed) before me on this __________ day of _________________, ' + yr + ', by ' + n + ', proved to me on the basis of satisfactory evidence to be the person(s) who appeared before me.<br><br><br>_______________________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Seal)<br>Notary Public</div>';
-};>
+};
+    </script>
+</body>
+
+</html>
