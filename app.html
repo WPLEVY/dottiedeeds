@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -986,25 +987,21 @@ const generateDoc = (docType, f, m) => {
   }
 };
 
-const generateWordDoc = (docText, docLabel, apn) => {
-  const lines = docText.split("\n");
-  const htmlLines = lines.map(line => {
-    const t = line.trim();
-    if (!t) return "<p style='margin:0;font-size:11pt;font-family:Times New Roman'>&nbsp;</p>";
-    if (t === t.toUpperCase() && t.length > 3 && t.length < 80 && !t.match(/^\d/) && !t.includes("$") && !t.includes("§") && !t.includes("APN") && !t.includes("GC") && !t.includes("R&T"))
-      return `<p style='text-align:center;font-weight:bold;font-size:12pt;font-family:Times New Roman;margin:6pt 0'>${t}</p>`;
-    if (t.startsWith("_____")) return `<p style='margin:12pt 0 2pt;font-size:11pt;font-family:Times New Roman'>${t}</p>`;
-    if (/^\d+\./.test(t)) return `<p style='margin:3pt 0;font-size:11pt;font-family:Times New Roman;margin-left:36pt'>${t}</p>`;
-    return `<p style='margin:1pt 0;font-size:11pt;font-family:Times New Roman'>${t}</p>`;
-  });
-  const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><style>@page{size:8.5in 11in;margin:1in;}body{font-family:'Times New Roman',serif;font-size:11pt;}</style></head><body><p style='margin-bottom:144pt'>&nbsp;</p>${htmlLines.join("")}</body></html>`;
-  const blob = new Blob([html], {type:"application/msword;charset=utf-8"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href=url; a.download=`${docLabel}_${apn||"draft"}.doc`;
-  a.click(); URL.revokeObjectURL(url);
+const docPageCSS = '@page{size:8.5in 11in;margin:1in;}*{box-sizing:border-box;}body{font-family:Times New Roman,serif;font-size:11pt;color:#000;background:#fff;line-height:1.6;}.doc-wrap{max-width:6.5in;margin:0 auto;}.rec-hdr{font-size:10pt;margin-bottom:4pt;}.rec-rule{border:none;border-top:1px solid #000;margin:6pt 0 2pt;}.rec-space{font-size:8pt;text-align:center;color:#444;margin:0 0 6pt;}.doc-title{text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 12pt;}.doc-subtitle{text-align:center;font-size:11pt;margin:0 0 12pt;}.two-col{display:table;width:100%;margin:8pt 0;}.col-l{display:table-cell;width:50%;vertical-align:top;padding-right:12pt;}.col-r{display:table-cell;width:50%;vertical-align:top;padding-left:12pt;}.col-label{font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;}.rule{border:none;border-top:1px solid #000;margin:10pt 0;}.body-text{font-size:11pt;margin:8pt 0;text-align:justify;line-height:1.7;}.indent{margin-left:36pt;}.sig-block{margin:24pt 0 8pt;}.sig-line{border-bottom:1px solid #000;width:220pt;display:inline-block;margin-bottom:3pt;}.sig-name{font-size:11pt;}.notary-box{border:1.5pt solid #000;padding:8pt 10pt;margin:16pt 0 8pt;font-size:10pt;line-height:1.6;}.jurat-title{text-align:center;font-weight:bold;font-size:11pt;margin:12pt 0 8pt;letter-spacing:2px;}.jurat-block{font-size:11pt;margin:8pt 0;line-height:1.8;}.ss-block{margin-left:20pt;}.footer-note{font-size:9pt;color:#444;margin-top:24pt;border-top:1px solid #ccc;padding-top:6pt;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
+
+const wrapDocHTML = (bodyHTML, docLabel, apn) => {
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + (docLabel||"") + ' - ' + (apn||"draft") + '</title><style>' + docPageCSS + '</style></head><body><div class="doc-wrap">' + (bodyHTML||"") + '<div class="footer-note">DOCUMENT DRAFTING SOFTWARE FOR LEGAL PROFESSIONALS - ATTORNEY REVIEW REQUIRED BEFORE EXECUTION AND RECORDATION</div></div></body></html>';
 };
 
+const generateWordDoc = (docHTML, docLabel, apn) => {
+  const fullHTML = wrapDocHTML(docHTML, docLabel, apn);
+  const printWindow = window.open("","_blank");
+  if (!printWindow) { alert("Please allow popups to print documents."); return; }
+  printWindow.document.write(fullHTML);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(function(){ printWindow.print(); }, 800);
+};
 const Header = ({subtitle, onHome, rightContent}) => (
   <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`,flexShrink:0}}>
     <div style={{height:58,padding:"0 28px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -1148,8 +1145,10 @@ function DottieDeeds() {
   const onDrop = useCallback((e)=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files[0]; if(f)handleFile(f); },[handleFile]);
   const handleGenerate = () => { setOutput(generateDoc(docType,form,master)); setStep(3); };
   const copyAndDownload = () => {
-    navigator.clipboard.writeText(output).catch(()=>{});
-    const blob = new Blob([output],{type:"text/plain"}); const url = URL.createObjectURL(blob);
+    const tmp = document.createElement("div"); tmp.innerHTML = output;
+    const plainText = tmp.innerText||tmp.textContent||output;
+    navigator.clipboard.writeText(plainText).catch(()=>{});
+    const blob = new Blob([plainText],{type:"text/plain"}); const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href=url; a.download=`${DOC_TYPES.find(d=>d.id===docType)?.label||"deed"}_${form.apn||"draft"}.txt`; a.click(); URL.revokeObjectURL(url);
     setCopied(true); setTimeout(()=>setCopied(false),2500);
   };
@@ -1700,16 +1699,12 @@ function DottieDeeds() {
           <div>
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:4}}>Document ready</h2>
             <div style={{fontSize:12,color:C.muted,marginBottom:20,letterSpacing:1}}>{dt?.label} · {form.county} County · {new Date().toLocaleDateString()}</div>
-            <div style={{background:"#fff",border:"1px solid #bbb",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",marginBottom:16}}>
-              <div style={{display:"flex",borderBottom:"1px solid #777",fontFamily:"'Times New Roman',Times,serif",fontSize:"9.5px",lineHeight:1.75}}>
-                <div style={{flex:"0 0 200px",padding:"10px 10px 8px",borderRight:"1px solid #777"}}>{output.split("\n").slice(0,7).map((l,i)=><div key={i}>{l||"\u00a0"}</div>)}</div>
-                <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"8px",color:"#999",fontFamily:"'DM Mono',monospace",letterSpacing:"0.1em",textAlign:"center",padding:8}}>SPACE ABOVE THIS LINE<br/>FOR RECORDER'S USE ONLY</div>
-              </div>
-              <div style={{padding:"14px 20px",maxHeight:360,overflowY:"auto",whiteSpace:"pre-wrap",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000"}}>{output.split("\n").slice(7).join("\n")}</div>
+            <div style={{background:"#fff",border:"1px solid #bbb",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",marginBottom:16,maxHeight:480,overflowY:"auto"}}>
+              <div style={{padding:"20px 28px",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000"}} dangerouslySetInnerHTML={{__html: wrapDocHTML(output, dt?.label||"deed", form.apn)}}/>
             </div>
             <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
               <button onClick={copyAndDownload} style={{...ST.btnP,background:copied?"#5a9a5a":C.gold}}>{copied?"✓ Copied & Downloaded":"Copy + Download .txt"}</button>
-              <button onClick={()=>generateWordDoc(output,dt?.label||"deed",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Download Word .doc</button>
+              <button onClick={()=>generateWordDoc(output,dt?.label||"deed",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Print / Save as PDF</button>
               <button onClick={()=>setScreen("guide")} style={ST.btnS}>Paralegal Guide</button>
               <button onClick={()=>setStep(2)} style={ST.btnS}>← Edit</button>
               <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
