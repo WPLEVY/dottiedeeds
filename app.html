@@ -1139,7 +1139,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
           {type:"text",text:`Extract from this recorded deed. Return ONLY valid JSON:\n{"grantor":"full grantor name and vesting exactly as written","apn":"assessor parcel number","county":"county name only","city":"city of property","legalDescription":"complete legal description verbatim","inferredCapacity":"one of: Individual, Trustee, Corporate Officer / LLC Manager, Attorney-in-Fact, Guardian / Conservator","trustName":"trust name if present else empty","trustDate":"trust date if present else empty","settlorName":"settlor name if present else empty","deedDate":"date of prior deed else empty","recordingInfo":"recording number else empty","confidence":{"grantor":"high|medium|low","apn":"high|medium|low","legalDescription":"high|medium|low","county":"high|medium|low"}}`}
         ]}]})
       });
-      const data = await resp.json();
+      const data = await resp.json(); console.log("PROXY RESPONSE:", JSON.stringify(data));
       const text = data.content?.map(b=>b.text||"").join("")||"";
       const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
       setExtracted(parsed); setExtractConf(parsed.confidence||{});
