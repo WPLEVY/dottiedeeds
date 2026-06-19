@@ -19,6 +19,7 @@
         const { useState, useCallback, useEffect } = React;
 
 const MODEL = "claude-sonnet-4-20250514";
+        const PROXY = "https://dottie-proxy.YOUR-SUBDOMAIN.workers.dev";
 const C = { gold:"#b8960c", goldlt:"#e8c84a", ink:"#1a1710", paper:"#f5f0e8", cream:"#ede7d8", rule:"#e0d8c8", muted:"#7a7060", green:"#3a7a3a", amber:"#c07a10", red:"#c03020" };
 const ST = {
   inp:{ width:"100%", background:"#fff", border:`1px solid ${C.rule}`, color:C.ink, padding:"10px 14px", fontSize:14, fontFamily:"Georgia,serif", borderRadius:2, outline:"none", boxSizing:"border-box" },
@@ -1131,9 +1132,9 @@ function DottieDeeds() {
     setExtractError(""); setExtracting(true); setLegalVerified(false);
     try {
       const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
-      const resp = await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST", headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","x-api-key":""},
-        body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",content:[
+     const resp = await fetch(PROXY,{
+        method:"POST", headers:{"Content-Type":"application/json"},
+body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",content:[
           {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
           {type:"text",text:`Extract from this recorded deed. Return ONLY valid JSON:\n{"grantor":"full grantor name and vesting exactly as written","apn":"assessor parcel number","county":"county name only","city":"city of property","legalDescription":"complete legal description verbatim","inferredCapacity":"one of: Individual, Trustee, Corporate Officer / LLC Manager, Attorney-in-Fact, Guardian / Conservator","trustName":"trust name if present else empty","trustDate":"trust date if present else empty","settlorName":"settlor name if present else empty","deedDate":"date of prior deed else empty","recordingInfo":"recording number else empty","confidence":{"grantor":"high|medium|low","apn":"high|medium|low","legalDescription":"high|medium|low","county":"high|medium|low"}}`}
         ]}]})
