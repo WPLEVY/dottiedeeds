@@ -1009,6 +1009,16 @@ const generateWordDoc = (docHTML, docLabel, apn) => {
   printWindow.focus();
   setTimeout(function(){ printWindow.print(); }, 800);
 };
+const downloadWordDoc = (docHTML, docLabel, apn) => {
+  const fullHTML = wrapDocHTML(docHTML, docLabel, apn);
+  const blob = new Blob(['\ufeff', fullHTML], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = (docLabel||"deed") + "_" + (apn||"draft") + ".doc";
+  a.click();
+  URL.revokeObjectURL(url);
+};
 const Header = ({subtitle, onHome, rightContent}) => (
   <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`,flexShrink:0}}>
     <div style={{height:58,padding:"0 28px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -1711,7 +1721,8 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
             </div>
             <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
               <button onClick={copyAndDownload} style={{...ST.btnP,background:copied?"#5a9a5a":C.gold}}>{copied?"✓ Copied & Downloaded":"Copy + Download .txt"}</button>
-              <button onClick={()=>generateWordDoc(output,dt?.label||"deed",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Print / Save as PDF</button>
+              <button onClick={()=>downloadWordDoc(output,dt?.label||"deed",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Download Word .doc</button>
+              <button onClick={()=>generateWordDoc(output,dt?.label||"deed",form.apn)} style={ST.btnS}>🖨 Print / Save as PDF</button>
               <button onClick={()=>setScreen("guide")} style={ST.btnS}>Paralegal Guide</button>
               <button onClick={()=>setStep(2)} style={ST.btnS}>← Edit</button>
               <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
