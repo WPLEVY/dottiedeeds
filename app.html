@@ -837,8 +837,7 @@ const genDOTMod = (f,m) => {
     '<div class="body-text">Assessor&#39;s Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
     '<div class="body-text">B. Original principal amount: $' + (f.reconLoanAmount||"[ORIGINAL AMOUNT]") + '</div>' +
     '<div class="body-text"><strong>AGREEMENT:</strong></div>' +
-    '<div class="body-text"><strong>1. MODIFICATIONS:</strong><br>' + (f.dotModTerms||"[DESCRIBE SPECIFIC MODIFICATIONS]").replace(/
-/g,'<br>') + '</div>' +
+    '<div class="body-text"><strong>1. MODIFICATIONS:</strong><br>' + (f.dotModTerms||"[DESCRIBE SPECIFIC MODIFICATIONS]").replace(/\n/g,'<br>') + '</div>' +
     (f.dotModNewAmount?'<div class="body-text"><strong>2. MODIFIED LOAN AMOUNT:</strong> $' + f.dotModNewAmount + '</div>':'') +
     (f.dotModNewMaturity?'<div class="body-text"><strong>3. MODIFIED MATURITY DATE:</strong> ' + f.dotModNewMaturity + '</div>':'') +
     (f.dotModNewRate?'<div class="body-text"><strong>4. MODIFIED INTEREST RATE:</strong> ' + f.dotModNewRate + '% per annum</div>':'') +
