@@ -381,7 +381,13 @@ const recHdr = (m) => {
   const fn = (m&&m.firmName)||"[FIRM NAME]";
   const fa = (m&&m.firmAddress)||"[FIRM ADDRESS]";
   const fc = (m&&m.firmCity)?(m.firmCity+", "+(m.firmState||"CA")+" "+(m.firmZip||"")):"[CITY, STATE ZIP]";
-  return "Recording Requested By:\n\n"+fn+"\n\nAnd When Recorded Mail To:\n\n"+fn+"\n"+fa+"\n"+fc+"\n\n______________________________________________________________________________________________\n                    Space above this line for Recorder's use only\n______________________________________________________________________________________________";
+  return '<div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">RECORDING REQUESTED BY:</div>' +
+    '<div style="font-size:11pt;margin-bottom:14pt;">' + fn + '</div>' +
+    '<div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">AND WHEN RECORDED MAIL TO:</div>' +
+    '<div style="font-size:11pt;margin-bottom:14pt;">' + fn + (fa?'<br>'+fa:'') + (fc?'<br>'+fc:'') + '</div>' +
+    '<hr style="border:none;border-top:1px solid #000;margin:6pt 0 2pt 0;">' +
+    '<div style="text-align:center;font-size:9pt;color:#444;margin-bottom:2pt;">Space above this line for Recorder's use only</div>' +
+    '<hr style="border:none;border-top:1px solid #000;margin:0 0 14pt 0;">';
 };
 
 // ─── Document generators — built from California public law sources ────────────
@@ -390,101 +396,68 @@ const genGrant = (f,m) => {
   const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
   const yr = new Date().getFullYear();
   const dttLine = f.exemptFromTax
-    ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}`
-    : `Documentary Transfer Tax: $${f.dtt||"___________"}`;
-  return `${recHdr(m)}
-______________________________________________________________________________________________
-
-                                  GRANT DEED
-
-MAIL TAX STATEMENTS TO:                    THE UNDERSIGNED GRANTOR(S) DECLARE(S):
-${f.grantee||"[GRANTEE NAME]"}             ${dttLine}
-${f.granteeAddress||"[GRANTEE ADDRESS]"}   Building Homes and Jobs Act Fee: $-0-
-                                            GC §27388.1(a)(2)(B)
-______________________________________________________________________________________________
-
-APN: ${f.apn||"_______________"}     County: ${f.county||"[COUNTY]"}${f.cityOfProperty?`     City: ${f.cityOfProperty}`:""}
-
-${grantorLine(f)}, hereby GRANTS to
-
-${f.grantee||"[GRANTEE NAME]"},
-${v},
-
-the following described real property in the County of ${f.county||"[COUNTY]"}, State of California:
-
-${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}
-
-Commonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}
-
-Dated: ______________________________
-
-_______________________________
-${grantorLine(f)}
-
-
-${nbFull(f)}`;
+    ? 'Documentary Transfer Tax: $0<br>' + (f.exemptReason||"R&T §11911")
+    : 'Documentary Transfer Tax: $' + (f.dtt||"___________");
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">GRANT DEED</div>' +
+    '<div class="two-col" style="margin-bottom:12pt;">' +
+      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div>' +
+        '<div>' + (f.grantee||"[GRANTEE NAME]") + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
+      '</div>' +
+      '<div class="col-r"><div class="col-label">The Undersigned Grantor(s) Declare(s):</div>' +
+        '<div>' + dttLine + '<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
+      '</div>' +
+    '</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"[COUNTY]") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
+    '<div class="body-text">' + grantorLine(f) + ', hereby GRANTS to</div>' +
+    '<div class="body-text">' + (f.grantee||"[GRANTEE NAME]") + ',<br>' + (v||"[VESTING]") + ',</div>' +
+    '<div class="body-text">the following described real property in the County of ' + (f.county||"[COUNTY]") + ', State of California:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF') + '</div>' +
+    '<div class="body-text">Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
+    '<div class="body-text">Dated: _______________________________</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + grantorLine(f) + '</div></div>' +
+    notaryHTML(f.grantorCapacity, f);
 };
+
 
 const genTrust = (f,m) => {
   const yr = new Date().getFullYear();
   const isInto = ["T1","T3","T5"].includes(f.trustTransferReason);
   const reasons = {T1:"Transfer into trust by settlor",T2:"Distribution to beneficiary",T3:"Transfer between trusts",T4:"Transfer upon death of settlor — successor trustee",T5:"Refinance — out then back into trust"};
   const granteeLine = isInto
-    ? `${f.trusteeName||"[TRUSTEE NAME(S)]"}, as Trustee of the ${f.trustName||"[TRUST NAME]"}${f.trustDate ? `, dated ${f.trustDate}` : ""}${f.isAmended ? ", as amended" : ""}`
+    ? (f.trusteeName||"[TRUSTEE NAME(S)]") + ", as Trustee of the " + (f.trustName||"[TRUST NAME]") + (f.trustDate?", dated "+f.trustDate:"") + (f.isAmended?", as amended":"")
     : (f.beneficiaryName||"[BENEFICIARY NAME]");
   const prop19Labels = {P1:"Parent to Child — Primary Residence (R&T §63.1)",P2:"Child to Parent (R&T §63.1)",P3:"Grandparent to Grandchild — Both Parents Deceased (R&T §63.1)"};
-  return `${recHdr(m)}
-______________________________________________________________________________________________
-
-                                  GRANT DEED
-                           (Transfer ${isInto ? "Into" : "Out of"} Trust)
-
-THE UNDERSIGNED GRANTOR(S) DECLARE(S):
-Documentary Transfer Tax: $0
-R&T §11930 — transfer to/from Living Trust     Not Pursuant to Sale
-Building Homes and Jobs Act Fee: $-0-     GC §27388.1(a)(2)(B)
-
-MAIL TAX STATEMENTS TO:
-${isInto ? (f.trusteeName||"[TRUSTEE]") : (f.beneficiaryName||"[GRANTEE]")}
-${f.granteeAddress||"[GRANTEE ADDRESS]"}
-______________________________________________________________________________________________
-
-APN: ${f.apn||"_______________"}     County: ${f.county||"[COUNTY]"}${f.cityOfProperty ? `     City: ${f.cityOfProperty}` : ""}
-
-${f.grantor||"[GRANTOR NAME AND VESTING]"},
-
-FOR VALUABLE CONSIDERATION, receipt of which is hereby acknowledged, hereby GRANTS to
-
-${granteeLine},
-
-the real property in the County of ${f.county||"[COUNTY]"}, State of California, described as:
-
-${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}
-
-Assessor's Parcel Number: ${f.apn||"_______________"}
-${f.cityOfProperty ? `Commonly known as: ${f.propertyAddress||""}, ${f.cityOfProperty}, CA` : ""}
-
-Trust: ${f.trustName||"[TRUST NAME]"}${f.trustDate ? `, dated ${f.trustDate}` : ""}
-Settlor(s): ${f.settlorName||"[SETTLOR NAME]"}
-Reason: ${reasons[f.trustTransferReason]||""}
-${f.isSettlorDeceased ? `
-NOTE: ${f.settlorName||"The Settlor"} died on ${f.dateOfDeath||"[DATE OF DEATH]"}. Executed by Successor Trustee pursuant to trust terms.
-` : ""}${f.prop19 !== "P4" ? `
-CLAIM FOR REASSESSMENT EXCLUSION — Proposition 19
-Basis: ${prop19Labels[f.prop19]||""}
-` : ""}${f.certify19100 ? `
-Pursuant to Probate Code §18100.5, the Trustee certifies that the trust has not been revoked, modified, or amended in any manner that would cause the representations herein to be incorrect.
-` : ""}
-Executed this __________ day of ______________________, ${yr}, at _____________________, California.
-
-
-_______________________________
-${f.grantor||"[TRUSTEE NAME]"}, as ${f.grantorCapacity||"Trustee"} of
-${f.capTrustName||f.trustName||"[TRUST NAME]"}${(f.capTrustDate||f.trustDate) ? `, dated ${f.capTrustDate||f.trustDate}` : ""}${f.isAmended ? ", as amended" : ""}
-
-
-${nb(f.grantorCapacity||"Trustee")}`;
+  const trusteeForTax = isInto?(f.trusteeName||"[TRUSTEE]"):(f.beneficiaryName||"[GRANTEE]");
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 4pt;">GRANT DEED</div>' +
+    '<div style="text-align:center;font-size:11pt;margin-bottom:12pt;">(Transfer ' + (isInto?"Into":"Out of") + ' Trust)</div>' +
+    '<div class="two-col" style="margin-bottom:12pt;">' +
+      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div>' +
+        '<div>' + trusteeForTax + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
+      '</div>' +
+      '<div class="col-r"><div class="col-label">The Undersigned Grantor(s) Declare(s):</div>' +
+        '<div>Documentary Transfer Tax: $0<br>R&amp;T §11930 — transfer to/from Living Trust<br>Not Pursuant to Sale<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
+      '</div>' +
+    '</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"[COUNTY]") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
+    '<div class="body-text">' + (f.grantor||"[GRANTOR NAME AND VESTING]") + ',</div>' +
+    '<div class="body-text">FOR VALUABLE CONSIDERATION, receipt of which is hereby acknowledged, hereby GRANTS to</div>' +
+    '<div class="body-text">' + granteeLine + ',</div>' +
+    '<div class="body-text">the real property in the County of ' + (f.county||"[COUNTY]") + ', State of California, described as:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF') + '</div>' +
+    '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '</div>' +
+    (f.cityOfProperty?'<div class="body-text">Commonly known as: ' + (f.propertyAddress||"") + ', ' + f.cityOfProperty + ', CA</div>':'') +
+    (f.isSettlorDeceased?'<div class="body-text"><strong>NOTE:</strong> ' + (f.settlorName||"The Settlor") + ' died on ' + (f.dateOfDeath||"[DATE OF DEATH]") + '. Executed by Successor Trustee pursuant to trust terms.</div>':'') +
+    (f.prop19!=="P4"?'<div class="body-text"><strong>CLAIM FOR REASSESSMENT EXCLUSION — Proposition 19</strong><br>Basis: ' + (prop19Labels[f.prop19]||"") + '</div>':'') +
+    (f.certify19100?'<div class="body-text">Pursuant to Probate Code §18100.5, the Trustee certifies that the trust has not been revoked, modified, or amended in any manner that would cause the representations herein to be incorrect.</div>':'') +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of<br>' + (f.capTrustName||f.trustName||"[TRUST NAME]") + ((f.capTrustDate||f.trustDate)?", dated "+(f.capTrustDate||f.trustDate):"") + (f.isAmended?", as amended":"") + '</div></div>' +
+    notaryHTML(f.grantorCapacity||"Trustee", f);
 };
+
 
 const genDOT = (f,m) => {
   const isSecond = f.dotPosition==="second";
@@ -492,104 +465,133 @@ const genDOT = (f,m) => {
   const yr = new Date().getFullYear();
   const lateChDays = f.lateChargeDays||(m&&m.lateChargeDays)||"10";
   const latePct = f.lateChargePercent||(m&&m.lateChargePercent)||"6";
-  const partA = (m&&m.standardCovenants)||`To protect the security of this Deed of Trust, Trustor covenants and agrees as follows:\n\n1. Payment of Principal and Interest. To promptly pay when due the principal of and interest on the Note, including any prepayment charges, late fees, and all other sums secured by this Deed of Trust.\n\n2. Payment of Taxes and Assessments. To pay, prior to delinquency, all taxes, assessments, charges, and liens now or hereafter levied or assessed upon the property.\n\n3. Insurance. To keep the improvements insured against damage by fire and such other hazards as Beneficiar${isSecond?"y":"ies"} may require, in amounts sufficient to cover all sums secured by this Deed of Trust.\n\n4. Defense of Title. To appear in and defend any action or proceeding purporting to affect the security hereof or the rights or powers of Beneficiar${isSecond?"y":"ies"} or Trustee.\n\n5. Maintenance and Repair of Property. To keep the property in good condition and repair; not to remove or demolish any buildings without prior written consent of Beneficiar${isSecond?"y":"ies"}.\n\n6. Compliance with Law. To comply with all applicable laws, ordinances, regulations, covenants, conditions, and restrictions affecting the property.\n\n7. Costs, Fees, and Expenses. To pay when due all costs, fees, and expenses of this trust, including reasonable compensation of the Trustee.\n\n8. Further Assurances. Upon written request of Beneficiar${isSecond?"y":"ies"}, to make and deliver any instruments reasonably requested to carry out the intent and purpose of this Deed of Trust.`;
-  const partB = `The following provisions are an integral part of this Deed of Trust:\n\n1. Trustee's Obligations Upon Payment in Full. Upon written request of Beneficiar${isSecond?"y":"ies"} stating that all sums secured hereby have been paid in full, and upon surrender of this Deed of Trust and the Note to Trustee, Trustee shall reconvey, without warranty, the property then held hereunder.\n\n2. Trustee's Authority; Acceptance of Trust. Trustee accepts this trust when this Deed of Trust, duly executed and acknowledged, is made a public record as provided by law.\n\n3. Trustee's Fees and Costs. Trustee shall be entitled to reasonable compensation for all services rendered in the administration of this trust.\n\n4. Substitution of Trustee. Beneficiar${isSecond?"y":"ies"} may substitute a successor Trustee by instrument in writing duly acknowledged and recorded.\n\n5. Authority to Collect Rents, Issues, and Profits. Upon default by Trustor, Beneficiar${isSecond?"y":"ies"} shall have the right to collect the rents, issues, and profits of the property.\n\n6. Acceleration Upon Default; Power of Sale. Upon default, Beneficiar${isSecond?"y":"ies"} may declare all sums secured hereby immediately due and payable and shall cause Trustee to execute a written notice of default and election to sell.\n\n7. Trustee's Deed Upon Sale. Trustee shall deliver to the purchaser its deed conveying the property, without any covenant or warranty, express or implied.\n\n8. Application of Proceeds of Sale. After deducting all costs, fees, and expenses, Trustee shall apply proceeds to: (a) sums expended hereunder; (b) all other sums secured; and (c) the remainder to persons legally entitled.\n\n9. Inspection of Property. Beneficiar${isSecond?"y":"ies"} may make reasonable entries and inspections of the property upon reasonable prior written notice.\n\n10. Condemnation. The proceeds of any condemnation award are hereby assigned to Beneficiar${isSecond?"y":"ies"}.`;
+  const partA = (m&&m.standardCovenants)||"To protect the security of this Deed of Trust, Trustor covenants and agrees as follows:\n\n1. Payment of Principal and Interest. To promptly pay when due the principal of and interest on the Note, including any prepayment charges, late fees, and all other sums secured by this Deed of Trust.\n\n2. Payment of Taxes and Assessments. To pay, prior to delinquency, all taxes, assessments, charges, and liens now or hereafter levied or assessed upon the property.\n\n3. Insurance. To keep the improvements insured against damage by fire and such other hazards as Beneficiar"+(isSecond?"y":"ies")+" may require, in amounts sufficient to cover all sums secured by this Deed of Trust.\n\n4. Defense of Title. To appear in and defend any action or proceeding purporting to affect the security hereof or the rights or powers of Beneficiar"+(isSecond?"y":"ies")+" or Trustee.\n\n5. Maintenance and Repair of Property. To keep the property in good condition and repair; not to remove or demolish any buildings without prior written consent of Beneficiar"+(isSecond?"y":"ies")+".\n\n6. Compliance with Law. To comply with all applicable laws, ordinances, regulations, covenants, conditions, and restrictions affecting the property.\n\n7. Costs, Fees, and Expenses. To pay when due all costs, fees, and expenses of this trust, including reasonable compensation of the Trustee.\n\n8. Further Assurances. Upon written request of Beneficiar"+(isSecond?"y":"ies")+", to make and deliver any instruments reasonably requested to carry out the intent and purpose of this Deed of Trust.";
+  const partB = "The following provisions are an integral part of this Deed of Trust:\n\n1. Trustee's Obligations Upon Payment in Full. Upon written request of Beneficiar"+(isSecond?"y":"ies")+" stating that all sums secured hereby have been paid in full, and upon surrender of this Deed of Trust and the Note to Trustee, Trustee shall reconvey, without warranty, the property then held hereunder.\n\n2. Trustee's Authority; Acceptance of Trust. Trustee accepts this trust when this Deed of Trust, duly executed and acknowledged, is made a public record as provided by law.\n\n3. Trustee's Fees and Costs. Trustee shall be entitled to reasonable compensation for all services rendered in the administration of this trust.\n\n4. Substitution of Trustee. Beneficiar"+(isSecond?"y":"ies")+" may substitute a successor Trustee by instrument in writing duly acknowledged and recorded.\n\n5. Authority to Collect Rents, Issues, and Profits. Upon default by Trustor, Beneficiar"+(isSecond?"y":"ies")+" shall have the right to collect the rents, issues, and profits of the property.\n\n6. Acceleration Upon Default; Power of Sale. Upon default, Beneficiar"+(isSecond?"y":"ies")+" may declare all sums secured hereby immediately due and payable and shall cause Trustee to execute a written notice of default and election to sell.\n\n7. Trustee's Deed Upon Sale. Trustee shall deliver to the purchaser its deed conveying the property, without any covenant or warranty, express or implied.\n\n8. Application of Proceeds of Sale. After deducting all costs, fees, and expenses, Trustee shall apply proceeds to: (a) sums expended hereunder; (b) all other sums secured; and (c) the remainder to persons legally entitled.\n\n9. Inspection of Property. Beneficiar"+(isSecond?"y":"ies")+" may make reasonable entries and inspections of the property upon reasonable prior written notice.\n\n10. Condemnation. The proceeds of any condemnation award are hereby assigned to Beneficiar"+(isSecond?"y":"ies")+".";
 
-  if (isSecond) {
-    return `${recHdr(m)}\n\nAND WHEN RECORDED MAIL TO:\n${f.beneficiaryLenderName||"[BENEFICIARY NAME]"}\n${f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]"}\n\nSECOND DEED OF TRUST\n\nAPN: ${f.apn||"_______________"}     County: ${f.county||"_______________"}${f.cityOfProperty?`     City: ${f.cityOfProperty}`:""}\n\nTHIS SECOND DEED OF TRUST, made this ______ day of _________________, ${yr}, between ${f.trustorName||"[TRUSTOR NAME]"}, herein called "Trustor", whose address is ${f.trustorAddress||"[TRUSTOR ADDRESS]"}, and ${f.beneficiaryLenderName||"[BENEFICIARY NAME]"}, herein called "Trustee" and "Beneficiary",\n\nWITNESSETH: That Trustor irrevocably grants, transfers and assigns to the Beneficiary, in trust, with power of sale, that real property in the County of ${f.county||"[COUNTY]"}, State of California, described as follows:\n\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\nAPN: ${f.apn||"_______________"}\n\nTHIS SECOND DEED OF TRUST IS SUBJECT TO AND SUBORDINATE TO THE FIRST ${f.seniorLienType||"DEED OF TRUST"} IN FAVOR OF ${f.seniorLienHolder||"[SENIOR LENDER]"}, RECORDED ON ${f.seniorLienRecordingDate||"[DATE]"}, AS INSTRUMENT NO. ${f.seniorLienRecording||"[INSTRUMENT NO.]"} IN THE OFFICIAL RECORDS OF ${(f.county||"[COUNTY]").toUpperCase()} COUNTY, STATE OF CALIFORNIA.\n\nTOGETHER WITH the rents, issues, and profits thereof, for the purpose of securing payment of the indebtedness evidenced by a promissory note of even date herewith, executed by Trustor in the sum of ${f.loanAmountWords||"[LOAN AMOUNT IN WORDS]"} ($${f.loanAmount||"_______________"}).\n${f.dueOnSale?`\nIn the event the herein described property is sold, conveyed, or alienated by Trustor, all obligations secured by this instrument shall, at the option of the holder, immediately become due and payable.\n`:""}${f.requestNOD?`\nBeneficiary requests that a copy of any Notice of Default and Notice of Sale hereunder be mailed to Beneficiary at the address given herein.\n`:""}\n${f.beneficiaryLenderName||"[BENEFICIARY NAME]"}\n${f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]"}\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${grantorLine({...f, grantor:f.trustorName, grantorCapacity:f.trustorCapacity})}\n\n\n${nb(f.trustorCapacity||"Individual")}\n\nSecond Deed of Trust for property commonly known as:\n${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\nAPN: ${f.apn||"_______________"}`;
-  }
+  const titleStr = isSecond ? "SECOND DEED OF TRUST" : "FIRST DEED OF TRUST";
+  const mailTo = '<div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">AND WHEN RECORDED MAIL TO:</div>' +
+    '<div style="font-size:11pt;margin-bottom:14pt;">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div>';
 
-  return `${recHdr(m)}\n\nAND WHEN RECORDED MAIL TO:\n${f.beneficiaryLenderName||"[BENEFICIARY / LENDER NAME]"}\n${f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]"}\n\nFIRST DEED OF TRUST\n\nTHIS FIRST DEED OF TRUST, made this ______ day of _________________, ${yr}, between ${f.trustorName||"[TRUSTOR NAME]"}, whose address is ${f.trustorAddress||"[TRUSTOR ADDRESS]"}, herein called "Trustors", ${f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]"}, a California corporation, as "Trustee," and ${f.beneficiaryLenderName||"[BENEFICIARY / LENDER NAME]"}, herein called "Beneficiaries",\n\nWITNESSETH: That Trustors irrevocably grant, transfer and assign to the Trustee, in trust, with power of sale, Trustors' interest in the real property situated in the County of ${f.county||"[COUNTY]"}, State of California, described in "Exhibit A" attached hereto.\n\nAPN(s): ${f.apn||"_______________"}\n\nTOGETHER WITH the rents, issues, and profits thereof, for the purpose of securing payment of the indebtedness evidenced by a promissory note of even date herewith, executed by Trustors in the principal amount of ${f.loanAmountWords||"[LOAN AMOUNT IN WORDS]"} ($${f.loanAmount||"_______________"}).\n\nPART A — COVENANTS OF TRUSTOR\n${partA}\n\nLATE CHARGE: If any payment is not received within ${lateChDays} calendar days after it is due, Trustor shall pay a late charge equal to ${latePct}% of the overdue amount.\n\nPREPAYMENT: ${(m&&m.prepaymentLanguage)||"This Deed of Trust may be prepaid in whole or in part at any time without penalty."}\n${f.dueOnSale?`\nDUE ON SALE: In the event the herein described property is sold, conveyed, or alienated by Trustor, all obligations secured by this instrument shall, at the option of the holder, immediately become due and payable.\n`:""}${f.businessPurpose?`\nBUSINESS PURPOSE: Trustor certifies that this loan is for business or commercial purposes and not for personal, family or household purposes (California Civil Code §1799.90 et seq.).\n`:""}${f.customRiders?`\nADDITIONAL PROVISIONS:\n${f.customRiders}`:""}\nPART B — TRUSTEE AND BENEFICIARY PROVISIONS\n${partB}\n${f.requestNOD?`\nBeneficiaries request that a copy of any Notice of Default and Notice of Sale hereunder be mailed to them at their address given herein.\n`:""}\n${f.beneficiaryLenderName||"[BENEFICIARY NAME]"}\n${f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]"}\n\nExecuted this ______ day of _________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${grantorLine({...f, grantor:f.trustorName, grantorCapacity:f.trustorCapacity})}\n\n\n${nb(f.trustorCapacity||"Individual")}\n\nFirst Deed of Trust for property commonly known as:\n${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\nAPNs: ${f.apn||"_______________"}`;
+  const body = isSecond
+    ? '<div class="body-text"><strong>APN:</strong> ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; <strong>County:</strong> ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; <strong>City:</strong> '+f.cityOfProperty:'') + '</div>' +
+      '<div class="body-text">THIS SECOND DEED OF TRUST, made this ______ day of _________________, ' + yr + ', between ' + (f.trustorName||"[TRUSTOR NAME]") + ', herein called "Trustor", whose address is ' + (f.trustorAddress||"[TRUSTOR ADDRESS]") + ', and ' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + ', herein called "Trustee" and "Beneficiary",</div>' +
+      '<div class="body-text">WITNESSETH: That Trustor irrevocably grants, transfers and assigns to the Beneficiary, in trust, with power of sale, that real property in the County of ' + (f.county||"[COUNTY]") + ', State of California, described as follows:</div>' +
+      '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
+      '<div class="body-text">Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>APN: ' + (f.apn||"_______________") + '</div>' +
+      '<div class="body-text">THIS SECOND DEED OF TRUST IS SUBJECT TO AND SUBORDINATE TO THE FIRST ' + (f.seniorLienType||"DEED OF TRUST") + ' IN FAVOR OF ' + (f.seniorLienHolder||"[SENIOR LENDER]") + ', RECORDED ON ' + (f.seniorLienRecordingDate||"[DATE]") + ', AS INSTRUMENT NO. ' + (f.seniorLienRecording||"[INSTRUMENT NO.]") + ' IN THE OFFICIAL RECORDS OF ' + (f.county||"[COUNTY]").toUpperCase() + ' COUNTY, STATE OF CALIFORNIA.</div>' +
+      '<div class="body-text">TOGETHER WITH the rents, issues, and profits thereof, for the purpose of securing payment of the indebtedness evidenced by a promissory note of even date herewith, executed by Trustor in the sum of ' + (f.loanAmountWords||"[LOAN AMOUNT IN WORDS]") + ' ($' + (f.loanAmount||"_______________") + ').</div>' +
+      (f.dueOnSale?'<div class="body-text">In the event the herein described property is sold, conveyed, or alienated by Trustor, all obligations secured by this instrument shall, at the option of the holder, immediately become due and payable.</div>':'') +
+      (f.requestNOD?'<div class="body-text">Beneficiary requests that a copy of any Notice of Default and Notice of Sale hereunder be mailed to Beneficiary at the address given herein.</div>':'') +
+      '<div class="body-text">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div>' +
+      '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+      '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + grantorLine({...f, grantor:f.trustorName, grantorCapacity:f.trustorCapacity}) + '</div></div>' +
+      notaryHTML(f.trustorCapacity||"Individual", f) +
+      '<div class="body-text" style="margin-top:16pt;">Second Deed of Trust for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>APN: ' + (f.apn||"_______________") + '</div>'
+    : '<div class="body-text">THIS FIRST DEED OF TRUST, made this ______ day of _________________, ' + yr + ', between ' + (f.trustorName||"[TRUSTOR NAME]") + ', whose address is ' + (f.trustorAddress||"[TRUSTOR ADDRESS]") + ', herein called "Trustors", ' + (f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]") + ', a California corporation, as "Trustee," and ' + (f.beneficiaryLenderName||"[BENEFICIARY / LENDER NAME]") + ', herein called "Beneficiaries",</div>' +
+      '<div class="body-text">WITNESSETH: That Trustors irrevocably grant, transfer and assign to the Trustee, in trust, with power of sale, Trustors\' interest in the real property situated in the County of ' + (f.county||"[COUNTY]") + ', State of California, described in "Exhibit A" attached hereto.</div>' +
+      '<div class="body-text"><strong>APN(s):</strong> ' + (f.apn||"_______________") + '</div>' +
+      '<div class="body-text">TOGETHER WITH the rents, issues, and profits thereof, for the purpose of securing payment of the indebtedness evidenced by a promissory note of even date herewith, executed by Trustors in the principal amount of ' + (f.loanAmountWords||"[LOAN AMOUNT IN WORDS]") + ' ($' + (f.loanAmount||"_______________") + ').</div>' +
+      '<div class="body-text"><strong>PART A — COVENANTS OF TRUSTOR</strong></div>' +
+      '<div class="body-text">' + partA.replace(/\n/g,'<br>') + '</div>' +
+      '<div class="body-text"><strong>LATE CHARGE:</strong> If any payment is not received within ' + lateChDays + ' calendar days after it is due, Trustor shall pay a late charge equal to ' + latePct + '% of the overdue amount.</div>' +
+      '<div class="body-text"><strong>PREPAYMENT:</strong> ' + ((m&&m.prepaymentLanguage)||"This Deed of Trust may be prepaid in whole or in part at any time without penalty.") + '</div>' +
+      (f.dueOnSale?'<div class="body-text"><strong>DUE ON SALE:</strong> In the event the herein described property is sold, conveyed, or alienated by Trustor, all obligations secured by this instrument shall, at the option of the holder, immediately become due and payable.</div>':'') +
+      (f.businessPurpose?'<div class="body-text"><strong>BUSINESS PURPOSE:</strong> Trustor certifies that this loan is for business or commercial purposes and not for personal, family or household purposes (California Civil Code §1799.90 et seq.).</div>':'') +
+      (f.customRiders?'<div class="body-text"><strong>ADDITIONAL PROVISIONS:</strong><br>' + f.customRiders.replace(/\n/g,'<br>') + '</div>':'') +
+      '<div class="body-text"><strong>PART B — TRUSTEE AND BENEFICIARY PROVISIONS</strong></div>' +
+      '<div class="body-text">' + partB.replace(/\n/g,'<br>') + '</div>' +
+      (f.requestNOD?'<div class="body-text">Beneficiaries request that a copy of any Notice of Default and Notice of Sale hereunder be mailed to them at their address given herein.</div>':'') +
+      '<div class="body-text">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div>' +
+      '<div class="body-text">Executed this ______ day of _________________, ' + yr + ', at _____________________, California.</div>' +
+      '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + grantorLine({...f, grantor:f.trustorName, grantorCapacity:f.trustorCapacity}) + '</div></div>' +
+      notaryHTML(f.trustorCapacity||"Individual", f) +
+      '<div class="body-text" style="margin-top:16pt;">First Deed of Trust for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>APNs: ' + (f.apn||"_______________") + '</div>';
+
+  return recHdr(m) + mailTo +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">' + titleStr + '</div>' +
+    body;
 };
+
 
 const genQuitclaim = (f,m) => {
   const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
   const yr = new Date().getFullYear();
-  const dttLine = f.exemptFromTax ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}` : `Documentary Transfer Tax: $${f.dtt||"___________"}`;
-  return `${recHdr(m)}\n\nQUITCLAIM DEED\n\nMAIL TAX STATEMENTS TO:                    THE UNDERSIGNED GRANTOR(S) DECLARE(S):\n${f.grantee||"[GRANTEE NAME]"}             ${dttLine}\n${f.granteeAddress||"[GRANTEE ADDRESS]"}   Building Homes and Jobs Act Fee: $-0-\n                                            AB1466 Fee: $-0-\n                                            GC §27388.1(a)(2)(B) and GC §27388.2(b)\n______________________________________________________________________________________________\n\n${f.grantor||"[GRANTOR NAME AND VESTING]"},\n\nFOR NO CONSIDERATION, does hereby REMISE, RELEASE, AND QUITCLAIM to\n\n${f.grantee||"[GRANTEE NAME]"},\n${v},\n\nany and all right, title and interest which Grantor now holds or may hereafter acquire in and to the real property in the City of ${f.cityOfProperty||"_______________"}, County of ${f.county||"[COUNTY]"}, State of California, described as:\n\n${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\n\nCommonly known as:\n${f.propertyAddress||"[PROPERTY ADDRESS]"}\n${f.cityOfProperty?`${f.cityOfProperty}, CA`:""}\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.grantor||"[GRANTOR NAME]"}\n\n\n${nb(f.grantorCapacity||"Individual")}`;
+  const dttLine = f.exemptFromTax
+    ? 'Documentary Transfer Tax: $0<br>' + (f.exemptReason||"R&T §11911")
+    : 'Documentary Transfer Tax: $' + (f.dtt||"___________");
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">QUITCLAIM DEED</div>' +
+    '<div class="two-col" style="margin-bottom:12pt;">' +
+      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div>' +
+        '<div>' + (f.grantee||"[GRANTEE NAME]") + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
+      '</div>' +
+      '<div class="col-r"><div class="col-label">The Undersigned Grantor(s) Declare(s):</div>' +
+        '<div>' + dttLine + '<br>Building Homes and Jobs Act Fee: $-0-<br>AB1466 Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
+      '</div>' +
+    '</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"[COUNTY]") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
+    '<div class="body-text">' + (f.grantor||"[GRANTOR NAME AND VESTING]") + ',</div>' +
+    '<div class="body-text">FOR NO CONSIDERATION, does hereby REMISE, RELEASE, AND QUITCLAIM to</div>' +
+    '<div class="body-text">' + (f.grantee||"[GRANTEE NAME]") + ',<br>' + (v||"[VESTING]") + ',</div>' +
+    '<div class="body-text">any and all right, title and interest which Grantor now holds or may hereafter acquire in and to the real property in the City of ' + (f.cityOfProperty||"_______________") + ', County of ' + (f.county||"[COUNTY]") + ', State of California, described as:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF') + '</div>' +
+    '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '</div>' +
+    '<div class="body-text">Commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div>' +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>' +
+    notaryHTML(f.grantorCapacity, f);
 };
+
 
 const genInterspousal = (f,m) => {
   const yr = new Date().getFullYear();
   const isTransmutation = ["I4","I5"].includes(f.interspousalReason);
   const reasons = {I1:"Adding spouse to title",I2:"Removing spouse from title (refinance)",I3:"Divorce / marital settlement",I4:"Transmutation — separate to community property",I5:"Transmutation — community to separate property",I6:"Estate planning purposes"};
-  return `${recHdr(m)}
-______________________________________________________________________________________________
-MAIL TAX STATEMENTS AS DIRECTED ABOVE
-
-                           INTERSPOUSAL QUITCLAIM DEED
-
-THE UNDERSIGNED GRANTOR(S) DECLARE(S):
-Documentary Transfer Tax: $0
-This conveyance is solely between spouses and is exempt from Documentary Transfer Tax
-pursuant to R&T §§11930 and 11911. This is an Interspousal Transfer and not a change
-in ownership under R&T §63. Not Pursuant to Sale.
-Building Homes and Jobs Act Fee: $75.00     AB1466 Fee: $-0-     GC §27388.2(b)
-______________________________________________________________________________________________
-
-${f.grantor||"[TRANSFERRING SPOUSE NAME]"}, Spouse of
-${f.spouseName||"[RECEIVING SPOUSE NAME]"}, ${f.spouseCurrentVesting||"a married person, as his/her sole and separate property"},
-
-FOR NO CONSIDERATION, does hereby REMISE, RELEASE, AND QUITCLAIM any and all of ${f.grantorPronoun||"his/her"} right, title and interest in and to the real property to
-
-${f.spouseName||"[RECEIVING SPOUSE NAME]"},
-${f.spouseVesting||"a married person, as his/her sole and separate property"},
-${isTransmutation ? `
-TRANSMUTATION DECLARATION: Pursuant to California Family Code §852, this instrument constitutes an express declaration that the character of the above-described property is hereby changed as stated above.
-` : ""}
-the real property in the City of ${f.cityOfProperty||"_______________"}, County of ${f.county||"[COUNTY]"}, State of California, described as:
-
-${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}
-
-Assessor's Parcel Number: ${f.apn||"_______________"}
-
-Commonly known as:
-${f.propertyAddress||"[PROPERTY ADDRESS]"}
-${f.cityOfProperty ? `${f.cityOfProperty}, CA` : ""}
-
-Reason for Transfer: ${reasons[f.interspousalReason]||""}
-
-Executed this __________ day of ______________________, ${yr}, at _____________________, California.
-
-
-_______________________________
-${f.grantor||"[TRANSFERRING SPOUSE NAME]"}
-
-
-${nb("Individual")}
-
-Interspousal Quitclaim Deed for property commonly known as:
-${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty ? `, ${f.cityOfProperty}, CA` : ""}
-Assessor's Parcel Number: ${f.apn||"_______________"}
-
-MAIL TAX STATEMENTS AS DIRECTED ABOVE`;
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 4pt;">INTERSPOUSAL QUITCLAIM DEED</div>' +
+    '<div class="two-col" style="margin-bottom:12pt;">' +
+      '<div class="col-l"><div class="col-label">Mail Tax Statements As Directed Above</div></div>' +
+      '<div class="col-r"><div class="col-label">The Undersigned Grantor(s) Declare(s):</div>' +
+        '<div>Documentary Transfer Tax: $0<br>This conveyance is solely between spouses and is exempt from Documentary Transfer Tax pursuant to R&amp;T §§11930 and 11911. This is an Interspousal Transfer and not a change in ownership under R&amp;T §63. Not Pursuant to Sale.<br>Building Homes and Jobs Act Fee: $75.00 &nbsp; AB1466 Fee: $-0-<br>GC §27388.2(b)</div>' +
+      '</div>' +
+    '</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"[COUNTY]") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
+    '<div class="body-text">' + (f.grantor||"[TRANSFERRING SPOUSE NAME]") + ', Spouse of ' + (f.spouseName||"[RECEIVING SPOUSE NAME]") + ', ' + (f.spouseCurrentVesting||"a married person, as his/her sole and separate property") + ',</div>' +
+    '<div class="body-text">FOR NO CONSIDERATION, does hereby REMISE, RELEASE, AND QUITCLAIM any and all of ' + (f.grantorPronoun||"his/her") + ' right, title and interest in and to the real property to</div>' +
+    '<div class="body-text">' + (f.spouseName||"[RECEIVING SPOUSE NAME]") + ',<br>' + (f.spouseVesting||"a married person, as his/her sole and separate property") + ',</div>' +
+    (isTransmutation?'<div class="body-text"><strong>TRANSMUTATION DECLARATION:</strong> Pursuant to California Family Code §852, this instrument constitutes an express declaration that the character of the above-described property is hereby changed as stated above.</div>':'') +
+    '<div class="body-text">the real property in the City of ' + (f.cityOfProperty||"_______________") + ', County of ' + (f.county||"[COUNTY]") + ', State of California, described as:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF') + '</div>' +
+    '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '</div>' +
+    '<div class="body-text">Commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div>' +
+    '<div class="body-text">Reason for Transfer: ' + (reasons[f.interspousalReason]||"") + '</div>' +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[TRANSFERRING SPOUSE NAME]") + '</div></div>' +
+    notaryHTML("Individual", f) +
+    '<div class="body-text" style="margin-top:16pt;">Interspousal Quitclaim Deed for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>Assessor's Parcel Number: ' + (f.apn||"_______________") + '</div>' +
+    '<div class="body-text"><strong>MAIL TAX STATEMENTS AS DIRECTED ABOVE</strong></div>';
 };
 
+
 const genADJT = (f,m) => {
-  const aka = f.deceasedJointTenantAKA ? `\n(Also known as ${f.deceasedJointTenantAKA})` : "";
-  return `${recHdr(m)}
-______________________________________________________________________________________________
-
-                         **AFFIDAVIT OF DEATH OF JOINT TENANT**
-
-______________________________________________________________________________________________
-
-I, ${f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]"}, being duly sworn, say:
-
-I am over the age of 18 years. The decedent described in the attached certified copy of Certificate of Death is the same person as ${f.deceasedJointTenant||"[DECEASED JOINT TENANT NAME]"}${aka}, who is named as one of the parties in that certain ${f.originalDeedType||"Grant Deed"} dated ${f.originalDeedDate||"[DEED DATE]"}, executed by ${f.originalDeedGrantor||"[ORIGINAL GRANTOR(S)]"}, to ${f.grantor||"[BOTH JOINT TENANTS AS VESTED]"}, as Joint Tenants, recorded on ${f.originalDeedRecordingDate||"[RECORDING DATE]"} as Instrument No. ${f.originalDeedRecording||"[RECORDING NUMBER]"}, in the Official Records of ${f.county||"[COUNTY]"} County, California, covering the property situated in the ${f.cityOfProperty?`City of ${f.cityOfProperty}, `:""}${f.county||"[COUNTY]"} County, California, described as follows:
-
-${f.legalDescription||"[LEGAL DESCRIPTION]"}
-
-Commonly known as ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}${f.apn?`\nAssessor's Parcel Number: ${f.apn}`:""}
-
-Date: ______________________________     _______________________________
-                                          ${f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]"}
-                                          Affiant
-
-
-${juratBlock(f.survivingJointTenant)}
-
-ATTACH CERTIFIED COPY OF DEATH CERTIFICATE`;
+  const yr = new Date().getFullYear();
+  const aka = f.deceasedJointTenantAKA ? '<br>(Also known as ' + f.deceasedJointTenantAKA + ')' : '';
+  return recHdr(m) +
+    '<hr class="rule">' +
+    '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:12pt 0;">AFFIDAVIT OF DEATH OF JOINT TENANT</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">I, ' + (f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]") + ', being duly sworn, say:</div>' +
+    '<div class="body-text">I am over the age of 18 years. The decedent described in the attached certified copy of Certificate of Death is the same person as ' + (f.deceasedJointTenant||"[DECEASED JOINT TENANT NAME]") + aka + ', who is named as one of the parties in that certain ' + (f.originalDeedType||"Grant Deed") + ' dated ' + (f.originalDeedDate||"[DEED DATE]") + ', executed by ' + (f.originalDeedGrantor||"[ORIGINAL GRANTOR(S)]") + ', to ' + (f.grantor||"[BOTH JOINT TENANTS AS VESTED]") + ', as Joint Tenants, recorded on ' + (f.originalDeedRecordingDate||"[RECORDING DATE]") + ' as Instrument No. ' + (f.originalDeedRecording||"[RECORDING NUMBER]") + ', in the Official Records of ' + (f.county||"[COUNTY]") + ' County, California, covering the property situated in the ' + (f.cityOfProperty?'City of '+f.cityOfProperty+', ':'') + (f.county||"[COUNTY]") + ' County, California, described as follows:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
+    '<div class="body-text">Commonly known as ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + (f.apn?'<br>Assessor's Parcel Number: '+f.apn:'') + '</div>' +
+    '<div style="display:table;width:100%;margin:20pt 0;">' +
+      '<div style="display:table-cell;width:40%;vertical-align:bottom;">Date: _______________________________</div>' +
+      '<div style="display:table-cell;width:60%;vertical-align:bottom;border-bottom:1px solid #000;padding-bottom:2pt;text-align:center;">' + (f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]") + '<br>Affiant</div>' +
+    '</div>' +
+    juratBoxHTML(f.survivingJointTenant, yr) +
+    '<div class="body-text" style="margin-top:16pt;font-weight:bold;">ATTACH CERTIFIED COPY OF DEATH CERTIFICATE</div>';
 };
 
 
@@ -598,6 +600,33 @@ const juratBoxHTML = (name, yr) => {
   return '<div class="notary-box">A notary public or other officer completing this certificate verifies only the identity of the individual who signed the document to which this certificate is attached, and not the truthfulness, accuracy, or validity of that document.</div>' +
     '<div class="jurat-title">JURAT</div>' +
     '<div class="jurat-block">State of California &nbsp;&nbsp;&nbsp; )<br><span class="ss-block">) ss.</span><br>County of _______________ &nbsp;&nbsp;&nbsp; )<br><br>Subscribed and sworn to (or affirmed) before me on this __________ day of _________________, ' + yr + ', by ' + n + ', proved to me on the basis of satisfactory evidence to be the person(s) who appeared before me.<br><br><br>_______________________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Seal)<br>Notary Public</div>';
+};
+const notaryHTML = (cap, f) => {
+  const capKey = cap||"Individual";
+  const capLabel = {
+    "Individual": "",
+    "Trustee": "as Trustee(s) of the trust named in the instrument",
+    "Successor Trustee": "as Successor Trustee(s) of the trust named in the instrument",
+    "Attorney-in-Fact": "as Attorney-in-Fact for " + ((f&&f.capAifPrincipal)||"_________________________"),
+    "Corporate Officer": "as an authorized officer of the corporation named therein",
+    "LLC Manager / Member": "as Manager/Member of the limited liability company named therein",
+    "General Partner": "as General Partner of the partnership named therein",
+    "Personal Representative": "as Executor/Administrator of the estate named in the instrument",
+    "Guardian / Conservator": "as Guardian/Conservator of the person/estate named in the instrument",
+    "Receiver": "as court-appointed Receiver",
+    "Sheriff / Public Official": "as Sheriff/Public Official of the county named in the instrument",
+  }[capKey] || "";
+  const capText = capLabel ? ', and that by his/her/their signature(s) on the instrument the person(s), or the entity upon behalf of which the person(s) acted, executed the instrument in his/her/their authorized capacity(ies) ' + capLabel + '.' : ', and that by his/her/their signature(s) on the instrument the person(s), or the entity upon behalf of which the person(s) acted, executed the instrument.';
+  return '<div class="notary-box">A notary public or other officer completing this certificate verifies only the identity of the individual who signed the document to which this certificate is attached, and not the truthfulness, accuracy, or validity of that document.</div>' +
+    '<div style="margin-top:14pt;">' +
+    '<div class="body-text">State of California &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</div>' +
+    '<div class="body-text" style="margin-left:36pt;">) ss.</div>' +
+    '<div class="body-text">County of _______________ &nbsp;&nbsp;&nbsp; )</div>' +
+    '<div class="body-text">On _____________ before me, _________________________, Notary Public, personally appeared _________________________, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that he/she/they executed the same in his/her/their authorized capacity(ies)' + capText + '</div>' +
+    '<div class="body-text">I certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.</div>' +
+    '<div class="body-text">WITNESS my hand and official seal.</div>' +
+    '<div style="margin-top:20pt;">Signature _________________________ &nbsp;&nbsp;&nbsp;&nbsp; (Seal)</div>' +
+    '</div>';
 };
 
 const genADTR = (f,m) => {
@@ -636,50 +665,238 @@ const genADTR = (f,m) => {
 };
 const genSSCP = (f,m) => {
   const yr = new Date().getFullYear();
-  const sb2Line = f.sscp_isPrimaryResidence ? `Building Homes and Jobs Act Fee: $-0-\n  GC §27388.1(a)(2)(B) — Residential dwelling to owner-occupier` : `Building Homes and Jobs Act Fee: $___\n  GC §27388.1 (beginning Jan. 1, 2018)`;
-  return `${recHdr(m)}\n\nAFFIDAVIT OF DEATH\nSurviving Spouse Succeeding to Title to Community Property\n(Probate Code §13540, State of California)\n\nMAIL TAX STATEMENTS TO:                    THE UNDERSIGNED DECLARE(S):\n${f.grantor||"[SURVIVING SPOUSE NAME]"}    Documentary Transfer Tax: $0\n${f.granteeAddress||"[ADDRESS]"}           ${sb2Line}\n______________________________________________________________________________________________\n\nSTATE OF CALIFORNIA             )\n                                ) ss.\nCOUNTY OF ${(f.county||"_______________").toUpperCase()}              )\n\n${f.grantor||"[SURVIVING SPOUSE NAME]"}, of legal age, being first duly sworn, deposes and says:\n\nThat ${f.decedentName||"[DECEDENT NAME — AS ON DEATH CERTIFICATE]"}, the decedent mentioned in the attached Certificate of Death, is the same person as ${f.decedentName||"[DECEDENT NAME]"} named as one of the parties in that certain Grant Deed dated ${f.originalDeedDate||"[DEED DATE]"}, executed by ${f.originalDeedGrantor||"[ORIGINAL GRANTOR]"}, to ${f.decedentName||"[DECEDENT NAME]"} and ${f.grantor||"[SURVIVING SPOUSE NAME]"}, husband and wife as community property, recorded as Document Number ${f.originalDeedRecording||"[RECORDING NUMBER]"} on ${f.originalDeedRecordingDate||"[RECORDING DATE]"}, of Official Records of the ${f.county||"[COUNTY]"} County Recorder, covering the real property situated in the County of ${f.county||"[COUNTY]"}, State of California, more fully described as follows:\n\n${f.legalDescription||"SEE EXHIBIT \"A\" ATTACHED HERETO AND MADE A PART HEREOF"}\n\n      Assessor's Parcel Number: ${f.apn||"_______________"}\n\n      Commonly known as:\n      ${f.propertyAddress||"[PROPERTY ADDRESS]"}\n      ${f.cityOfProperty?`${f.cityOfProperty}, CA`:""}\n\nThat ${f.grantor||"[SURVIVING SPOUSE NAME]"} was married to ${f.decedentName||"[DECEDENT NAME]"} at the time of the death of the decedent.\n\nThat the above-described property has been at all times since acquisition considered the community property of ${f.grantor||"[SURVIVING SPOUSE NAME]"} and ${f.decedentName||"[DECEDENT NAME]"}. More than forty (40) days have passed since the death of the above-named decedent, and no notice has been recorded pursuant to Probate Code §13541.\n\nThat, with respect to the above-described property, there has not been nor will there be an election filed pursuant to Probate Code §§13502 or 13503 in any probate proceedings in any court of competent jurisdiction.\n\nThat the above described property has not passed to someone other than the affiant under the decedent's will or by intestate succession. That the property has not been disposed of in trust under the decedent's will. That the decedent's will does not limit the affiant to a qualified ownership.\n\nThat this Affidavit is made for the protection and benefit of the surviving spouse, his/her successors, assigns and personal representatives and all other parties hereafter dealing with or who may acquire an interest in the above described property.\n\nI declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.grantor||"[SURVIVING SPOUSE NAME]"}\n\n\n${juratBlock(f.grantor)}\n\nAffidavit of Death for property commonly known as:\n${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\nAssessor's Parcel Number: ${f.apn||"_______________"}\n\nMAIL TAX STATEMENTS AS DIRECTED ABOVE`;
+  const sb2Line = f.sscp_isPrimaryResidence
+    ? 'Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B) — Residential dwelling to owner-occupier'
+    : 'Building Homes and Jobs Act Fee: $___<br>GC §27388.1 (beginning Jan. 1, 2018)';
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 4pt;">AFFIDAVIT OF DEATH</div>' +
+    '<div style="text-align:center;font-size:11pt;margin-bottom:4pt;">Surviving Spouse Succeeding to Title to Community Property</div>' +
+    '<div style="text-align:center;font-size:11pt;margin-bottom:12pt;">(Probate Code §13540, State of California)</div>' +
+    '<div class="two-col" style="margin-bottom:12pt;">' +
+      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div>' +
+        '<div>' + (f.grantor||"[SURVIVING SPOUSE NAME]") + '<br>' + (f.granteeAddress||"[ADDRESS]") + '</div>' +
+      '</div>' +
+      '<div class="col-r"><div class="col-label">The Undersigned Declare(s):</div>' +
+        '<div>Documentary Transfer Tax: $0<br>' + sb2Line + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">STATE OF CALIFORNIA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</div>' +
+    '<div class="body-text" style="margin-left:36pt;">) ss.</div>' +
+    '<div class="body-text">COUNTY OF ' + (f.county||"_______________").toUpperCase() + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</div>' +
+    '<div class="body-text">' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ', of legal age, being first duly sworn, deposes and says:</div>' +
+    '<div class="body-text">That ' + (f.decedentName||"[DECEDENT NAME — AS ON DEATH CERTIFICATE]") + ', the decedent mentioned in the attached Certificate of Death, is the same person as ' + (f.decedentName||"[DECEDENT NAME]") + ' named as one of the parties in that certain Grant Deed dated ' + (f.originalDeedDate||"[DEED DATE]") + ', executed by ' + (f.originalDeedGrantor||"[ORIGINAL GRANTOR]") + ', to ' + (f.decedentName||"[DECEDENT NAME]") + ' and ' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ', husband and wife as community property, recorded as Document Number ' + (f.originalDeedRecording||"[RECORDING NUMBER]") + ' on ' + (f.originalDeedRecordingDate||"[RECORDING DATE]") + ', of Official Records of the ' + (f.county||"[COUNTY]") + ' County Recorder, covering the real property situated in the County of ' + (f.county||"[COUNTY]") + ', State of California, more fully described as follows:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF') + '</div>' +
+    '<div class="body-text indent">Assessor's Parcel Number: ' + (f.apn||"_______________") + '</div>' +
+    '<div class="body-text indent">Commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div>' +
+    '<div class="body-text">That ' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ' was married to ' + (f.decedentName||"[DECEDENT NAME]") + ' at the time of the death of the decedent.</div>' +
+    '<div class="body-text">That the above-described property has been at all times since acquisition considered the community property of ' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ' and ' + (f.decedentName||"[DECEDENT NAME]") + '. More than forty (40) days have passed since the death of the above-named decedent, and no notice has been recorded pursuant to Probate Code §13541.</div>' +
+    '<div class="body-text">That, with respect to the above-described property, there has not been nor will there be an election filed pursuant to Probate Code §§13502 or 13503 in any probate proceedings in any court of competent jurisdiction.</div>' +
+    '<div class="body-text">That the above described property has not passed to someone other than the affiant under the decedent's will or by intestate succession. That the property has not been disposed of in trust under the decedent's will. That the decedent's will does not limit the affiant to a qualified ownership.</div>' +
+    '<div class="body-text">That this Affidavit is made for the protection and benefit of the surviving spouse, his/her successors, assigns and personal representatives and all other parties hereafter dealing with or who may acquire an interest in the above described property.</div>' +
+    '<div class="body-text">I declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.</div>' +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[SURVIVING SPOUSE NAME]") + '</div></div>' +
+    juratBoxHTML(f.grantor, yr) +
+    '<div class="body-text" style="margin-top:16pt;">Affidavit of Death for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>Assessor's Parcel Number: ' + (f.apn||"_______________") + '</div>' +
+    '<div class="body-text"><strong>MAIL TAX STATEMENTS AS DIRECTED ABOVE</strong></div>';
 };
+
 
 const genTOD = (f,m) => {
   const btypes = {
     "Individual": f.todBeneficiary||"[BENEFICIARY FULL NAME]",
-    "Two individuals as joint tenants": `${f.todBeneficiary||"[BENEFICIARY 1]"} and ${f.todBeneficiary2||"[BENEFICIARY 2]"}, as joint tenants`,
-    "Two individuals as tenants in common": `${f.todBeneficiary||"[BENEFICIARY 1]"} and ${f.todBeneficiary2||"[BENEFICIARY 2]"}, as tenants in common`,
-    "Trustee of a trust": `${f.todTrusteeName||"[TRUSTEE NAME(S)]"}, Trustee(s) of the ${f.todTrustName||"[TRUST NAME]"}, dated ${f.todTrustDate||"[TRUST DATE]"}`,
+    "Two individuals as joint tenants": (f.todBeneficiary||"[BENEFICIARY 1]") + " and " + (f.todBeneficiary2||"[BENEFICIARY 2]") + ", as joint tenants",
+    "Two individuals as tenants in common": (f.todBeneficiary||"[BENEFICIARY 1]") + " and " + (f.todBeneficiary2||"[BENEFICIARY 2]") + ", as tenants in common",
+    "Trustee of a trust": (f.todTrusteeName||"[TRUSTEE NAME(S)]") + ", Trustee(s) of the " + (f.todTrustName||"[TRUST NAME]") + ", dated " + (f.todTrustDate||"[TRUST DATE]"),
     "Entity": f.todEntityName||"[ENTITY NAME]",
   };
-  return `RECORDING REQUESTED BY AND WHEN RECORDED MAIL DOCUMENT AND TAX STATEMENT TO:\n\n${f.todOwner||"[OWNER NAME]"}\n${f.propertyAddress||"[PROPERTY ADDRESS]"}\n${f.cityOfProperty?`${f.cityOfProperty}, CA ${f.todOwnerZip||""}`:""}\n\n                    Space above this line for Recorder's use only\n\nREVOCABLE TRANSFER ON DEATH (TOD) DEED\n(California Probate Code §5642)\n\nASSESSOR'S PARCEL NUMBER: ${f.apn||"_______________"}\n\nThis document is exempt from documentary transfer tax under Revenue & Taxation Code §11930.\nThis document is exempt from preliminary change of ownership report under Revenue & Taxation Code §480.3.\n\nIMPORTANT NOTICE: THIS DEED MUST BE RECORDED ON OR BEFORE 60 DAYS AFTER THE DATE IT IS NOTARIZED.\n\nPROPERTY DESCRIPTION:\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nBENEFICIARY(IES):\n${btypes[f.todBeneficiaryType]||"[BENEFICIARY NAME]"}\n${f.todBeneficiaryRelationship?`Relationship to transferor: ${f.todBeneficiaryRelationship}`:""}\n\nTRANSFER ON DEATH\n\nI transfer all of my interest in the described property to the named beneficiary(ies) on my death. I may revoke this deed. When recorded, this deed revokes any TOD deed that I made before signing this deed.\n\nDate _______________________     _______________________________\n                                  ${f.todOwner||"[OWNER NAME — must match title exactly]"}\n                                  Signature of Grantor\n\n\nSTATE OF CALIFORNIA\nCOUNTY OF _______________\n\nOn ___________________________ before me, ___________________________________________, a Notary Public, personally appeared ${f.todOwner||"[OWNER NAME]"}, who proved to me on the basis of satisfactory evidence to be the person(s) whose name(s) is/are subscribed to the within instrument and acknowledged to me that they executed the same in their authorized capacity(ies), and that by their signature(s) on the instrument the person(s), or the entity upon behalf of which the person(s) acted, executed the instrument.\n\nI certify under PENALTY OF PERJURY under the laws of the State of California that the foregoing paragraph is true and correct.\n\nWITNESS my hand and official seal.\n\nSignature ________________________________________________ (Seal)\n\nA notary public or other officer completing this certificate verifies only the identity of the individual who signed the document to which this certificate is attached, and not the truthfulness, accuracy, or validity of that document.\n\nWITNESSES (both must be present simultaneously):\n\nSignature Witness #1 ___________________________________     Printed Name Witness #1 ___________________________________\n\nSignature Witness #2 ___________________________________     Printed Name Witness #2 ___________________________________\n\nRev 1/1/2022`;
+  return '<div style="font-size:11pt;margin-bottom:14pt;">RECORDING REQUESTED BY AND WHEN RECORDED MAIL DOCUMENT AND TAX STATEMENT TO:<br><br>' +
+    (f.todOwner||"[OWNER NAME]") + '<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA '+(f.todOwnerZip||""):'') + '</div>' +
+    '<hr style="border:none;border-top:1px solid #000;margin:6pt 0 2pt;">' +
+    '<div style="text-align:center;font-size:9pt;color:#444;margin-bottom:2pt;">Space above this line for Recorder's use only</div>' +
+    '<hr style="border:none;border-top:1px solid #000;margin:0 0 14pt;">' +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 4pt;">REVOCABLE TRANSFER ON DEATH (TOD) DEED</div>' +
+    '<div style="text-align:center;font-size:11pt;margin-bottom:12pt;">(California Probate Code §5642)</div>' +
+    '<div class="body-text"><strong>ASSESSOR'S PARCEL NUMBER:</strong> ' + (f.apn||"_______________") + '</div>' +
+    '<div class="body-text" style="border:1.5pt solid #000;padding:8pt 10pt;background:#fff8f0;">&#9888; <strong>IMPORTANT NOTICE: THIS DEED MUST BE RECORDED ON OR BEFORE 60 DAYS AFTER THE DATE IT IS NOTARIZED.</strong></div>' +
+    '<div class="body-text">This document is exempt from documentary transfer tax under Revenue &amp; Taxation Code §11930.<br>This document is exempt from preliminary change of ownership report under Revenue &amp; Taxation Code §480.3.</div>' +
+    '<div class="body-text"><strong>PROPERTY DESCRIPTION:</strong><br><span style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</span></div>' +
+    '<div class="body-text"><strong>BENEFICIARY(IES):</strong><br>' + (btypes[f.todBeneficiaryType]||"[BENEFICIARY NAME]") + (f.todBeneficiaryRelationship?'<br>Relationship to transferor: '+f.todBeneficiaryRelationship:'') + '</div>' +
+    '<div class="body-text"><strong>TRANSFER ON DEATH</strong><br>I transfer all of my interest in the described property to the named beneficiary(ies) on my death. I may revoke this deed. When recorded, this deed revokes any TOD deed that I made before signing this deed.</div>' +
+    '<div style="display:table;width:100%;margin:20pt 0;">' +
+      '<div style="display:table-cell;width:40%;vertical-align:bottom;">Date _______________________</div>' +
+      '<div style="display:table-cell;width:60%;text-align:center;vertical-align:bottom;">' +
+        '<div style="border-bottom:1px solid #000;padding-bottom:2pt;">' + (f.todOwner||"[OWNER NAME — must match title exactly]") + '</div>' +
+        '<div style="font-size:10pt;margin-top:3pt;">Signature of Grantor</div>' +
+      '</div>' +
+    '</div>' +
+    notaryHTML("Individual", f) +
+    '<div class="body-text" style="margin-top:16pt;border:1px solid #000;padding:8pt 10pt;"><strong>WITNESSES (both must be present simultaneously):</strong><br><br>' +
+    'Signature Witness #1 ___________________________________<br>Printed Name Witness #1 ___________________________________<br><br>' +
+    'Signature Witness #2 ___________________________________<br>Printed Name Witness #2 ___________________________________</div>' +
+    '<div class="body-text" style="font-size:9pt;color:#444;">Rev 1/1/2022</div>';
 };
+
 
 const genRecon = (f,m) => {
   const yr = new Date().getFullYear();
   if (f.reconType==="sub_and_recon") {
-    return `${recHdr(m)}\n\nSUBSTITUTION OF TRUSTEE AND FULL RECONVEYANCE\n\nMAIL TAX STATEMENTS TO:\n${f.grantor||"[TRUSTOR NAME]"}\n${f.propertyAddress||"[PROPERTY ADDRESS]"}\n${f.cityOfProperty?`${f.cityOfProperty}, CA`:""}\n\nTHE UNDERSIGNED DECLARE(S):\nDocumentary Transfer Tax: $0\nBuilding Homes and Jobs Act Fee: $0\nGC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\nWHEREAS, ${f.grantor||"[TRUSTOR NAME(S)]"}, TRUSTORS, ${f.reconOriginalTrustee||f.reconTrustee||"[ORIGINAL TRUSTEE]"}, TRUSTEE, and ${f.reconBeneficiary||"[ORIGINAL BENEFICIARY]"}, BENEFICIARY, executed a Deed of Trust dated ${f.reconOriginalDeedDate||"[DEED DATE]"}, recorded on ${f.reconRecordingDate||"[RECORDING DATE]"} as Document Number ${f.reconRecording||"[DOCUMENT NUMBER]"} in the Official Records of ${f.county||"[COUNTY]"} County, California, encumbering the following real property:\n\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nWHEREAS, the undersigned, ${f.reconNewTrustee||"[NEW TRUSTEE NAME(S)]"}, as a result of ${f.reconSuccessionReason||"[reason for succession]"}, are the current acting Trustees.\n\nWHEREAS, the undersigned BENEFICIARY desires to substitute a new TRUSTEE in place of ${f.reconOriginalTrustee||"[ORIGINAL TRUSTEE]"}, and does hereby substitute themselves, ${f.reconNewTrustee||"[NEW TRUSTEE NAME(S)]"}, as TRUSTEE.\n\nAND WHEREAS, the obligation secured by the Deed of Trust has been fully satisfied;\n\nNOW, THEREFORE, the undersigned hereby accepts said appointment as Trustee and does hereby RECONVEY WITHOUT WARRANTY, TO THE PERSONS LEGALLY ENTITLED THERETO, all the estate now held under said Deed of Trust.\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.reconNewTrustee||"[NEW TRUSTEE]"}, as Trustee\n\n\n${nb("Trustee")}`;
+    return recHdr(m) +
+      '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">SUBSTITUTION OF TRUSTEE AND FULL RECONVEYANCE</div>' +
+      '<div class="two-col" style="margin-bottom:12pt;">' +
+        '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div><div>' + (f.grantor||"[TRUSTOR NAME]") + '<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div></div>' +
+        '<div class="col-r"><div class="col-label">The Undersigned Declare(s):</div><div>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $0<br>GC §27388.1(a)(2)(B)</div></div>' +
+      '</div>' +
+      '<hr class="rule">' +
+      '<div class="body-text">WHEREAS, ' + (f.grantor||"[TRUSTOR NAME(S)]") + ', TRUSTORS, ' + (f.reconOriginalTrustee||f.reconTrustee||"[ORIGINAL TRUSTEE]") + ', TRUSTEE, and ' + (f.reconBeneficiary||"[ORIGINAL BENEFICIARY]") + ', BENEFICIARY, executed a Deed of Trust dated ' + (f.reconOriginalDeedDate||"[DEED DATE]") + ', recorded on ' + (f.reconRecordingDate||"[RECORDING DATE]") + ' as Document Number ' + (f.reconRecording||"[DOCUMENT NUMBER]") + ' in the Official Records of ' + (f.county||"[COUNTY]") + ' County, California, encumbering the following real property:</div>' +
+      '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
+      '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
+      '<div class="body-text">WHEREAS, the undersigned, ' + (f.reconNewTrustee||"[NEW TRUSTEE NAME(S)]") + ', as a result of ' + (f.reconSuccessionReason||"[reason for succession]") + ', are the current acting Trustees.</div>' +
+      '<div class="body-text">WHEREAS, the undersigned BENEFICIARY desires to substitute a new TRUSTEE in place of ' + (f.reconOriginalTrustee||"[ORIGINAL TRUSTEE]") + ', and does hereby substitute themselves, ' + (f.reconNewTrustee||"[NEW TRUSTEE NAME(S)]") + ', as TRUSTEE.</div>' +
+      '<div class="body-text">AND WHEREAS, the obligation secured by the Deed of Trust has been fully satisfied;</div>' +
+      '<div class="body-text">NOW, THEREFORE, the undersigned hereby accepts said appointment as Trustee and does hereby RECONVEY WITHOUT WARRANTY, TO THE PERSONS LEGALLY ENTITLED THERETO, all the estate now held under said Deed of Trust.</div>' +
+      '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+      '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.reconNewTrustee||"[NEW TRUSTEE]") + ', as Trustee</div></div>' +
+      notaryHTML("Trustee", f);
   }
-  return `${recHdr(m)}\n\nFULL RECONVEYANCE\n\nMAIL TAX STATEMENTS TO:\n${f.grantor||"[TRUSTOR NAME]"}\n${f.propertyAddress||"[PROPERTY ADDRESS]"}\n${f.cityOfProperty?`${f.cityOfProperty}, CA`:""}\n\nTHE UNDERSIGNED DECLARE(S):\nDocumentary Transfer Tax: $0\nBuilding Homes and Jobs Act Fee: $0\nGC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\n${f.reconTrustee||"[TRUSTEE NAME]"}, as Trustee under the Deed of Trust described below, having been requested in writing by the holder of the obligation secured by said Deed of Trust to reconvey the real property described herein, and having been paid all sums secured thereby, does hereby RECONVEY, without warranty, to the person or persons legally entitled thereto, all the estate, title, and interest now held by said Trustee under the following described Deed of Trust:\n\nORIGINAL DEED OF TRUST:\n  Trustor:       ${f.grantor||"[TRUSTOR NAME]"}\n  Beneficiary:   ${f.reconBeneficiary||"[ORIGINAL BENEFICIARY]"}\n  Trustee:       ${f.reconTrustee||"[TRUSTEE NAME]"}\n  Dated:         ${f.reconOriginalDeedDate||"_______________"}\n  Recorded:      ${f.reconRecording||"_______________"} on ${f.reconRecordingDate||"_______________"}\n  County:        ${f.county||"_______________"}, California\n  Loan Amount:   $${f.reconLoanAmount||"_______________"}\n\nPROPERTY DESCRIPTION:\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nTHE OBLIGATION SECURED BY SAID DEED OF TRUST HAS BEEN FULLY PAID AND SATISFIED.\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.reconTrustee||"[TRUSTEE NAME]"}, as Trustee\n\n\n${nb("Corporate Officer / LLC Manager")}`;
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">FULL RECONVEYANCE</div>' +
+    '<div class="two-col" style="margin-bottom:12pt;">' +
+      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div><div>' + (f.grantor||"[TRUSTOR NAME]") + '<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div></div>' +
+      '<div class="col-r"><div class="col-label">The Undersigned Declare(s):</div><div>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $0<br>GC §27388.1(a)(2)(B)</div></div>' +
+    '</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">' + (f.reconTrustee||"[TRUSTEE NAME]") + ', as Trustee under the Deed of Trust described below, having been requested in writing by the holder of the obligation secured by said Deed of Trust to reconvey the real property described herein, and having been paid all sums secured thereby, does hereby RECONVEY, without warranty, to the person or persons legally entitled thereto, all the estate, title, and interest now held by said Trustee under the following described Deed of Trust:</div>' +
+    '<div class="body-text"><strong>ORIGINAL DEED OF TRUST:</strong><br>' +
+      'Trustor: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' + (f.grantor||"[TRUSTOR NAME]") + '<br>' +
+      'Beneficiary: &nbsp; ' + (f.reconBeneficiary||"[ORIGINAL BENEFICIARY]") + '<br>' +
+      'Trustee: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' + (f.reconTrustee||"[TRUSTEE NAME]") + '<br>' +
+      'Dated: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' + (f.reconOriginalDeedDate||"_______________") + '<br>' +
+      'Recorded: &nbsp;&nbsp;&nbsp;&nbsp; ' + (f.reconRecording||"_______________") + ' on ' + (f.reconRecordingDate||"_______________") + '<br>' +
+      'County: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' + (f.county||"_______________") + ', California<br>' +
+      'Loan Amount: &nbsp; $' + (f.reconLoanAmount||"_______________") + '</div>' +
+    '<div class="body-text"><strong>PROPERTY DESCRIPTION:</strong><br><span style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</span></div>' +
+    '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
+    '<div class="body-text"><strong>THE OBLIGATION SECURED BY SAID DEED OF TRUST HAS BEEN FULLY PAID AND SATISFIED.</strong></div>' +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.reconTrustee||"[TRUSTEE NAME]") + ', as Trustee</div></div>' +
+    notaryHTML("Corporate Officer", f);
 };
+
 
 const genEasement = (f,m) => {
   const yr = new Date().getFullYear();
+  const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
   const et = {ingress_egress:"an easement for ingress and egress",utility:"an easement for utility purposes",access:"an access easement",appurtenant:"an appurtenant easement",drainage:"an easement for drainage",solar:"a solar access easement (Civil Code §801.5)",conservation:"a conservation easement (Civil Code §815 et seq.)",other:f.easementTypeCustom||"[DESCRIBE EASEMENT]"};
-  const dttLine = f.exemptFromTax ? `Documentary Transfer Tax: $0\n  ${f.exemptReason||"R&T §11911"}` : `Documentary Transfer Tax: $${f.dtt||"___________"}`;
-  return `${recHdr(m)}\n\nEASEMENT DEED\n\nMAIL TAX STATEMENTS TO:\n${f.grantee||"[GRANTEE NAME]"}\n${f.granteeAddress||"[GRANTEE ADDRESS]"}\n\nTHE UNDERSIGNED GRANTOR(S) DECLARE(S):\n${dttLine}\nBuilding Homes and Jobs Act Fee: $-0-\nAB1466 Fee: $-0-\nGC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\n${f.grantor||"[GRANTOR NAME AND VESTING]"},\n\nhereby GRANTS to ${f.grantee||"[GRANTEE NAME]"}, ${f.granteeVesting==="custom"?f.customVesting:f.granteeVesting||"[VESTING]"},\n\n${et[f.easementType]||et.other} over, under, and across the following described real property in the County of ${f.county||"[COUNTY]"}, State of California:\n\nSERVIENT TENEMENT:\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n${f.dominantDescription?`\nDOMINANT TENEMENT:\n${f.dominantDescription}\n`:""}\nEASEMENT DESCRIPTION:\n${f.easementDescription||"[DESCRIBE SPECIFIC LOCATION, DIMENSIONS, AND PURPOSE]"}\n${f.easementWidth?`\nWidth of easement: ${f.easementWidth} feet\n`:""}${f.easementTerms?`\nTERMS AND CONDITIONS:\n${f.easementTerms}\n`:""}\nThis easement is ${f.easementExclusive?"exclusive":"non-exclusive"} and shall run with the land.\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.grantor||"[GRANTOR NAME]"}\n\n\n${nb(f.grantorCapacity||"Individual")}`;
+  const dttLine = f.exemptFromTax
+    ? 'Documentary Transfer Tax: $0<br>' + (f.exemptReason||"R&T §11911")
+    : 'Documentary Transfer Tax: $' + (f.dtt||"___________");
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">EASEMENT DEED</div>' +
+    '<div class="two-col" style="margin-bottom:12pt;">' +
+      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div><div>' + (f.grantee||"[GRANTEE NAME]") + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div></div>' +
+      '<div class="col-r"><div class="col-label">The Undersigned Grantor(s) Declare(s):</div><div>' + dttLine + '<br>Building Homes and Jobs Act Fee: $-0-<br>AB1466 Fee: $-0-<br>GC §27388.1(a)(2)(B)</div></div>' +
+    '</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"[COUNTY]") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
+    '<div class="body-text">' + (f.grantor||"[GRANTOR NAME AND VESTING]") + ',</div>' +
+    '<div class="body-text">hereby GRANTS to ' + (f.grantee||"[GRANTEE NAME]") + ', ' + (v||"[VESTING]") + ',</div>' +
+    '<div class="body-text">' + (et[f.easementType]||et.other) + ' over, under, and across the following described real property in the County of ' + (f.county||"[COUNTY]") + ', State of California:</div>' +
+    '<div class="body-text"><strong>SERVIENT TENEMENT:</strong><br><span style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</span></div>' +
+    '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
+    (f.dominantDescription?'<div class="body-text"><strong>DOMINANT TENEMENT:</strong><br>' + f.dominantDescription + '</div>':'') +
+    '<div class="body-text"><strong>EASEMENT DESCRIPTION:</strong><br>' + (f.easementDescription||"[DESCRIBE SPECIFIC LOCATION, DIMENSIONS, AND PURPOSE]") + '</div>' +
+    (f.easementWidth?'<div class="body-text">Width of easement: ' + f.easementWidth + ' feet</div>':'') +
+    (f.easementTerms?'<div class="body-text"><strong>TERMS AND CONDITIONS:</strong><br>' + f.easementTerms + '</div>':'') +
+    '<div class="body-text">This easement is ' + (f.easementExclusive?"exclusive":"non-exclusive") + ' and shall run with the land.</div>' +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>' +
+    notaryHTML(f.grantorCapacity||"Individual", f);
 };
+
 
 const genDOTMod = (f,m) => {
   const yr = new Date().getFullYear();
-  return `${recHdr(m)}\n\nMODIFICATION OF DEED OF TRUST\n\nMAIL TAX STATEMENTS TO:\n${f.beneficiaryLenderName||"[BENEFICIARY NAME]"}\n${f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]"}\n\nTHE UNDERSIGNED DECLARE(S):\nDocumentary Transfer Tax: $0\nBuilding Homes and Jobs Act Fee: $-0-\nGC §27388.1(a)(2)(B)\n______________________________________________________________________________________________\n\nTHIS MODIFICATION OF DEED OF TRUST is entered into as of ______________________, ${yr}, by and between:\n\nTRUSTOR:     ${f.trustorName||"[TRUSTOR NAME]"}, ${f.trustorVesting==="custom"?f.trustorCustomVesting:f.trustorVesting||"[VESTING]"}\nTRUSTEE:     ${f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]"}\nBENEFICIARY: ${f.beneficiaryLenderName||"[BENEFICIARY / LENDER NAME]"}\n             ${f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]"}\n\nRECITALS:\n\nA. Trustor executed that certain ${f.dotModPosition==="second"?"Second":"First"} Deed of Trust dated ${f.reconOriginalDeedDate||"[ORIGINAL DATE]"}, recorded on ${f.reconRecordingDate||"[RECORDING DATE]"} as Document Number ${f.reconRecording||"[DOCUMENT NUMBER]"} in the Official Records of ${f.county||"[COUNTY]"} County, California, encumbering the real property described as:\n\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nB. Original principal amount: $${f.reconLoanAmount||"[ORIGINAL AMOUNT]"}\n\nAGREEMENT:\n\n1. MODIFICATIONS:\n${f.dotModTerms||"[DESCRIBE SPECIFIC MODIFICATIONS]"}\n${f.dotModNewAmount?`\n2. MODIFIED LOAN AMOUNT: $${f.dotModNewAmount}\n`:""}${f.dotModNewMaturity?`\n3. MODIFIED MATURITY DATE: ${f.dotModNewMaturity}\n`:""}${f.dotModNewRate?`\n4. MODIFIED INTEREST RATE: ${f.dotModNewRate}% per annum\n`:""}\n5. RATIFICATION: Except as modified herein, all terms of the Original Deed of Trust remain in full force and effect.\n\nTRUSTOR:\n\n_______________________________\n${f.trustorName||"[TRUSTOR NAME]"}\n\nBENEFICIARY:\n\n_______________________________\n${f.beneficiaryLenderName||"[BENEFICIARY NAME]"}\n\n\n${nb(f.trustorCapacity||"Individual")}`;
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">MODIFICATION OF DEED OF TRUST</div>' +
+    '<div class="two-col" style="margin-bottom:12pt;">' +
+      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div><div>' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div></div>' +
+      '<div class="col-r"><div class="col-label">The Undersigned Declare(s):</div><div>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div></div>' +
+    '</div>' +
+    '<hr class="rule">' +
+    '<div class="body-text">THIS MODIFICATION OF DEED OF TRUST is entered into as of ______________________, ' + yr + ', by and between:</div>' +
+    '<div class="body-text">' +
+      'TRUSTOR: &nbsp;&nbsp;&nbsp;&nbsp; ' + (f.trustorName||"[TRUSTOR NAME]") + ', ' + (f.trustorVesting==="custom"?f.trustorCustomVesting:f.trustorVesting||"[VESTING]") + '<br>' +
+      'TRUSTEE: &nbsp;&nbsp;&nbsp;&nbsp; ' + (f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]") + '<br>' +
+      'BENEFICIARY: ' + (f.beneficiaryLenderName||"[BENEFICIARY / LENDER NAME]") + '<br>' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div>' +
+    '<div class="body-text"><strong>RECITALS:</strong></div>' +
+    '<div class="body-text">A. Trustor executed that certain ' + (f.dotModPosition==="second"?"Second":"First") + ' Deed of Trust dated ' + (f.reconOriginalDeedDate||"[ORIGINAL DATE]") + ', recorded on ' + (f.reconRecordingDate||"[RECORDING DATE]") + ' as Document Number ' + (f.reconRecording||"[DOCUMENT NUMBER]") + ' in the Official Records of ' + (f.county||"[COUNTY]") + ' County, California, encumbering the real property described as:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
+    '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
+    '<div class="body-text">B. Original principal amount: $' + (f.reconLoanAmount||"[ORIGINAL AMOUNT]") + '</div>' +
+    '<div class="body-text"><strong>AGREEMENT:</strong></div>' +
+    '<div class="body-text"><strong>1. MODIFICATIONS:</strong><br>' + (f.dotModTerms||"[DESCRIBE SPECIFIC MODIFICATIONS]").replace(/
+/g,'<br>') + '</div>' +
+    (f.dotModNewAmount?'<div class="body-text"><strong>2. MODIFIED LOAN AMOUNT:</strong> $' + f.dotModNewAmount + '</div>':'') +
+    (f.dotModNewMaturity?'<div class="body-text"><strong>3. MODIFIED MATURITY DATE:</strong> ' + f.dotModNewMaturity + '</div>':'') +
+    (f.dotModNewRate?'<div class="body-text"><strong>4. MODIFIED INTEREST RATE:</strong> ' + f.dotModNewRate + '% per annum</div>':'') +
+    '<div class="body-text"><strong>' + (f.dotModNewAmount||f.dotModNewMaturity||f.dotModNewRate?'5':'2') + '. RATIFICATION:</strong> Except as modified herein, all terms of the Original Deed of Trust remain in full force and effect.</div>' +
+    '<div class="body-text"><strong>TRUSTOR:</strong></div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.trustorName||"[TRUSTOR NAME]") + '</div></div>' +
+    '<div class="body-text" style="margin-top:20pt;"><strong>BENEFICIARY:</strong></div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '</div></div>' +
+    notaryHTML(f.trustorCapacity||"Individual", f);
 };
+
 
 const genTrusteeDeed = (f,m) => {
   const yr = new Date().getFullYear();
-  return `${recHdr(m)}\n\nTRUSTEE'S DEED UPON SALE\n\nAPN: ${f.apn||"_______________"}     County: ${f.county||"_______________"}${f.cityOfProperty?`     City: ${f.cityOfProperty}`:""}\n\n${f.reconTrustee||"[TRUSTEE NAME]"} (hereinafter "Grantor"), as Trustee under that certain Deed of Trust dated ${f.reconOriginalDeedDate||"[DEED DATE]"}, executed by ${f.grantor||"[TRUSTOR / BORROWER NAME]"}, recorded on ${f.reconRecordingDate||"[RECORDING DATE]"} as Document Number ${f.reconRecording||"[DOCUMENT NUMBER]"} in the Official Records of ${f.county||"[COUNTY]"} County, California, does hereby GRANT AND CONVEY, but without covenant or warranty, to:\n\n${f.grantee||"[PURCHASER NAME]"}, ${f.granteeVesting==="custom"?f.customVesting:f.granteeVesting||"[VESTING]"},\n\nall right, title and interest in and to the real property described as follows:\n\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nThis conveyance is made pursuant to California Civil Code §2924 et seq.\n\nTRUSTEE'S STATEMENTS:\n1. The grantee is the purchaser at a Trustee's Sale conducted on ${f.trusteeSaleDate||"[SALE DATE]"}, at ${f.trusteeSaleLocation||"[SALE LOCATION]"}.\n2. Total unpaid debt at time of sale: $${f.reconLoanAmount||"[UNPAID BALANCE]"}\n3. Amount bid by grantee: $${f.trusteeSalePrice||"[SALE PRICE]"}\n\nDocumentary Transfer Tax: ${f.exemptFromTax?`EXEMPT — ${f.exemptReason||"R&T §11922"}`:` $${f.dtt||"___________"}`}\nBuilding Homes and Jobs Act Fee: $-0-\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.reconTrustee||"[TRUSTEE NAME]"}, as Trustee\n\n\n${nb("Corporate Officer / LLC Manager")}`;
+  const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">TRUSTEE'S DEED UPON SALE</div>' +
+    '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
+    '<div class="body-text">' + (f.reconTrustee||"[TRUSTEE NAME]") + ' (hereinafter "Grantor"), as Trustee under that certain Deed of Trust dated ' + (f.reconOriginalDeedDate||"[DEED DATE]") + ', executed by ' + (f.grantor||"[TRUSTOR / BORROWER NAME]") + ', recorded on ' + (f.reconRecordingDate||"[RECORDING DATE]") + ' as Document Number ' + (f.reconRecording||"[DOCUMENT NUMBER]") + ' in the Official Records of ' + (f.county||"[COUNTY]") + ' County, California, does hereby GRANT AND CONVEY, but without covenant or warranty, to:</div>' +
+    '<div class="body-text">' + (f.grantee||"[PURCHASER NAME]") + ', ' + (v||"[VESTING]") + ',</div>' +
+    '<div class="body-text">all right, title and interest in and to the real property described as follows:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
+    '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
+    '<div class="body-text">This conveyance is made pursuant to California Civil Code §2924 et seq.</div>' +
+    '<div class="body-text"><strong>TRUSTEE'S STATEMENTS:</strong><br>' +
+      '1. The grantee is the purchaser at a Trustee's Sale conducted on ' + (f.trusteeSaleDate||"[SALE DATE]") + ', at ' + (f.trusteeSaleLocation||"[SALE LOCATION]") + '.<br>' +
+      '2. Total unpaid debt at time of sale: $' + (f.reconLoanAmount||"[UNPAID BALANCE]") + '<br>' +
+      '3. Amount bid by grantee: $' + (f.trusteeSalePrice||"[SALE PRICE]") + '</div>' +
+    '<div class="body-text">Documentary Transfer Tax: ' + (f.exemptFromTax?'EXEMPT — '+(f.exemptReason||"R&T §11922"):'$'+(f.dtt||"___________")) + '<br>Building Homes and Jobs Act Fee: $-0-</div>' +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.reconTrustee||"[TRUSTEE NAME]") + ', as Trustee</div></div>' +
+    notaryHTML("Corporate Officer", f);
 };
+
 
 const genSheriff = (f,m) => {
   const yr = new Date().getFullYear();
-  return `${recHdr(m)}\n\nSHERIFF'S DEED\n\nAPN: ${f.apn||"_______________"}     County: ${f.county||"_______________"}${f.cityOfProperty?`     City: ${f.cityOfProperty}`:""}\n\n${f.sheriffName||"[SHERIFF'S NAME]"}, Sheriff of ${f.county||"[COUNTY]"} County, California, pursuant to a Writ of Execution/Sale issued out of the ${f.courtName||"[COURT NAME]"}, Case Number ${f.caseNumber||"[CASE NUMBER]"}, entitled ${f.caseName||"[PLAINTIFF] v. [DEFENDANT]"}, pursuant to a Judgment entered on ${f.judgmentDate||"[JUDGMENT DATE]"}, in favor of ${f.judgmentCreditor||"[JUDGMENT CREDITOR]"} and against ${f.judgmentDebtor||"[JUDGMENT DEBTOR]"}, does hereby GRANT AND CONVEY to:\n\n${f.grantee||"[PURCHASER NAME]"}, ${f.granteeVesting==="custom"?f.customVesting:f.granteeVesting||"[VESTING]"},\n\nall right, title, and interest of ${f.judgmentDebtor||"[JUDGMENT DEBTOR]"} in and to the following described real property in the County of ${f.county||"[COUNTY]"}, State of California:\n\n${f.legalDescription||"[LEGAL DESCRIPTION]"}\n\nAssessor's Parcel Number: ${f.apn||"_______________"}\nCommonly known as: ${f.propertyAddress||"[PROPERTY ADDRESS]"}${f.cityOfProperty?`, ${f.cityOfProperty}, CA`:""}\n\nDate of Sale: ${f.trusteeSaleDate||"[SALE DATE]"}\nSale Location: ${f.trusteeSaleLocation||"[SALE LOCATION]"}\nJudgment Amount: $${f.reconLoanAmount||"[JUDGMENT AMOUNT]"}\nPurchase Price: $${f.trusteeSalePrice||"[PURCHASE PRICE]"}\n\nThis deed is made without covenant or warranty and conveys only such right, title and interest as the judgment debtor held at the time of the levy of execution.\n\nDocumentary Transfer Tax: ${f.exemptFromTax?`EXEMPT — ${f.exemptReason||"R&T §11922"}`:` $${f.dtt||"___________"}`}\nBuilding Homes and Jobs Act Fee: $-0-\n\nExecuted this __________ day of ______________________, ${yr}, at _____________________, California.\n\n\n_______________________________\n${f.sheriffName||"[SHERIFF'S NAME]"}\nSheriff, ${f.county||"[COUNTY]"} County\n\n\n${nb("Individual")}`;
+  const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
+  return recHdr(m) +
+    '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">SHERIFF'S DEED</div>' +
+    '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
+    '<div class="body-text">' + (f.sheriffName||"[SHERIFF'S NAME]") + ', Sheriff of ' + (f.county||"[COUNTY]") + ' County, California, pursuant to a Writ of Execution/Sale issued out of the ' + (f.courtName||"[COURT NAME]") + ', Case Number ' + (f.caseNumber||"[CASE NUMBER]") + ', entitled ' + (f.caseName||"[PLAINTIFF] v. [DEFENDANT]") + ', pursuant to a Judgment entered on ' + (f.judgmentDate||"[JUDGMENT DATE]") + ', in favor of ' + (f.judgmentCreditor||"[JUDGMENT CREDITOR]") + ' and against ' + (f.judgmentDebtor||"[JUDGMENT DEBTOR]") + ', does hereby GRANT AND CONVEY to:</div>' +
+    '<div class="body-text">' + (f.grantee||"[PURCHASER NAME]") + ', ' + (v||"[VESTING]") + ',</div>' +
+    '<div class="body-text">all right, title, and interest of ' + (f.judgmentDebtor||"[JUDGMENT DEBTOR]") + ' in and to the following described real property in the County of ' + (f.county||"[COUNTY]") + ', State of California:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
+    '<div class="body-text">Assessor's Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
+    '<div class="body-text">' +
+      'Date of Sale: ' + (f.trusteeSaleDate||"[SALE DATE]") + '<br>' +
+      'Sale Location: ' + (f.trusteeSaleLocation||"[SALE LOCATION]") + '<br>' +
+      'Judgment Amount: $' + (f.reconLoanAmount||"[JUDGMENT AMOUNT]") + '<br>' +
+      'Purchase Price: $' + (f.trusteeSalePrice||"[PURCHASE PRICE]") + '</div>' +
+    '<div class="body-text">This deed is made without covenant or warranty and conveys only such right, title and interest as the judgment debtor held at the time of the levy of execution.</div>' +
+    '<div class="body-text">Documentary Transfer Tax: ' + (f.exemptFromTax?'EXEMPT — '+(f.exemptReason||"R&T §11922"):'$'+(f.dtt||"___________")) + '<br>Building Homes and Jobs Act Fee: $-0-</div>' +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.sheriffName||"[SHERIFF'S NAME]") + '<br>Sheriff, ' + (f.county||"[COUNTY]") + ' County</div></div>' +
+    notaryHTML("Individual", f);
 };
+
 
 
 // ─── PCOR applicable doc types ───────────────────────────────────────────────
@@ -994,10 +1211,14 @@ const generateDoc = (docType, f, m) => {
   }
 };
 
-const docPageCSS = '@page{size:8.5in 11in;margin:1in;}*{box-sizing:border-box;}body{font-family:Times New Roman,serif;font-size:11pt;color:#000;background:#fff;line-height:1.6;}.doc-wrap{max-width:6.5in;margin:0 auto;}.rec-hdr{font-size:10pt;margin-bottom:4pt;}.rec-rule{border:none;border-top:1px solid #000;margin:6pt 0 2pt;}.rec-space{font-size:8pt;text-align:center;color:#444;margin:0 0 6pt;}.doc-title{text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 12pt;}.doc-subtitle{text-align:center;font-size:11pt;margin:0 0 12pt;}.two-col{display:table;width:100%;margin:8pt 0;}.col-l{display:table-cell;width:50%;vertical-align:top;padding-right:12pt;}.col-r{display:table-cell;width:50%;vertical-align:top;padding-left:12pt;}.col-label{font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;}.rule{border:none;border-top:1px solid #000;margin:10pt 0;}.body-text{font-size:11pt;margin:8pt 0;text-align:justify;line-height:1.7;}.indent{margin-left:36pt;}.sig-block{margin:24pt 0 8pt;}.sig-line{border-bottom:1px solid #000;width:220pt;display:inline-block;margin-bottom:3pt;}.sig-name{font-size:11pt;}.notary-box{border:1.5pt solid #000;padding:8pt 10pt;margin:16pt 0 8pt;font-size:10pt;line-height:1.6;}.jurat-title{text-align:center;font-weight:bold;font-size:11pt;margin:12pt 0 8pt;letter-spacing:2px;}.jurat-block{font-size:11pt;margin:8pt 0;line-height:1.8;}.ss-block{margin-left:20pt;}.footer-note{font-size:9pt;color:#444;margin-top:24pt;border-top:1px solid #ccc;padding-top:6pt;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
+const docPageCSS = '@page{size:8.5in 11in;margin:1in;}*{box-sizing:border-box;}body{font-family:Times New Roman,serif;font-size:11pt;color:#000;background:#fff;line-height:1.6;}.doc-wrap{max-width:6.5in;margin:0 auto;}.rec-hdr{font-size:10pt;margin-bottom:4pt;}.rec-rule{border:none;border-top:1px solid #000;margin:6pt 0 2pt;}.rec-space{font-size:8pt;text-align:center;color:#444;margin:0 0 6pt;}.doc-title{text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 12pt;}.doc-subtitle{text-align:center;font-size:11pt;margin:0 0 12pt;}.two-col{display:table;width:100%;margin:8pt 0;}.col-l{display:table-cell;width:50%;vertical-align:top;padding-right:12pt;}.col-r{display:table-cell;width:50%;vertical-align:top;padding-left:12pt;}.col-label{font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;}.rule{border:none;border-top:1px solid #000;margin:10pt 0;}.body-text{font-size:11pt;margin:8pt 0;text-align:justify;line-height:1.7;}.indent{margin-left:36pt;}.sig-block{margin:24pt 0 8pt;}.sig-line{border-bottom:1px solid #000;width:220pt;display:inline-block;margin-bottom:3pt;}.sig-name{font-size:11pt;}.notary-box{border:1.5pt solid #000;padding:8pt 10pt;margin:16pt 0 8pt;font-size:10pt;line-height:1.6;}.jurat-title{text-align:center;font-weight:bold;font-size:11pt;margin:12pt 0 8pt;letter-spacing:2px;}.jurat-block{font-size:11pt;margin:8pt 0;line-height:1.8;}.ss-block{margin-left:20pt;}.footer-note{font-size:9pt;color:#444;margin-top:24pt;border-top:1px solid #ccc;padding-top:6pt;}.doc-pre{font-family:Times New Roman,serif;font-size:11pt;white-space:pre-wrap;line-height:1.7;margin:0;padding:0;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
 
 const wrapDocHTML = (bodyHTML, docLabel, apn) => {
-  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + (docLabel||"") + ' - ' + (apn||"draft") + '</title><style>' + docPageCSS + '</style></head><body><div class="doc-wrap">' + (bodyHTML||"") + '</div></body></html>';
+  const isHTML = (bodyHTML||"").indexOf('<div') >= 0 || (bodyHTML||"").indexOf('<hr') >= 0;
+  const body = isHTML
+    ? (bodyHTML||"")
+    : '<pre style="font-family:Times New Roman,serif;font-size:11pt;white-space:pre-wrap;line-height:1.6;margin:0;">' + (bodyHTML||"") + '</pre>';
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + (docLabel||"") + ' - ' + (apn||"draft") + '</title><style>' + docPageCSS + '</style></head><body><div class="doc-wrap">' + body + '</div></body></html>';
 };
 
 const generateWordDoc = (docHTML, docLabel, apn) => {
