@@ -2197,14 +2197,77 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 </div>
                 <div style={ST.warn}>Review all information above before printing. The PCOR must be filed with the county assessor at or before recording. Missing PCOR results in a $20 additional recording fee.</div>
                 <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
-                  <button onClick={()=>{
-                    const html = genPCOR(docType,form,master,pcorForm);
-                    const printWindow = window.open("","_blank");
-                    printWindow.document.write(html);
-                    printWindow.document.close();
-                    printWindow.focus();
-                    setTimeout(()=>printWindow.print(),800);
-                  }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Open & Print PCOR (BOE-502-A)</button>
+                  <button onClick={async()=>{
+                    try {
+                      const payload = {
+                        buyerName: pcorForm.buyerName,
+                        buyerAddress: pcorForm.buyerAddress,
+                        buyerCity: pcorForm.buyerCity,
+                        buyerState: pcorForm.buyerState||"CA",
+                        buyerZip: pcorForm.buyerZip,
+                        buyerPhone: pcorForm.buyerPhone,
+                        buyerEmail: pcorForm.buyerEmail,
+                        sellerName: form.grantor,
+                        apn: form.apn,
+                        propertyAddress: form.propertyAddress,
+                        propertyCity: form.cityOfProperty,
+                        propertyCounty: form.county,
+                        isPrimaryResidence: pcorForm.isPrimaryResidence,
+                        occupancyDate: pcorForm.occupancyDate,
+                        isDisabledVet: pcorForm.isDisabledVet||"NO",
+                        mailTaxName: pcorForm.mailTaxName||pcorForm.buyerName,
+                        mailTaxAddress: pcorForm.mailTaxAddress||pcorForm.buyerAddress,
+                        mailTaxCity: pcorForm.mailTaxCity||pcorForm.buyerCity,
+                        mailTaxState: pcorForm.mailTaxState||"CA",
+                        p1a: pcorForm.p1a||"NO",
+                        p1b: pcorForm.p1b||"NO",
+                        p1c: pcorForm.p1c||"NO",
+                        p1d: pcorForm.p1d||"NO",
+                        p1e: pcorForm.p1e||"NO",
+                        p1f: pcorForm.p1f||"NO",
+                        p1g: pcorForm.p1g||"NO",
+                        p1h: pcorForm.p1h||"NO",
+                        p1i: pcorForm.p1i||"NO",
+                        p1j: pcorForm.p1j||"NO",
+                        p1k: pcorForm.p1k||"NO",
+                        p1l1: pcorForm.p1l1||"NO",
+                        p1l2: pcorForm.p1l2||"NO",
+                        p1m: pcorForm.p1m||"NO",
+                        p1n: pcorForm.p1n||"NO",
+                        p1o: pcorForm.p1o||"NO",
+                        p1p: pcorForm.p1p||"NO",
+                        p1q: pcorForm.p1q||"NO",
+                        p1qDesc: pcorForm.p1qDesc||"",
+                        dateOfDeath: pcorForm.inheritanceDate||form.dateOfDeathJT||form.dateOfDeath||"",
+                        dateOfDeathJT: form.dateOfDeathJT||"",
+                        dateOfTransfer: pcorForm.dateOfTransfer||"",
+                        transferType: pcorForm.transferType||"Other",
+                        transferTypeOther: pcorForm.transferTypeOther||"",
+                        partialInterest: pcorForm.partialInterest||"NO",
+                        partialPct: pcorForm.partialPct||"",
+                        totalPurchasePrice: pcorForm.totalPurchasePrice||"",
+                        downPayment: pcorForm.downPayment||"",
+                        propertyType: pcorForm.propertyType||"Single-family residence",
+                        producesIncome: pcorForm.producesIncome||"NO",
+                        propertyCondition: pcorForm.propertyCondition||"Good",
+                      };
+                      const resp = await fetch(PROXY+"/pcor",{
+                        method:"POST",
+                        headers:{"Content-Type":"application/json"},
+                        body:JSON.stringify(payload)
+                      });
+                      if(!resp.ok){const e=await resp.json();throw new Error(e.error||"PDF generation failed");}
+                      const blob = await resp.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href=url;
+                      a.download="PCOR_BOE502A_"+(form.apn||"draft")+".pdf";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } catch(err) {
+                      alert("PCOR PDF error: "+err.message);
+                    }
+                  }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Download Official PCOR (BOE-502-A PDF)</button>
                   <button onClick={()=>setPcorStep(3)} style={ST.btnS}>← Edit</button>
                   <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setPcorOutput("");setPcorStep(1);setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
                 </div>
