@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; padding: 0; background: #f5f0e8; }
@@ -2549,17 +2550,95 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                         producesIncome: pcorForm.producesIncome||"NO",
                         propertyCondition: pcorForm.propertyCondition||"Good",
                       };
-                      const resp = await fetch(PROXY+"/pcor",{
-                        method:"POST",
-                        headers:{"Content-Type":"application/json"},
-                        body:JSON.stringify(payload)
-                      });
-                      if(!resp.ok){const e=await resp.json();throw new Error(e.error||"PDF generation failed");}
-                      const blob = await resp.blob();
+                      // Fetch PDF via Worker proxy (handles CORS)
+                      const pdfRes = await fetch(PROXY+"/boe502a.pdf");
+                      if(!pdfRes.ok) throw new Error("Could not fetch BOE-502-A PDF");
+                      const pdfBytes = await pdfRes.arrayBuffer();
+
+                      // Fill using pdf-lib loaded in page
+                      const { PDFDocument } = PDFLib;
+                      const pdfDoc = await PDFDocument.load(pdfBytes);
+                      const pdfForm = pdfDoc.getForm();
+
+                      const txt = (name, val) => {
+                        if (!val) return;
+                        try { pdfForm.getTextField(name).setText(String(val)); } catch(e) {}
+                      };
+                      const chk = (name, yes) => {
+                        try { const f = pdfForm.getCheckBox(name); yes ? f.check() : f.uncheck(); } catch(e) {}
+                      };
+
+                      // Fill fields
+                      txt("Name and mailing address of buyer/transferee", (payload.buyerName||"") + (payload.buyerAddress?"
+"+payload.buyerAddress:"") + (payload.buyerCity?"
+"+payload.buyerCity+", "+(payload.buyerState||"CA")+" "+(payload.buyerZip||""):""));
+                      txt("Assessors parcel number", payload.apn);
+                      txt("seller transferor", payload.sellerName);
+                      txt("Buyer's email address", payload.buyerEmail);
+                      txt("street address or physical location of real property", (payload.propertyAddress||"")+(payload.propertyCity?", "+payload.propertyCity:"")+(payload.propertyCounty?", "+payload.propertyCounty+" County, CA":""));
+                      txt("mail property tax information to (name)", payload.mailTaxName||payload.buyerName);
+                      txt("Mail property tax informatino to address", payload.mailTaxAddress||payload.buyerAddress);
+                      txt("city", payload.mailTaxCity||payload.buyerCity);
+                      txt("state", payload.mailTaxState||"CA");
+                      txt("DATE OF DEATH", payload.dateOfDeath||"");
+                      txt("Q. Other. his transfer is to", payload.p1qDesc||"");
+                      txt("A. Date of transfer, if other than recording date", payload.dateOfTransfer||"");
+                      if(payload.transferType==="Inheritance") txt("inheritance.  date of death", payload.dateOfDeath||"");
+                      if(payload.transferType==="Other") txt("other. please explain1", payload.transferTypeOther||"");
+                      if(payload.partialInterest==="YES") txt("if yes, indicate the percentage transferred", payload.partialPct||"");
+                      txt("Total purchase price", payload.totalPurchasePrice||"");
+                      txt("Cash down payment or value of trade or exchange excluding closing costs amount $", payload.downPayment||"");
+                      txt("Name of buyer/transferee/personal representative/corporate officer (please print)", payload.buyerName||"");
+
+                      // Checkboxes - Part 1
+                      chk("This property is intended as my principal residence. If YES, please indicate the date of occupancy or intended occupancy Yes", payload.isPrimaryResidence==="YES");
+                      chk("This property is intended as my principal residence. If YES, please indicate the date of occupancy or intended occupancy_no", payload.isPrimaryResidence!=="YES");
+                      chk("Are you a disabled veteran or an unmarried surviving spouse of a disabled veteran who was compensated at 100% by the Department of Veterans Affairs or an unmarried surviving spouse of a 100% rated disabled veteran? Yes", false);
+                      chk("Are you a disabled veteran or an unmarried surviving spouse of a disabled veteran who was compensated at 100% by the Department of Veterans Affairs or an unmarried surviving spouse of a 100% rated disabled veteran? No", true);
+                      chk("A. This transfer is solely between spouses (addition or removal of a spouse, death of a spouse, divorce settlement, etc.)­yes", payload.p1a==="YES");
+                      chk("A. This transfer is solely between spouses (addition or removal of a spouse, death of a spouse, divorce settlement, etc.)_no1", payload.p1a!=="YES");
+                      chk("B. This transfer is solely between domestic partners currently registered with the California Secretary of State (addition or removal of a partner, death of a partner, termination settlement, etc.)_yes", payload.p1b==="YES");
+                      chk("B. This transfer is solely between domestic partners currently registered with the California Secretary of State (addition or removal of a partner, death of a partner, termination settlement, etc.)_no", payload.p1b!=="YES");
+                      chk("D.This transfer is the result of a cotenant’s death_yes", payload.p1d==="YES");
+                      chk("D.This transfer is the result of a cotenant’s death_no", payload.p1d!=="YES");
+                      chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor’s spouse and/or registered domestic partner Yes", payload.p1l1==="YES");
+                      chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor’s spouse and/or registered domestic partner_no", payload.p1l1!=="YES");
+                      chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor’s trustor’s spouse grantor’s/trustor’s registered domestic partner Yes", payload.p1l2==="YES");
+                      chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor’s trustor’s spouse grantor’s/trustor’s registered domestic partner No", payload.p1l2!=="YES");
+                      chk("N. This is a transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel being transferred remain exactly the same after the transfer yes", payload.p1n==="YES");
+                      chk("N. This is a transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel being transferred remain exactly the same after the transfer no", payload.p1n!=="YES");
+
+                      // Transfer type
+                      chk("B. Type of transfer purchase", payload.transferType==="Purchase");
+                      chk("B. Type of transfer foreclosure", payload.transferType==="Foreclosure");
+                      chk("B. Type of transfer gift", payload.transferType==="Gift");
+                      chk("B. Type of transfer inheritance", payload.transferType==="Inheritance");
+                      chk("B. Type of transfer other", payload.transferType==="Other");
+
+                      // Property type
+                      chk("A. Type of property transferred single-family residence", payload.propertyType==="Single-family residence");
+                      chk("A. Type of property transferred Condominium", payload.propertyType==="Condominium");
+                      chk("A. Type of property transferred multiple-family residence", (payload.propertyType||"").includes("Multiple"));
+                      chk("A. Type of property transferred Unimproved lot", payload.propertyType==="Unimproved lot");
+                      chk("A. Type of property transferred Commercial/Industrial", payload.propertyType==="Commercial/Industrial");
+
+                      // Condition
+                      chk("E. The condition of the property at the time of sale was good", payload.propertyCondition==="Good");
+                      chk("E. The condition of the property at the time of sale was average1", payload.propertyCondition==="Average");
+                      chk("E. The condition of the property at the time of sale was fair", payload.propertyCondition==="Fair");
+                      chk("E. The condition of the property at the time of sale was poor3", payload.propertyCondition==="Poor");
+
+                      // Partial interest
+                      chk("C. Only a partial interest in the property was transferred. Yes", payload.partialInterest==="YES");
+                      chk("Only a partial interest in the property was transferred_no", payload.partialInterest!=="YES");
+
+                      // Save and download
+                      const filledBytes = await pdfDoc.save();
+                      const blob = new Blob([filledBytes], {type:"application/pdf"});
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
                       a.href=url;
-                      a.download="PCOR_BOE502A_"+(form.apn||"draft")+".pdf";
+                      a.download="PCOR_BOE502A_"+(form.apn||"draft").replace(/[^a-zA-Z0-9]/g,"-")+".pdf";
                       a.click();
                       URL.revokeObjectURL(url);
                     } catch(err) {
