@@ -405,14 +405,16 @@ const genGrant = (f,m) => {
     : 'Documentary Transfer Tax: $' + (f.dtt||"___________");
   return recHdr(m) +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">GRANT DEED</div>' +
-    '<div class="two-col" style="margin-bottom:12pt;">' +
-      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div>' +
-        '<div>' + (f.grantee||"[GRANTEE NAME]") + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
-      '</div>' +
-      '<div class="col-r"><div class="col-label">The Undersigned Grantor(s) Declare(s):</div>' +
-        '<div>' + dttLine + '<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
-      '</div>' +
-    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:12pt;"><tr>' +
+      '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
+        '<div style="font-size:11pt;">' + (f.grantee||"[GRANTEE NAME]") + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
+      '</td>' +
+      '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Grantor(s) Declare(s):</div>' +
+        '<div style="font-size:11pt;">' + dttLine + '<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
+      '</td>' +
+    '</tr></table>' +
     '<hr class="rule">' +
     '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"[COUNTY]") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
     '<div class="body-text">' + grantorLine(f) + ', hereby GRANTS to</div>' +
@@ -528,14 +530,16 @@ const genQuitclaim = (f,m) => {
     : 'Documentary Transfer Tax: $' + (f.dtt||"___________");
   return recHdr(m) +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">QUITCLAIM DEED</div>' +
-    '<div class="two-col" style="margin-bottom:12pt;">' +
-      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div>' +
-        '<div>' + (f.grantee||"[GRANTEE NAME]") + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
-      '</div>' +
-      '<div class="col-r"><div class="col-label">The Undersigned Grantor(s) Declare(s):</div>' +
-        '<div>' + dttLine + '<br>Building Homes and Jobs Act Fee: $-0-<br>AB1466 Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
-      '</div>' +
-    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:12pt;"><tr>' +
+      '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
+        '<div style="font-size:11pt;">' + (f.grantee||"[GRANTEE NAME]") + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
+      '</td>' +
+      '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Grantor(s) Declare(s):</div>' +
+        '<div style="font-size:11pt;">' + dttLine + '<br>Building Homes and Jobs Act Fee: $-0-<br>AB1466 Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
+      '</td>' +
+    '</tr></table>' +
     '<hr class="rule">' +
     '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"[COUNTY]") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
     '<div class="body-text">' + (f.grantor||"[GRANTOR NAME AND VESTING]") + ',</div>' +
@@ -652,10 +656,16 @@ const genADTR = (f,m) => {
     '<div class="rec-hdr" style="margin-top:8pt">And When Recorded Mail To:</div>' +
     '<div class="rec-hdr">' + firmName + '<br>' + firmAddr + '<br>' + firmCity + '</div>' +
     '<hr class="rec-rule"><div class="rec-space">Space above this line for Recorder\'s use only</div><hr class="rec-rule">' +
-    '<div class="two-col" style="margin:12pt 0;">' +
-      '<div class="col-l"><div class="col-label">And When Recorded Mail To:</div><div>' + successor + ', Trustee<br>' + propAddr + '<br>' + city + '</div></div>' +
-      '<div class="col-r" style="font-size:10pt;"><div class="col-label">Mail Tax Statements To: &nbsp; The Undersigned Declare(s):</div><div>' + successor + '<br>' + propAddr + '<br>' + city + '<br><br>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div></div>' +
-    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin:12pt 0;"><tr>' +
+      '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">And When Recorded Mail To:</div>' +
+        '<div style="font-size:11pt;">' + successor + ', Trustee<br>' + propAddr + '<br>' + city + '</div>' +
+      '</td>' +
+      '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To: &nbsp; The Undersigned Declare(s):</div>' +
+        '<div style="font-size:11pt;">' + successor + '<br>' + propAddr + '<br>' + city + '<br><br>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
+      '</td>' +
+    '</tr></table>' +
     '<hr class="rule"><div class="doc-title">AFFIDAVIT OF DEATH OF TRUSTEE</div><hr class="rule">' +
     '<div class="body-text">' + successor + ', Trustee of the ' + trust + ', of legal age, being first duly sworn, deposes and says:</div>' +
     '<div class="body-text">That ' + deceased + ', the decedent mentioned in the attached certified copy of the Certificate of Death, is the same person as ' + deceased + ' named as one of the parties, to wit, Trustee of the ' + trust + ', in that certain Grant Deed dated ' + (f.trustDate||"[DEED DATE]") + ', recorded as Document Number ' + (f.originalDeedRecording||"[DOCUMENT NUMBER]") + ', of Official Records of the ' + (f.county||"[COUNTY]") + ' County Recorder, covering the real property situated in the County of ' + (f.county||"[COUNTY]") + ', State of California, more fully described as follows:</div>' +
@@ -679,14 +689,16 @@ const genSSCP = (f,m) => {
     '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 4pt;">AFFIDAVIT OF DEATH</div>' +
     '<div style="text-align:center;font-size:11pt;margin-bottom:4pt;">Surviving Spouse Succeeding to Title to Community Property</div>' +
     '<div style="text-align:center;font-size:11pt;margin-bottom:12pt;">(Probate Code §13540, State of California)</div>' +
-    '<div class="two-col" style="margin-bottom:12pt;">' +
-      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div>' +
-        '<div>' + (f.grantor||"[SURVIVING SPOUSE NAME]") + '<br>' + (f.granteeAddress||"[ADDRESS]") + '</div>' +
-      '</div>' +
-      '<div class="col-r"><div class="col-label">The Undersigned Declare(s):</div>' +
-        '<div>Documentary Transfer Tax: $0<br>' + sb2Line + '</div>' +
-      '</div>' +
-    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:12pt;"><tr>' +
+      '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
+        '<div style="font-size:11pt;">' + (f.grantor||"[SURVIVING SPOUSE NAME]") + '<br>' + (f.granteeAddress||"[ADDRESS]") + '</div>' +
+      '</td>' +
+      '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Declare(s):</div>' +
+        '<div style="font-size:11pt;">Documentary Transfer Tax: $0<br>' + sb2Line + '</div>' +
+      '</td>' +
+    '</tr></table>' +
     '<hr class="rule">' +
     '<div class="body-text">STATE OF CALIFORNIA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</div>' +
     '<div class="body-text" style="margin-left:36pt;">) ss.</div>' +
@@ -1453,7 +1465,13 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
   },[]);
 
   const onDrop = useCallback((e)=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files[0]; if(f)handleFile(f); },[handleFile]);
-  const handleGenerate = () => { const doc = generateDoc(docType,form,master); setOutput(doc); setStep(3); trackDeed(docType, form.county, true); };
+  const handleGenerate = () => {
+    const doc = generateDoc(docType,form,master);
+    setOutput(doc);
+    setStep(3);
+    trackDeed(docType, form.county, true);
+    try { localStorage.setItem("dd_lastform", JSON.stringify({docType,form,step:3,output:doc,ts:Date.now()})); } catch(e) {}
+  };
   const copyAndDownload = () => {
     const tmp = document.createElement("div"); tmp.innerHTML = output;
     const plainText = tmp.innerText||tmp.textContent||output;
