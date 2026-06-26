@@ -1329,7 +1329,7 @@ function DottieDeeds() {
     trustorCustomVesting:"", trustorCapacity:"",
     beneficiaryLenderName:"", beneficiaryLenderAddress:"",
     dotTrustee:((m&&m.defaultTrustee)||""), loanAmount:"",
-    dueOnSale:((m&&m.defaultDueOnSale)!==false), lateChargeDays:"", lateChargePercent:"",
+    dueOnSale:false, lateChargeDays:"", lateChargePercent:"",
     businessPurpose:false, customRiders:"", requestNOD:false,
     seniorLienHolder:"", seniorLienAmount:"", seniorLienRecording:"",
     spouseName:"", spouseVesting:"", interspousalReason:"",
@@ -2403,7 +2403,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 <Field label="Date of transfer (if different from recording date)"><input value={pcorForm.dateOfTransfer} onChange={e=>updPcor("dateOfTransfer",e.target.value)} placeholder="Leave blank if same as recording date" style={ST.inp}/></Field>
                 <Field label="Type of transfer">
                   <select value={pcorForm.transferType} onChange={e=>updPcor("transferType",e.target.value)} style={ST.inp}>
-                    {["Purchase","Foreclosure","Gift","Trade or exchange","Inheritance","Sale/leaseback","Other"].map(t=><option key={t} value={t}>{t}</option>)}
+                    <option value="">— Select transfer type —</option>{["Purchase","Foreclosure","Gift","Trade or exchange","Inheritance","Sale/leaseback","Other"].map(t=><option key={t} value={t}>{t}</option>)}
                   </select>
                   {pcorForm.transferType==="Inheritance"&&<Field label="Date of death" hint="Enter date of death for inheritance transfers"><input value={pcorForm.inheritanceDate} onChange={e=>updPcor("inheritanceDate",e.target.value)} placeholder="e.g. 01/15/2026" style={{...ST.inp,marginTop:8}}/></Field>}
                   {pcorForm.transferType==="Other"&&<input value={pcorForm.transferTypeOther} onChange={e=>updPcor("transferTypeOther",e.target.value)} placeholder="Please describe the transfer" style={{...ST.inp,marginTop:8}}/>}
@@ -2430,7 +2430,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 <div style={ST.sec}>Part 4 — Property Information</div>
                 <Field label="Type of property transferred">
                   <select value={pcorForm.propertyType} onChange={e=>updPcor("propertyType",e.target.value)} style={ST.inp}>
-                    {["Single-family residence","Multiple-family residence (2-4 units)","Condominium","Co-op/Own-your-own","Manufactured home","Unimproved lot","Timeshare","Commercial/Industrial","Other"].map(t=><option key={t} value={t}>{t}</option>)}
+                    <option value="">— Select property type —</option>{["Single-family residence","Multiple-family residence (2-4 units)","Condominium","Co-op/Own-your-own","Manufactured home","Unimproved lot","Timeshare","Commercial/Industrial","Other"].map(t=><option key={t} value={t}>{t}</option>)}
                   </select>
                 </Field>
                 <Field label="Does the property produce rental or other income?">
