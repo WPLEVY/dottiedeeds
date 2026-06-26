@@ -438,14 +438,16 @@ const genTrust = (f,m) => {
   return recHdr(m) +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 4pt;">GRANT DEED</div>' +
     '<div style="text-align:center;font-size:11pt;margin-bottom:12pt;">(Transfer ' + (isInto?"Into":"Out of") + ' Trust)</div>' +
-    '<div class="two-col" style="margin-bottom:12pt;">' +
-      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div>' +
-        '<div>' + trusteeForTax + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
-      '</div>' +
-      '<div class="col-r"><div class="col-label">The Undersigned Grantor(s) Declare(s):</div>' +
-        '<div>Documentary Transfer Tax: $0<br>R&amp;T §11930 — transfer to/from Living Trust<br>Not Pursuant to Sale<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
-      '</div>' +
-    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:12pt;"><tr>' +
+      '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
+        '<div style="font-size:11pt;">' + trusteeForTax + '<br>' + (f.granteeAddress||"[GRANTEE ADDRESS]") + '</div>' +
+      '</td>' +
+      '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Grantor(s) Declare(s):</div>' +
+        '<div style="font-size:11pt;">Documentary Transfer Tax: $0<br>R&amp;T §11930 — transfer to/from Living Trust<br>Not Pursuant to Sale<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
+      '</td>' +
+    '</tr></table>' +
     '<hr class="rule">' +
     '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"[COUNTY]") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
     '<div class="body-text">' + (f.grantor||"[GRANTOR NAME AND VESTING]") + ',</div>' +
