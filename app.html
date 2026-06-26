@@ -1269,7 +1269,7 @@ function DottieDeeds() {
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
   const [authFirm, setAuthFirm] = useState("");
-  const [authRole, setAuthRole] = useState("Attorney");
+  const [authRole, setAuthRole] = useState("");
   const [authMode, setAuthMode] = useState("login"); // login | signup | forgot
   const [authLoading, setAuthLoading] = useState(false);
   const [adminUsers, setAdminUsers] = useState([]);
@@ -1315,49 +1315,49 @@ function DottieDeeds() {
   const [master, setMaster] = useState(() => { try { const s = localStorage.getItem("dd_master"); return s?{...DEFAULT_MASTER,...JSON.parse(s)}:DEFAULT_MASTER; } catch { return DEFAULT_MASTER; } });
 
   const blank = (m=DEFAULT_MASTER) => ({
-    grantor:"", grantorCapacity:"Individual", apn:"", county:"", countyOfResidence:"",
-    propertyAddress:"", granteeAddress:"", grantorPronoun:"his/her", rtCodeKey:"",
+    grantor:"", grantorCapacity:"", apn:"", county:"", countyOfResidence:"",
+    propertyAddress:"", granteeAddress:"", grantorPronoun:"", rtCodeKey:"",
     trustorAddress:"", loanAmountWords:"", seniorLienRecordingDate:"",
-    seniorLienType:"DEED OF TRUST", spouseCurrentVesting:"", isAmended:false,
+    seniorLienType:"", spouseCurrentVesting:"", isAmended:false,
     legalDescription:"", cityOfProperty:"",
     exemptFromTax:false, exemptReason:((m&&m.defaultExemptReason)||"R&T §11930 — transfer to/from trust"), dtt:"",
-    grantee:"", granteeVesting:VESTING[0], customVesting:"",
+    grantee:"", granteeVesting:"", customVesting:"",
     trustName:"", trustDate:"", trustType:"Revocable Living Trust", settlorName:"",
-    trusteeName:"", trustTransferReason:"T1", beneficiaryName:"",
-    isSettlorDeceased:false, dateOfDeath:"", prop19:"P4", certify19100:false,
-    dotPosition:"first", trustorName:"", trustorVesting:VESTING[0],
-    trustorCustomVesting:"", trustorCapacity:"Individual",
+    trusteeName:"", trustTransferReason:"", beneficiaryName:"",
+    isSettlorDeceased:false, dateOfDeath:"", prop19:"", certify19100:false,
+    dotPosition:"", trustorName:"", trustorVesting:"",
+    trustorCustomVesting:"", trustorCapacity:"",
     beneficiaryLenderName:"", beneficiaryLenderAddress:"",
     dotTrustee:((m&&m.defaultTrustee)||""), loanAmount:"",
     dueOnSale:((m&&m.defaultDueOnSale)!==false), lateChargeDays:"", lateChargePercent:"",
     businessPurpose:false, customRiders:"", requestNOD:false,
     seniorLienHolder:"", seniorLienAmount:"", seniorLienRecording:"",
-    spouseName:"", spouseVesting:VESTING[2], interspousalReason:"I1",
-    survivingJointTenant:"", deceasedJointTenant:"", deceasedJointTenantAKA:"", originalDeedType:"Grant Deed", dateOfDeathJT:"", placeOfDeath:"",
+    spouseName:"", spouseVesting:"", interspousalReason:"",
+    survivingJointTenant:"", deceasedJointTenant:"", deceasedJointTenantAKA:"", originalDeedType:"", dateOfDeathJT:"", placeOfDeath:"",
     originalDeedDate:"", originalDeedRecording:"", originalDeedGrantor:"", originalDeedRecordingDate:"",
     deceasedTrusteeName:"", successorTrusteeName:"", dateOfDeathTrustee:"",
     decedentName:"", sscp_isPrimaryResidence:false, sscp_sb2Exempt:false,
-    todOwner:"", todOwnerVesting:VESTING[0], todOwnerZip:"", todBeneficiaryType:"Individual",
+    todOwner:"", todOwnerVesting:"", todOwnerZip:"", todBeneficiaryType:"",
     todEntityName:"", todBeneficiaryRelationship:"",
     todBeneficiary:"", todBeneficiary2:"", todTrustName:"", todTrustDate:"", todTrusteeName:"",
     reconTrustee:"", reconBeneficiary:"", reconOriginalDeedDate:"", reconRecording:"",
-    reconLoanAmount:"", reconType:"standard", reconRecordingDate:"",
+    reconLoanAmount:"", reconType:"", reconRecordingDate:"",
     reconOriginalTrustee:"", reconNewTrustee:"", reconSuccessionReason:"",
     reconSuccessorTrustName:"", reconSuccessorTrustTitle:"",
-    easementType:"ingress_egress", easementTypeCustom:"", easementDescription:"",
+    easementType:"", easementTypeCustom:"", easementDescription:"",
     easementTerms:"", easementWidth:"", easementExclusive:false, dominantDescription:"",
-    dotModPosition:"first", dotModTerms:"", dotModNewAmount:"", dotModNewMaturity:"", dotModNewRate:"",
+    dotModPosition:"", dotModTerms:"", dotModNewAmount:"", dotModNewMaturity:"", dotModNewRate:"",
     trusteeSaleDate:"", trusteeSaleLocation:"", trusteeSalePrice:"",
     sheriffName:"", courtName:"", caseNumber:"", caseName:"", judgmentDate:"",
     judgmentCreditor:"", judgmentDebtor:"",
     // Signing capacity sub-fields
-    capTrustName:"", capTrustDate:"", capCoTrustees:"", capTrusteeRole:"Trustee",
+    capTrustName:"", capTrustDate:"", capCoTrustees:"", capTrusteeRole:"",
     capDeceasedTrusteeName:"",
     capAifPrincipal:"", capAifAgent:"",
-    capEntityName:"", capEntityState:"California", capOfficerTitle:"",
-    capPartnershipName:"", capPartnershipType:"LP", capPartnerTitle:"General Partner",
-    capEstateName:"", capPRCourt:"", capPRCaseNo:"", capPRRole:"Executor",
-    capWardName:"", capGCRole:"Guardian",
+    capEntityName:"", capEntityState:"", capOfficerTitle:"",
+    capPartnershipName:"", capPartnershipType:"", capPartnerTitle:"",
+    capEstateName:"", capPRCourt:"", capPRCaseNo:"", capPRRole:"",
+    capWardName:"", capGCRole:"",
     capReceiverCourt:"", capReceiverCaseNo:"",
   });
 
@@ -1523,7 +1523,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               <div style={{marginBottom:16}}>
                 <label style={ST.lbl}>Role</label>
                 <select value={authRole} onChange={e=>setAuthRole(e.target.value)} style={ST.inp}>
-                  <option>Attorney</option><option>Paralegal</option><option>Legal Assistant</option><option>Office Manager</option><option>Other</option>
+                  <option value="">— Select role —</option><option>Attorney</option><option>Paralegal</option><option>Legal Assistant</option><option>Office Manager</option><option>Other</option>
                 </select>
               </div>
             </>}
@@ -1937,7 +1937,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 <div style={{...ST.sec,marginTop:0}}>Signing capacity</div>
                 <Field label="How is the grantor signing?">
                   <select value={form.grantorCapacity} onChange={e=>upd("grantorCapacity",e.target.value)} style={ST.inp}>
-                    {(docType==="granttrust"
+                    <option value="">— Select capacity —</option>{(docType==="granttrust"
                       ? ["Trustee","Successor Trustee","Attorney-in-Fact","Corporate Officer","LLC Manager / Member","General Partner","Personal Representative"]
                       : CAPACITY
                     ).map(c=><option key={c} value={c}>{c}</option>)}
@@ -1948,7 +1948,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 {(form.grantorCapacity==="Trustee")&&<>
                   <Field label="Trust name"><input value={form.capTrustName} onChange={e=>upd("capTrustName",e.target.value)} placeholder="e.g. The Smith Family Revocable Trust" style={ST.inp}/></Field>
                   <Field label="Trust date"><input value={form.capTrustDate} onChange={e=>upd("capTrustDate",e.target.value)} placeholder="e.g. January 15, 2018" style={ST.inp}/></Field>
-                  <Field label="Trustee role"><select value={form.capTrusteeRole} onChange={e=>upd("capTrusteeRole",e.target.value)} style={ST.inp}><option value="Trustee">Trustee</option><option value="Co-Trustee">Co-Trustee</option></select></Field>
+                  <Field label="Trustee role"><select value={form.capTrusteeRole} onChange={e=>upd("capTrusteeRole",e.target.value)} style={ST.inp}><option value="">— Select role —</option><option value="Trustee">Trustee</option><option value="Co-Trustee">Co-Trustee</option></select></Field>
                   {form.capTrusteeRole==="Co-Trustee"&&<Field label="All co-trustee names" hint="Enter all trustees who will sign, one per line"><textarea value={form.capCoTrustees} onChange={e=>upd("capCoTrustees",e.target.value)} rows={3} placeholder="e.g. John Smith, Trustee&#10;Jane Smith, Co-Trustee" style={{...ST.inp,resize:"vertical"}}/></Field>}
                 </>}
 
@@ -1982,7 +1982,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 {/* General Partner sub-fields */}
                 {form.grantorCapacity==="General Partner"&&<>
                   <Field label="Partnership name"><input value={form.capPartnershipName} onChange={e=>upd("capPartnershipName",e.target.value)} placeholder="e.g. Smith Family Limited Partnership" style={ST.inp}/></Field>
-                  <Field label="Partnership type"><select value={form.capPartnershipType} onChange={e=>upd("capPartnershipType",e.target.value)} style={ST.inp}><option value="LP">Limited Partnership (LP)</option><option value="LLP">Limited Liability Partnership (LLP)</option><option value="GP">General Partnership (GP)</option></select></Field>
+                  <Field label="Partnership type"><select value={form.capPartnershipType} onChange={e=>upd("capPartnershipType",e.target.value)} style={ST.inp}><option value="">— Select type —</option><option value="LP">Limited Partnership (LP)</option><option value="LLP">Limited Liability Partnership (LLP)</option><option value="GP">General Partnership (GP)</option></select></Field>
                   <Field label="Partner name and title"><input value={form.capPartnerTitle} onChange={e=>upd("capPartnerTitle",e.target.value)} placeholder="e.g. Jane Smith, General Partner" style={ST.inp}/></Field>
                 </>}
 
@@ -1991,13 +1991,13 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   <Field label="Estate name"><input value={form.capEstateName} onChange={e=>upd("capEstateName",e.target.value)} placeholder="e.g. Estate of John Robert Smith" style={ST.inp}/></Field>
                   <Field label="Appointing court"><input value={form.capPRCourt} onChange={e=>upd("capPRCourt",e.target.value)} placeholder="e.g. Superior Court of California, County of Los Angeles" style={ST.inp}/></Field>
                   <Field label="Case number"><input value={form.capPRCaseNo} onChange={e=>upd("capPRCaseNo",e.target.value)} placeholder="e.g. 24STPB12345" style={ST.inp}/></Field>
-                  <Field label="Role"><select value={form.capPRRole} onChange={e=>upd("capPRRole",e.target.value)} style={ST.inp}><option value="Executor">Executor</option><option value="Administrator">Administrator</option><option value="Administrator with Will Annexed">Administrator with Will Annexed</option><option value="Special Administrator">Special Administrator</option></select></Field>
+                  <Field label="Role"><select value={form.capPRRole} onChange={e=>upd("capPRRole",e.target.value)} style={ST.inp}><option value="">— Select role —</option><option value="Executor">Executor</option><option value="Administrator">Administrator</option><option value="Administrator with Will Annexed">Administrator with Will Annexed</option><option value="Special Administrator">Special Administrator</option></select></Field>
                 </>}
 
                 {/* Guardian / Conservator sub-fields */}
                 {form.grantorCapacity==="Guardian / Conservator"&&<>
                   <Field label="Ward / conservatee name"><input value={form.capWardName} onChange={e=>upd("capWardName",e.target.value)} placeholder="e.g. John Robert Smith" style={ST.inp}/></Field>
-                  <Field label="Role"><select value={form.capGCRole} onChange={e=>upd("capGCRole",e.target.value)} style={ST.inp}><option value="Guardian">Guardian</option><option value="Conservator of the Estate">Conservator of the Estate</option><option value="Conservator of the Person">Conservator of the Person</option><option value="Guardian of the Estate">Guardian of the Estate</option></select></Field>
+                  <Field label="Role"><select value={form.capGCRole} onChange={e=>upd("capGCRole",e.target.value)} style={ST.inp}><option value="">— Select role —</option><option value="Guardian">Guardian</option><option value="Conservator of the Estate">Conservator of the Estate</option><option value="Conservator of the Person">Conservator of the Person</option><option value="Guardian of the Estate">Guardian of the Estate</option></select></Field>
                 </>}
 
                 {/* Receiver sub-fields */}
@@ -2046,7 +2046,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
 
             {(docType==="grant"||docType==="granttrust")&&<>
               <Field label="Grantee — full name"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. Jane Doe and Robert Doe" style={ST.inp}/></Field>
-              <Field label="How the grantee takes title" ><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom vesting...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting language" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="How the grantee takes title" ><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom vesting...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting language" style={{...ST.inp,marginTop:8}}/>}</Field>
               <Field label="Grantee mailing address"><input value={form.granteeAddress} onChange={e=>upd("granteeAddress",e.target.value)} placeholder="e.g. 123 Main Street, Los Angeles, CA 90001" style={ST.inp}/></Field>
               <Field label="Documentary Transfer Tax"><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:10,fontSize:13,color:C.muted}}><input type="checkbox" checked={form.exemptFromTax} onChange={e=>upd("exemptFromTax",e.target.checked)} style={{width:15,height:15}}/>Exempt from Documentary Transfer Tax</label>{form.exemptFromTax?<RTDropdown/>:<input value={form.dtt} onChange={e=>upd("dtt",e.target.value)} placeholder="e.g. 935.00" style={ST.inp}/>}</Field>
               {docType==="granttrust"&&<>
@@ -2054,10 +2054,10 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:16,fontSize:13,color:C.muted}}><input type="checkbox" checked={form.isAmended} onChange={e=>upd("isAmended",e.target.checked)} style={{width:15,height:15}}/>Trust has been amended — include "as amended"</label>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Trust date"><input value={form.trustDate} onChange={e=>upd("trustDate",e.target.value)} placeholder="e.g. January 15, 2018" style={ST.inp}/></Field><Field label="Settlor(s)"><input value={form.settlorName} onChange={e=>upd("settlorName",e.target.value)} placeholder="e.g. John Smith and Jane Smith" style={ST.inp}/></Field></div>
                 <Field label="Trustee(s)"><input value={form.trusteeName} onChange={e=>upd("trusteeName",e.target.value)} placeholder="e.g. John Smith and Jane Smith" style={ST.inp}/></Field>
-                <Field label="Reason for transfer"><select value={form.trustTransferReason} onChange={e=>upd("trustTransferReason",e.target.value)} style={ST.inp}><option value="T1">Transfer into trust by settlor (initial funding)</option><option value="T2">Transfer out of trust to beneficiary (distribution)</option><option value="T3">Transfer between trusts</option><option value="T4">Transfer upon death of settlor — successor trustee</option><option value="T5">Refinance — out then back into trust</option></select></Field>
+                <Field label="Reason for transfer"><select value={form.trustTransferReason} onChange={e=>upd("trustTransferReason",e.target.value)} style={ST.inp}><option value="">— Select reason —</option><option value="T1">Transfer into trust by settlor (initial funding)</option><option value="T2">Transfer out of trust to beneficiary (distribution)</option><option value="T3">Transfer between trusts</option><option value="T4">Transfer upon death of settlor — successor trustee</option><option value="T5">Refinance — out then back into trust</option></select></Field>
                 {["T2","T4"].includes(form.trustTransferReason)&&<Field label="Beneficiary name"><input value={form.beneficiaryName} onChange={e=>upd("beneficiaryName",e.target.value)} placeholder="e.g. Sarah Smith, an unmarried woman" style={ST.inp}/></Field>}
                 <div style={{background:"#f8f4ec",border:`1px solid ${C.rule}`,padding:"14px 16px",borderRadius:2,marginBottom:18}}><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:form.isSettlorDeceased?12:0,fontSize:13,color:"#8a6020"}}><input type="checkbox" checked={form.isSettlorDeceased} onChange={e=>upd("isSettlorDeceased",e.target.checked)} style={{width:15,height:15}}/>Settlor is deceased — successor trustee transfer</label>{form.isSettlorDeceased&&<Field label="Date of death"><input value={form.dateOfDeath} onChange={e=>upd("dateOfDeath",e.target.value)} placeholder="e.g. March 10, 2025" style={ST.inp}/></Field>}</div>
-                <Field label="Prop 19 reassessment exclusion"><select value={form.prop19} onChange={e=>upd("prop19",e.target.value)} style={ST.inp}><option value="P4">Not applicable</option><option value="P1">Parent to child — primary residence</option><option value="P2">Child to parent</option><option value="P3">Grandparent to grandchild (both parents deceased)</option></select></Field>
+                <Field label="Prop 19 reassessment exclusion"><select value={form.prop19} onChange={e=>upd("prop19",e.target.value)} style={ST.inp}><option value="">— Select —</option><option value="P4">Not applicable</option><option value="P1">Parent to child — primary residence</option><option value="P2">Child to parent</option><option value="P3">Grandparent to grandchild (both parents deceased)</option></select></Field>
                 <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}><input type="checkbox" checked={form.certify19100} onChange={e=>upd("certify19100",e.target.checked)} style={{width:15,height:15,marginTop:2}}/>Include Probate Code §18100.5 trustee certification</label>
               </>}
             </>}
@@ -2067,12 +2067,12 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               {form.dotPosition==="second"&&(<div style={{background:"#f0f8f0",border:"1px solid #b0d090",padding:"14px 16px",borderRadius:2,marginBottom:18}}>
                 <div style={{fontSize:11,color:"#3a6010",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Senior lien information</div>
                 <Field label="Senior lien holder"><input value={form.seniorLienHolder} onChange={e=>upd("seniorLienHolder",e.target.value)} placeholder="e.g. UBS Bank USA" style={ST.inp}/></Field>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Senior lien type"><select value={form.seniorLienType} onChange={e=>upd("seniorLienType",e.target.value)} style={ST.inp}><option value="DEED OF TRUST">DEED OF TRUST</option><option value="MORTGAGE">MORTGAGE</option></select></Field><Field label="Senior lien amount ($)"><input value={form.seniorLienAmount} onChange={e=>upd("seniorLienAmount",e.target.value)} placeholder="e.g. 500,000" style={ST.inp}/></Field></div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Senior lien type"><select value={form.seniorLienType} onChange={e=>upd("seniorLienType",e.target.value)} style={ST.inp}><option value="">— Select —</option><option value="DEED OF TRUST">DEED OF TRUST</option><option value="MORTGAGE">MORTGAGE</option></select></Field><Field label="Senior lien amount ($)"><input value={form.seniorLienAmount} onChange={e=>upd("seniorLienAmount",e.target.value)} placeholder="e.g. 500,000" style={ST.inp}/></Field></div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Recording date"><input value={form.seniorLienRecordingDate} onChange={e=>upd("seniorLienRecordingDate",e.target.value)} placeholder="e.g. 01/25/2022" style={ST.inp}/></Field><Field label="Instrument number"><input value={form.seniorLienRecording} onChange={e=>upd("seniorLienRecording",e.target.value)} placeholder="e.g. 2022008090" style={ST.inp}/></Field></div>
                 <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:13,color:C.muted}}><input type="checkbox" checked={form.requestNOD} onChange={e=>upd("requestNOD",e.target.checked)} style={{width:15,height:15}}/>Request for notice of default on senior lien (CC §2924b)</label>
               </div>)}
-              <Field label="How trustor holds title"><select value={form.trustorVesting} onChange={e=>upd("trustorVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.trustorVesting==="custom"&&<input value={form.trustorCustomVesting} onChange={e=>upd("trustorCustomVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
-              <Field label="Trustor signing capacity"><select value={form.trustorCapacity} onChange={e=>upd("trustorCapacity",e.target.value)} style={ST.inp}>{["Individual","Trustee","Corporate Officer","LLC Manager / Member","General Partner","Attorney-in-Fact"].map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
+              <Field label="How trustor holds title"><select value={form.trustorVesting} onChange={e=>upd("trustorVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.trustorVesting==="custom"&&<input value={form.trustorCustomVesting} onChange={e=>upd("trustorCustomVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="Trustor signing capacity"><select value={form.trustorCapacity} onChange={e=>upd("trustorCapacity",e.target.value)} style={ST.inp}><option value="">— Select capacity —</option>{["Individual","Trustee","Corporate Officer","LLC Manager / Member","General Partner","Attorney-in-Fact"].map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
               {form.trustorCapacity==="Trustee"&&<><Field label="Trust name"><input value={form.capTrustName} onChange={e=>upd("capTrustName",e.target.value)} placeholder="e.g. The Smith Family Trust" style={ST.inp}/></Field><Field label="Trust date"><input value={form.capTrustDate} onChange={e=>upd("capTrustDate",e.target.value)} placeholder="e.g. January 15, 2018" style={ST.inp}/></Field></>}
               {(form.trustorCapacity==="Corporate Officer"||form.trustorCapacity==="LLC Manager / Member")&&<><Field label="Entity name"><input value={form.capEntityName} onChange={e=>upd("capEntityName",e.target.value)} placeholder="e.g. Smith Properties Inc." style={ST.inp}/></Field><Field label="State of formation"><input value={form.capEntityState} onChange={e=>upd("capEntityState",e.target.value)} placeholder="California" style={ST.inp}/></Field><Field label="Officer/Manager name and title"><input value={form.capOfficerTitle} onChange={e=>upd("capOfficerTitle",e.target.value)} placeholder="e.g. Jane Smith, Managing Member" style={ST.inp}/></Field></>}
               {form.trustorCapacity==="Attorney-in-Fact"&&<><Field label="Principal name"><input value={form.capAifPrincipal} onChange={e=>upd("capAifPrincipal",e.target.value)} placeholder="e.g. John Robert Smith" style={ST.inp}/></Field><Field label="AIF name"><input value={form.capAifAgent} onChange={e=>upd("capAifAgent",e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/></Field></>}
@@ -2088,20 +2088,20 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
             {docType==="quitclaim"&&<>
               <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:16}}>A Quitclaim Deed releases whatever interest the grantor holds — with no warranties of title.</div>
               <Field label="Grantee — full name"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. Jane Doe, an unmarried woman" style={ST.inp}/></Field>
-              <Field label="How grantee takes title"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="How grantee takes title"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
               <Field label="Grantee mailing address"><input value={form.granteeAddress} onChange={e=>upd("granteeAddress",e.target.value)} placeholder="e.g. 123 Main Street, Oakland, CA 94601" style={ST.inp}/></Field>
               <Field label="Documentary Transfer Tax"><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:10,fontSize:13,color:C.muted}}><input type="checkbox" checked={form.exemptFromTax} onChange={e=>upd("exemptFromTax",e.target.checked)} style={{width:15,height:15}}/>Exempt from Documentary Transfer Tax</label>{form.exemptFromTax?<RTDropdown/>:<input value={form.dtt} onChange={e=>upd("dtt",e.target.value)} placeholder="e.g. 935.00" style={ST.inp}/>}</Field>
             </>}
 
             {docType==="interspousal"&&<>
               
-              <Field label="Reason for transfer"><select value={form.interspousalReason} onChange={e=>upd("interspousalReason",e.target.value)} style={ST.inp}><option value="I1">Adding spouse to title</option><option value="I2">Removing spouse from title (refinance)</option><option value="I3">Divorce / marital settlement</option><option value="I4">Transmutation — separate to community property</option><option value="I5">Transmutation — community to separate property</option><option value="I6">Estate planning purposes</option></select></Field>
+              <Field label="Reason for transfer"><select value={form.interspousalReason} onChange={e=>upd("interspousalReason",e.target.value)} style={ST.inp}><option value="">— Select reason —</option><option value="I1">Adding spouse to title</option><option value="I2">Removing spouse from title (refinance)</option><option value="I3">Divorce / marital settlement</option><option value="I4">Transmutation — separate to community property</option><option value="I5">Transmutation — community to separate property</option><option value="I6">Estate planning purposes</option></select></Field>
               {["I4","I5"].includes(form.interspousalReason)&&<div style={ST.warn}>Transmutation requires Family Code §852 express declaration. Confirm both spouses understand the legal effect.</div>}
               <Field label="Transferring spouse (grantor)"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. John Smith, a married man" style={ST.inp}/></Field>
               <Field label="Receiving spouse (grantee)"><input value={form.spouseName} onChange={e=>upd("spouseName",e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/></Field>
               <Field label="Transferring spouse current vesting"><input value={form.spouseCurrentVesting} onChange={e=>upd("spouseCurrentVesting",e.target.value)} placeholder="e.g. a married man, as his sole and separate property" style={ST.inp}/></Field>
               <Field label="How grantee takes title" ><select value={form.spouseVesting} onChange={e=>upd("spouseVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}</select></Field>
-              <Field label="Grantor pronoun"><select value={form.grantorPronoun} onChange={e=>upd("grantorPronoun",e.target.value)} style={ST.inp}><option value="his/her">his/her</option><option value="his">his</option><option value="her">her</option><option value="their">their</option></select></Field>
+              <Field label="Grantor pronoun"><select value={form.grantorPronoun} onChange={e=>upd("grantorPronoun",e.target.value)} style={ST.inp}><option value="">— Select —</option><option value="his/her">his/her</option><option value="his">his</option><option value="her">her</option><option value="their">their</option></select></Field>
               <Field label="Grantee mailing address"><input value={form.granteeAddress} onChange={e=>upd("granteeAddress",e.target.value)} placeholder="e.g. 1535 Forest Way, Del Mar, CA 92014" style={ST.inp}/></Field>
             </>}
 
@@ -2111,7 +2111,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               <Field label="Deceased joint tenant — name as it appears on the death certificate"><input value={form.deceasedJointTenant} onChange={e=>upd("deceasedJointTenant",e.target.value)} placeholder="e.g. Allen Joel Blair" style={ST.inp}/></Field>
               <Field label="AKA — name as it appears on the original deed (if different from death certificate)" hint="If the death certificate name differs from how they were vested on title, enter the deed name here to add an AKA clause"><input value={form.deceasedJointTenantAKA} onChange={e=>upd("deceasedJointTenantAKA",e.target.value)} placeholder="e.g. Allen J. Blair (leave blank if same as above)" style={ST.inp}/></Field>
               <Field label="Both joint tenants as vested on prior deed"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. John Smith and Jane Smith, as joint tenants" style={ST.inp}/></Field>
-              <Field label="Original deed type"><select value={form.originalDeedType} onChange={e=>upd("originalDeedType",e.target.value)} style={ST.inp}><option value="Grant Deed">Grant Deed</option><option value="Joint Tenancy Grant Deed">Joint Tenancy Grant Deed</option><option value="Quitclaim Deed">Quitclaim Deed</option><option value="Interspousal Transfer Deed">Interspousal Transfer Deed</option></select></Field>
+              <Field label="Original deed type"><select value={form.originalDeedType} onChange={e=>upd("originalDeedType",e.target.value)} style={ST.inp}><option value="">— Select deed type —</option><option value="Grant Deed">Grant Deed</option><option value="Joint Tenancy Grant Deed">Joint Tenancy Grant Deed</option><option value="Quitclaim Deed">Quitclaim Deed</option><option value="Interspousal Transfer Deed">Interspousal Transfer Deed</option></select></Field>
               <Field label="Original deed grantor(s) — names of the people who signed the original deed" hint="These are the sellers/grantors — not the joint tenants who received title"><input value={form.originalDeedGrantor} onChange={e=>upd("originalDeedGrantor",e.target.value)} placeholder="e.g. Sharon Elizabeth Blair, who acquired title as Sharon E. Murphy, and Richard P. Murray and Kathleen M. Murray" style={ST.inp}/></Field>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Prior deed date"><input value={form.originalDeedDate} onChange={e=>upd("originalDeedDate",e.target.value)} placeholder="e.g. June 1, 2010" style={ST.inp}/></Field><Field label="Recording date"><input value={form.originalDeedRecordingDate} onChange={e=>upd("originalDeedRecordingDate",e.target.value)} placeholder="e.g. June 15, 2010" style={ST.inp}/></Field></div>
               <Field label="Recording instrument number"><input value={form.originalDeedRecording} onChange={e=>upd("originalDeedRecording",e.target.value)} placeholder="e.g. DOC-2015-0049442-00" style={ST.inp}/></Field>
@@ -2150,7 +2150,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               <div style={{...ST.card,fontSize:13,color:"#3a6020",background:"#f0f8f0",borderLeft:`3px solid ${C.green}`,marginBottom:16}}>Exempt from PCOR (R&T §480.3) and Documentary Transfer Tax (R&T §11930). No PCOR required.</div>
               <Field label="Owner (transferor) full name" hint="Must exactly match name shown on title documents"><input value={form.todOwner} onChange={e=>upd("todOwner",e.target.value)} placeholder="e.g. John Robert Smith" style={ST.inp}/></Field>
               <Field label="Owner zip code"><input value={form.todOwnerZip} onChange={e=>upd("todOwnerZip",e.target.value)} placeholder="e.g. 90024" style={ST.inp}/></Field>
-              <Field label="Beneficiary type"><select value={form.todBeneficiaryType} onChange={e=>upd("todBeneficiaryType",e.target.value)} style={ST.inp}><option value="Individual">Individual person</option><option value="Two individuals as joint tenants">Two individuals as joint tenants</option><option value="Two individuals as tenants in common">Two individuals as tenants in common</option><option value="Trustee of a trust">Trustee of a trust</option><option value="Entity">Private or public entity</option></select></Field>
+              <Field label="Beneficiary type"><select value={form.todBeneficiaryType} onChange={e=>upd("todBeneficiaryType",e.target.value)} style={ST.inp}><option value="">— Select type —</option><option value="Individual">Individual person</option><option value="Two individuals as joint tenants">Two individuals as joint tenants</option><option value="Two individuals as tenants in common">Two individuals as tenants in common</option><option value="Trustee of a trust">Trustee of a trust</option><option value="Entity">Private or public entity</option></select></Field>
               {form.todBeneficiaryType==="Trustee of a trust"?<><Field label="Trustee name(s)"><input value={form.todTrusteeName} onChange={e=>upd("todTrusteeName",e.target.value)} style={ST.inp}/></Field><Field label="Trust name"><input value={form.todTrustName} onChange={e=>upd("todTrustName",e.target.value)} style={ST.inp}/></Field><Field label="Trust date"><input value={form.todTrustDate} onChange={e=>upd("todTrustDate",e.target.value)} style={ST.inp}/></Field></>:form.todBeneficiaryType==="Entity"?<Field label="Entity name" hint="State precisely — exactly as the entity is legally named"><input value={form.todEntityName||""} onChange={e=>upd("todEntityName",e.target.value)} placeholder="e.g. Los Angeles County Museum of Art" style={ST.inp}/></Field>:<><Field label={form.todBeneficiaryType.includes("Two")?"Beneficiary 1 — full name":"Beneficiary full name"} hint="Full legal name — do NOT use general terms like 'my children'"><input value={form.todBeneficiary} onChange={e=>upd("todBeneficiary",e.target.value)} placeholder="e.g. Sarah Jane Smith" style={ST.inp}/></Field>{form.todBeneficiaryType.includes("Two")&&<Field label="Beneficiary 2 — full name"><input value={form.todBeneficiary2} onChange={e=>upd("todBeneficiary2",e.target.value)} placeholder="e.g. Michael Robert Smith" style={ST.inp}/></Field>}</>}
               <Field label="Beneficiary&#39;s relationship to owner" hint="Optional — e.g. daughter, son, spouse, friend"><input value={form.todBeneficiaryRelationship||""} onChange={e=>upd("todBeneficiaryRelationship",e.target.value)} placeholder="e.g. daughter" style={ST.inp}/></Field>
               <div style={{background:"#fff8f0",border:`1px solid #e8c060`,borderLeft:`3px solid ${C.gold}`,padding:"12px 16px",fontSize:12,color:"#5a4010",lineHeight:1.8,marginBottom:18}}><strong>Two witnesses required.</strong> Both must be present at the same time when the owner signs. Witnesses do not need their signatures notarized.</div>
@@ -2170,9 +2170,9 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
             </>}
 
             {docType==="easement"&&<>
-              <Field label="Easement type"><select value={form.easementType} onChange={e=>upd("easementType",e.target.value)} style={ST.inp}><option value="ingress_egress">Ingress and Egress</option><option value="utility">Utility</option><option value="access">Access</option><option value="appurtenant">Appurtenant</option><option value="drainage">Drainage</option><option value="solar">Solar access (Civil Code §801.5)</option><option value="conservation">Conservation (Civil Code §815)</option><option value="other">Other — describe below</option></select>{form.easementType==="other"&&<input value={form.easementTypeCustom} onChange={e=>upd("easementTypeCustom",e.target.value)} placeholder="Describe easement type" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="Easement type"><select value={form.easementType} onChange={e=>upd("easementType",e.target.value)} style={ST.inp}><option value="">— Select easement type —</option><option value="ingress_egress">Ingress and Egress</option><option value="utility">Utility</option><option value="access">Access</option><option value="appurtenant">Appurtenant</option><option value="drainage">Drainage</option><option value="solar">Solar access (Civil Code §801.5)</option><option value="conservation">Conservation (Civil Code §815)</option><option value="other">Other — describe below</option></select>{form.easementType==="other"&&<input value={form.easementTypeCustom} onChange={e=>upd("easementTypeCustom",e.target.value)} placeholder="Describe easement type" style={{...ST.inp,marginTop:8}}/>}</Field>
               <Field label="Grantee — who receives the easement"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. Pacific Gas and Electric Company" style={ST.inp}/></Field>
-              <Field label="How grantee holds easement"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="How grantee holds easement"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
               <Field label="Grantee mailing address"><input value={form.granteeAddress} onChange={e=>upd("granteeAddress",e.target.value)} placeholder="e.g. 123 Main Street, Sacramento, CA 95814" style={ST.inp}/></Field>
               <Field label="Easement description" hint="State specific location, dimensions, and purpose."><textarea value={form.easementDescription} onChange={e=>upd("easementDescription",e.target.value)} rows={4} placeholder="e.g. A strip of land 10 feet in width lying 5 feet on each side of the following described centerline..." style={{...ST.inp,resize:"vertical",lineHeight:1.6,fontFamily:"'Courier New',monospace",fontSize:12}}/></Field>
               <Field label="Dominant tenement description" hint="Leave blank for easements in gross"><textarea value={form.dominantDescription} onChange={e=>upd("dominantDescription",e.target.value)} rows={3} placeholder="Legal description of the benefited parcel (if appurtenant)" style={{...ST.inp,resize:"vertical",lineHeight:1.6,fontFamily:"'Courier New',monospace",fontSize:12}}/></Field>
@@ -2199,7 +2199,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               
               <Field label="Trustee (foreclosing trustee) name"><input value={form.reconTrustee} onChange={e=>upd("reconTrustee",e.target.value)} placeholder="e.g. First American Title Insurance Company" style={ST.inp}/></Field>
               <Field label="Purchaser at sale (grantee)"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. ABC Investments LLC, a California limited liability company" style={ST.inp}/></Field>
-              <Field label="How purchaser takes title"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="How purchaser takes title"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
               <Field label="Original trustor (defaulting borrower)"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. Jane Smith, a married woman" style={ST.inp}/></Field>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Original DOT date"><input value={form.reconOriginalDeedDate} onChange={e=>upd("reconOriginalDeedDate",e.target.value)} placeholder="e.g. June 1, 2022" style={ST.inp}/></Field><Field label="Recording date"><input value={form.reconRecordingDate} onChange={e=>upd("reconRecordingDate",e.target.value)} placeholder="e.g. June 15, 2022" style={ST.inp}/></Field></div>
               <Field label="Document number"><input value={form.reconRecording} onChange={e=>upd("reconRecording",e.target.value)} placeholder="e.g. 2022-123456" style={ST.inp}/></Field>
@@ -2218,7 +2218,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               <Field label="Judgment creditor (plaintiff)"><input value={form.judgmentCreditor} onChange={e=>upd("judgmentCreditor",e.target.value)} placeholder="e.g. First Bank of California" style={ST.inp}/></Field>
               <Field label="Judgment debtor (defendant / property owner)"><input value={form.judgmentDebtor} onChange={e=>upd("judgmentDebtor",e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/></Field>
               <Field label="Purchaser at sale (grantee)"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. First Bank of California" style={ST.inp}/></Field>
-              <Field label="How purchaser takes title"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="How purchaser takes title"><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Sale date"><input value={form.trusteeSaleDate} onChange={e=>upd("trusteeSaleDate",e.target.value)} placeholder="e.g. March 15, 2026" style={ST.inp}/></Field><Field label="Sale location"><input value={form.trusteeSaleLocation} onChange={e=>upd("trusteeSaleLocation",e.target.value)} placeholder="e.g. Front steps of the Los Angeles County Courthouse" style={ST.inp}/></Field></div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Judgment amount ($)"><input value={form.reconLoanAmount} onChange={e=>upd("reconLoanAmount",e.target.value)} placeholder="e.g. 500,000" style={ST.inp}/></Field><Field label="Purchase price ($)"><input value={form.trusteeSalePrice} onChange={e=>upd("trusteeSalePrice",e.target.value)} placeholder="e.g. 550,000" style={ST.inp}/></Field></div>
               <Field label="Documentary Transfer Tax"><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:8,fontSize:13,color:C.muted}}><input type="checkbox" checked={form.exemptFromTax} onChange={e=>upd("exemptFromTax",e.target.checked)} style={{width:15,height:15}}/>Exempt (R&T Code §11922)</label>{!form.exemptFromTax&&<input value={form.dtt} onChange={e=>upd("dtt",e.target.value)} placeholder="DTT amount" style={ST.inp}/>}</Field>
