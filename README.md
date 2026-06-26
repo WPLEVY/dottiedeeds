@@ -93,7 +93,7 @@ The objective is to automate everything surrounding it.
 
 Every design decision is guided by five principles:
 
-* AI should augment professionals—not replace them.
+* AI should augment professionals, not replace them.
 * Legal workflows require transparency and explainability.
 * Security must be designed into the product from day one.
 * Simplicity beats feature bloat.
@@ -140,6 +140,16 @@ The current focus is onboarding beta users, measuring product usage, and iterati
 
 ---
 
+# Design Philosophy
+
+I believe AI should augment professionals, not replace them.
+
+The most valuable AI products are not those that generate the most text, but those that remove the most friction from real-world workflows.
+
+Dottie Deeds reflects that philosophy.
+
+---
+
 # Lessons Learned
 
 Building Dottie reinforced that successful AI products require far more than connecting a language model to a user interface.
@@ -155,3 +165,21 @@ Those principles continue to shape every product I build.
 William B. Plevy is a California attorney, California real estate broker, and product builder focused on applying AI to complex professional workflows.
 
 His work explores how legal expertise, product thinking, and modern AI can be combined to reduce operational friction in high-trust industries.
+
+---
+
+# My Philosophy
+
+I don't believe the future belongs to professionals who simply use AI.
+
+I believe it belongs to professionals who understand a domain deeply enough to redesign it.
+
+My work sits at the intersection of domain expertise, systems thinking, and applied AI.
+
+I build software that removes friction from high-trust professional workflows, allowing experts to spend less time on repetitive process and more time on judgment, strategy, and human relationships.
+
+I believe AI should augment professionals, not replace them.
+
+The most valuable AI products are not those that generate the most text, but those that remove the most friction from real-world workflows.
+
+Every product I build reflects that philosophy.
