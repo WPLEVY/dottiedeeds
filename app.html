@@ -2570,7 +2570,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                         propertyCondition: pcorForm.propertyCondition||"Good",
                       };
                       // Fetch PDF via Worker proxy (handles CORS)
-                      const pdfRes = await fetch(PROXY+"/boe502a.pdf");
+                      const pdfRes = await fetch("/boe502a.pdf");
                       if(!pdfRes.ok) throw new Error("Could not fetch BOE-502-A PDF");
                       const pdfBytes = await pdfRes.arrayBuffer();
 
