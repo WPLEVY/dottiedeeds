@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; padding: 0; background: #f5f0e8; }
@@ -20,6 +21,9 @@
 
 const MODEL = "claude-sonnet-4-6";
         const PROXY = "https://dottie-proxy.wplevy.workers.dev";
+const SUPA_URL = "https://mmhodgxhpsractyhxazw.supabase.co";
+const SUPA_KEY = "sb_publishable_dG95yicMPE0Ztep4xiRNoA_u-krCjhO";
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 const C = { gold:"#b8960c", goldlt:"#e8c84a", ink:"#1a1710", paper:"#f5f0e8", cream:"#ede7d8", rule:"#e0d8c8", muted:"#7a7060", green:"#3a7a3a", amber:"#c07a10", red:"#c03020" };
 const ST = {
   inp:{ width:"100%", background:"#fff", border:`1px solid ${C.rule}`, color:C.ink, padding:"10px 14px", fontSize:14, fontFamily:"Georgia,serif", borderRadius:2, outline:"none", boxSizing:"border-box" },
@@ -1256,7 +1260,19 @@ const Header = ({subtitle, onHome, rightContent}) => (
 );
 
 function DottieDeeds() {
-  const [screen, setScreen] = useState(() => { try { const isTrial = new URLSearchParams(window.location.search).get("trial")==="true"; const r = localStorage.getItem("dd_registered"); const validReg = r && JSON.parse(r).email && JSON.parse(r).email.includes("@"); if(isTrial && !validReg) return "intake"; const m = localStorage.getItem("dd_master"); return (m&&JSON.parse(m).firmName)?"home":"onboard"; } catch { return "onboard"; } });
+  const [screen, setScreen] = useState("loading");
+  const [authUser, setAuthUser] = useState(null);
+  const [authProfile, setAuthProfile] = useState(null);
+  const [authError, setAuthError] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authFirm, setAuthFirm] = useState("");
+  const [authRole, setAuthRole] = useState("Attorney");
+  const [authMode, setAuthMode] = useState("login"); // login | signup | forgot
+  const [authLoading, setAuthLoading] = useState(false);
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminDeeds, setAdminDeeds] = useState([]);
   const [intakeForm, setIntakeForm] = useState({name:"",firm:"",email:"",role:"Attorney"});
   const [intakeSubmitting, setIntakeSubmitting] = useState(false);
   const [intakeError, setIntakeError] = useState("");
@@ -1348,14 +1364,61 @@ function DottieDeeds() {
   const upd = useCallback((k,v) => setForm(p=>({...p,[k]:v})), []);
   const oUpd = (k,v) => setOForm(p=>({...p,[k]:v}));
 
+  // Auth state management
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supa.auth.getSession();
+        if (session) {
+          setAuthUser(session.user);
+          const { data: profile } = await supa.from("profiles").select("*").eq("id", session.user.id).single();
+          setAuthProfile(profile);
+          if (profile && !profile.is_approved) {
+            setScreen("pending");
+          } else if (profile && profile.is_approved) {
+            const m = localStorage.getItem("dd_master");
+            setScreen((m && JSON.parse(m).firmName) ? "home" : "onboard");
+          } else {
+            setScreen("auth");
+          }
+        } else {
+          setScreen("auth");
+        }
+      } catch(e) {
+        setScreen("auth");
+      }
+    };
+    initAuth();
+    const { data: { subscription } } = supa.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_OUT") { setAuthUser(null); setAuthProfile(null); setScreen("auth"); }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     setForm(blank(master||DEFAULT_MASTER));
     setExtracted(null); setExtractConf({}); setLegalVerified(false); setStep(0); setOutput("");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docType]);
 
+  // Track deed generation
+  const trackDeed = async (docType, county, completed) => {
+    if (!authUser) return;
+    try {
+      await supa.from("deeds").insert({
+        user_id: authUser.id,
+        doc_type: docType,
+        county: county,
+        completed: completed,
+        downloaded: false,
+      });
+      // Update last_seen
+      await supa.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", authUser.id);
+    } catch(e) {}
+  };
+
   const saveMaster = () => { try { localStorage.setItem("dd_master",JSON.stringify(master)); } catch {} setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500); };
-  const finish = () => { const nm={...DEFAULT_MASTER,...oForm}; setMaster(nm); setForm(blank(nm)); try{localStorage.setItem("dd_master",JSON.stringify(nm));}catch{} setScreen("home"); };
+  const finish = async () => { const nm={...DEFAULT_MASTER,...oForm}; setMaster(nm); setForm(blank(nm)); try{localStorage.setItem("dd_master",JSON.stringify(nm));}catch{} if(authUser){try{await supa.from("profiles").update({firm:oForm.firmName}).eq("id",authUser.id);}catch(e){}} setScreen("home"); };
 
   const handleFile = useCallback(async (file) => {
     if (!file||file.type!=="application/pdf") { setExtractError("Please upload a PDF file."); return; }
@@ -1380,7 +1443,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
   },[]);
 
   const onDrop = useCallback((e)=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files[0]; if(f)handleFile(f); },[handleFile]);
-  const handleGenerate = () => { setOutput(generateDoc(docType,form,master)); setStep(3); };
+  const handleGenerate = () => { const doc = generateDoc(docType,form,master); setOutput(doc); setStep(3); trackDeed(docType, form.county, true); };
   const copyAndDownload = () => {
     const tmp = document.createElement("div"); tmp.innerHTML = output;
     const plainText = tmp.innerText||tmp.textContent||output;
@@ -1411,7 +1474,222 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
     </>
   );
 
-  // ── Intake / Registration ──────────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────────────────
+  if (screen==="loading") return (
+    <div style={{fontFamily:"Georgia,serif",background:C.paper,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",marginBottom:8}}>Dottie Deeds</div>
+        <div style={{fontSize:12,color:C.muted}}>Loading...</div>
+      </div>
+    </div>
+  );
+
+  // ── Auth Screen (Login / Signup / Forgot) ──────────────────────────────────
+  if (screen==="auth") return (
+    <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`}}>
+        <div style={{height:58,padding:"0 28px",display:"flex",alignItems:"center"}}>
+          <div style={{display:"flex",flexDirection:"column",borderRight:`1px solid ${C.rule}`,paddingRight:18,marginRight:18}}>
+            <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Dottie</div>
+            <div style={{fontFamily:"monospace",fontSize:9,color:C.ink,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Deeds</div>
+          </div>
+          <div style={{fontSize:12,color:C.muted,fontStyle:"italic"}}>California deed drafting. Done right.</div>
+        </div>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.gold},${C.goldlt},${C.gold})`}}/>
+      </div>
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"40px 20px"}}>
+        <div style={{maxWidth:440,width:"100%"}}>
+          <div style={{textAlign:"center",marginBottom:28}}>
+            <div style={{fontSize:11,letterSpacing:4,textTransform:"uppercase",color:C.gold,fontFamily:"monospace",marginBottom:10}}>
+              {authMode==="login"?"Welcome Back":authMode==="signup"?"Request Beta Access":"Reset Password"}
+            </div>
+            <h2 style={{fontSize:26,fontWeight:300,marginBottom:8,lineHeight:1.3}}>
+              {authMode==="login"?"Sign in to Dottie Deeds":authMode==="signup"?"Join the beta":"Forgot your password?"}
+            </h2>
+            {authMode==="signup"&&<p style={{fontSize:13,color:C.muted,lineHeight:1.7}}>Beta access is by invitation. Your request will be reviewed before activation.</p>}
+          </div>
+          <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:4,padding:"28px 32px",boxShadow:"0 4px 20px rgba(0,0,0,0.06)"}}>
+            {authMode==="signup"&&<>
+              <div style={{marginBottom:16}}>
+                <label style={ST.lbl}>Your name <span style={{color:C.gold}}>*</span></label>
+                <input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/>
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={ST.lbl}>Firm name <span style={{color:C.gold}}>*</span></label>
+                <input value={authFirm} onChange={e=>setAuthFirm(e.target.value)} placeholder="e.g. Smith & Jones, APC" style={ST.inp}/>
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={ST.lbl}>Role</label>
+                <select value={authRole} onChange={e=>setAuthRole(e.target.value)} style={ST.inp}>
+                  <option>Attorney</option><option>Paralegal</option><option>Legal Assistant</option><option>Office Manager</option><option>Other</option>
+                </select>
+              </div>
+            </>}
+            <div style={{marginBottom:16}}>
+              <label style={ST.lbl}>Email address <span style={{color:C.gold}}>*</span></label>
+              <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="e.g. jane@smithjones.com" type="email" style={ST.inp}/>
+            </div>
+            {authMode!=="forgot"&&<div style={{marginBottom:20}}>
+              <label style={ST.lbl}>Password <span style={{color:C.gold}}>*</span></label>
+              <input value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder={authMode==="signup"?"At least 8 characters":""} type="password" style={ST.inp}/>
+            </div>}
+            {authError&&<div style={{...ST.err,marginBottom:16}}>{authError}</div>}
+            <button
+              disabled={authLoading||!authEmail||(authMode!=="forgot"&&!authPassword)||(authMode==="signup"&&(!authName||!authFirm))}
+              onClick={async()=>{
+                setAuthLoading(true); setAuthError("");
+                try {
+                  if (authMode==="login") {
+                    const {data,error} = await supa.auth.signInWithPassword({email:authEmail,password:authPassword});
+                    if (error) throw error;
+                    const {data:profile} = await supa.from("profiles").select("*").eq("id",data.user.id).single();
+                    setAuthUser(data.user); setAuthProfile(profile);
+                    if (!profile||!profile.is_approved) { setScreen("pending"); }
+                    else {
+                      const m = localStorage.getItem("dd_master");
+                      if (profile.firm && !m) {
+                        const nm = {...DEFAULT_MASTER, firmName: profile.firm};
+                        localStorage.setItem("dd_master", JSON.stringify(nm));
+                        setMaster(nm);
+                      }
+                      setScreen((m&&JSON.parse(m||'{}').firmName)||profile.firm ? "home" : "onboard");
+                    }
+                  } else if (authMode==="signup") {
+                    const {data,error} = await supa.auth.signUp({
+                      email:authEmail, password:authPassword,
+                      options:{data:{name:authName,firm:authFirm,role:authRole}}
+                    });
+                    if (error) throw error;
+                    setScreen("pending");
+                  } else {
+                    const {error} = await supa.auth.resetPasswordForEmail(authEmail,{redirectTo:"https://dottiedeeds.com/app.html"});
+                    if (error) throw error;
+                    setAuthError(""); alert("Password reset email sent. Check your inbox.");
+                    setAuthMode("login");
+                  }
+                } catch(e) { setAuthError(e.message||"An error occurred."); }
+                setAuthLoading(false);
+              }}
+              style={{...ST.btnP,width:"100%",padding:"13px",fontSize:11,opacity:(authLoading||!authEmail||(authMode!=="forgot"&&!authPassword))?0.5:1}}
+            >{authLoading?"Please wait...":{login:"Sign In →",signup:"Request Access →",forgot:"Send Reset Email →"}[authMode]}</button>
+            <div style={{textAlign:"center",marginTop:16,fontSize:12,color:C.muted,lineHeight:2}}>
+              {authMode==="login"&&<><span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("signup");setAuthError("");}}>Request beta access</span> · <span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("forgot");setAuthError("");}}>Forgot password?</span></>}
+              {authMode==="signup"&&<span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("login");setAuthError("");}}>Already have an account? Sign in</span>}
+              {authMode==="forgot"&&<span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("login");setAuthError("");}}>Back to sign in</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Pending Approval ───────────────────────────────────────────────────────
+  if (screen==="pending") return (
+    <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`}}>
+        <div style={{height:58,padding:"0 28px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",flexDirection:"column",borderRight:`1px solid ${C.rule}`,paddingRight:18,marginRight:18}}>
+            <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Dottie</div>
+            <div style={{fontFamily:"monospace",fontSize:9,color:C.ink,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Deeds</div>
+          </div>
+          <button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"6px 14px",fontSize:10}}>Sign out</button>
+        </div>
+        <div style={{height:2,background:`linear-gradient(90deg,${C.gold},${C.goldlt},${C.gold})`}}/>
+      </div>
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"40px 20px"}}>
+        <div style={{maxWidth:480,width:"100%",textAlign:"center"}}>
+          <div style={{fontSize:48,marginBottom:16}}>⏳</div>
+          <h2 style={{fontSize:26,fontWeight:300,marginBottom:12}}>Access Pending</h2>
+          <p style={{fontSize:14,color:C.muted,lineHeight:1.8,marginBottom:24}}>
+            Your account is pending approval. You will receive an email at <strong>{authUser?.email}</strong> once your access has been activated.
+          </p>
+          <p style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
+            Questions? Contact <a href="mailto:william@cunninghamlegal.com" style={{color:C.gold}}>william@cunninghamlegal.com</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Admin Dashboard ────────────────────────────────────────────────────────
+  if (screen==="admin") return (
+    <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <Header subtitle="Admin Dashboard" onHome={()=>setScreen("home")} rightContent={
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"7px 14px",fontSize:10}}>← App</button>
+          <button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"7px 14px",fontSize:10}}>Sign out</button>
+        </div>
+      }/>
+      <div style={{maxWidth:900,margin:"0 auto",padding:"28px 20px",flex:1}}>
+        <div style={ST.sec}>Users</div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr style={{borderBottom:`2px solid ${C.rule}`}}>
+              {["Name","Firm","Email","Role","Approved","Admin","Last Seen","Deeds","Actions"].map(h=>(
+                <th key={h} style={{padding:"8px 10px",textAlign:"left",fontSize:10,letterSpacing:1,textTransform:"uppercase",color:C.muted}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {adminUsers.map(u=>(
+                <tr key={u.id} style={{borderBottom:`1px solid ${C.cream}`}}>
+                  <td style={{padding:"10px"}}>{u.name||"—"}</td>
+                  <td style={{padding:"10px"}}>{u.firm||"—"}</td>
+                  <td style={{padding:"10px",color:C.muted}}>{u.email}</td>
+                  <td style={{padding:"10px"}}>{u.role||"—"}</td>
+                  <td style={{padding:"10px",textAlign:"center"}}>
+                    <span style={{color:u.is_approved?C.green:C.red,fontWeight:"bold"}}>{u.is_approved?"✓":"✗"}</span>
+                  </td>
+                  <td style={{padding:"10px",textAlign:"center"}}>
+                    <span style={{color:u.is_admin?C.gold:C.muted}}>{u.is_admin?"★":"—"}</span>
+                  </td>
+                  <td style={{padding:"10px",color:C.muted,fontSize:11}}>{u.last_seen?new Date(u.last_seen).toLocaleDateString():"Never"}</td>
+                  <td style={{padding:"10px",textAlign:"center"}}>{adminDeeds.filter(d=>d.user_id===u.id).length}</td>
+                  <td style={{padding:"10px"}}>
+                    <div style={{display:"flex",gap:6}}>
+                      {!u.is_approved&&<button onClick={async()=>{
+                        await supa.from("profiles").update({is_approved:true}).eq("id",u.id);
+                        setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,is_approved:true}:p));
+                      }} style={{...ST.btnP,padding:"4px 10px",fontSize:10,background:C.green}}>Approve</button>}
+                      {u.is_approved&&<button onClick={async()=>{
+                        await supa.from("profiles").update({is_approved:false}).eq("id",u.id);
+                        setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,is_approved:false}:p));
+                      }} style={{...ST.btnP,padding:"4px 10px",fontSize:10,background:C.red}}>Revoke</button>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {adminUsers.length===0&&<div style={{padding:"20px",color:C.muted,textAlign:"center"}}>No users yet.</div>}
+        </div>
+        <div style={{...ST.sec,marginTop:32}}>Recent Deeds</div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr style={{borderBottom:`2px solid ${C.rule}`}}>
+              {["User","Document Type","County","Completed","Date"].map(h=>(
+                <th key={h} style={{padding:"8px 10px",textAlign:"left",fontSize:10,letterSpacing:1,textTransform:"uppercase",color:C.muted}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {adminDeeds.slice(0,50).map(d=>{
+                const u = adminUsers.find(u=>u.id===d.user_id);
+                return <tr key={d.id} style={{borderBottom:`1px solid ${C.cream}`}}>
+                  <td style={{padding:"10px",fontSize:11,color:C.muted}}>{u?.email||"—"}</td>
+                  <td style={{padding:"10px"}}>{d.doc_type}</td>
+                  <td style={{padding:"10px"}}>{d.county}</td>
+                  <td style={{padding:"10px",textAlign:"center"}}><span style={{color:d.completed?C.green:C.amber}}>{d.completed?"✓":"…"}</span></td>
+                  <td style={{padding:"10px",color:C.muted,fontSize:11}}>{new Date(d.created_at).toLocaleDateString()}</td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+          {adminDeeds.length===0&&<div style={{padding:"20px",color:C.muted,textAlign:"center"}}>No deeds yet.</div>}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Intake / Registration (legacy — kept for trial URL compat) ─────────────
   if (screen==="intake") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`}}>
@@ -1562,8 +1840,8 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
   // ── Home ───────────────────────────────────────────────────────────────────
   if (screen==="home") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-      <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<div style={{display:"flex",gap:8,alignItems:"center"}}><button onClick={()=>setScreen("guide")} style={{...ST.btnS,padding:"8px 18px",fontSize:10}}>Paralegal Guide</button><button onClick={()=>setScreen("master")} style={{background:C.ink,color:"#d4c49a",border:"none",padding:"9px 18px",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,letterSpacing:1}}>⚙ Firm Settings</button></div>}/>
-      {master.firmName&&<div style={{background:"#f9f6f0",borderBottom:`1px solid ${C.cream}`,padding:"5px 28px",fontSize:11,color:"#8a7a5a",letterSpacing:1}}>{master.firmName}{master.firmCity?` · ${master.firmCity}`:""}</div>}
+      <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<div style={{display:"flex",gap:8,alignItems:"center"}}><button onClick={()=>setScreen("guide")} style={{...ST.btnS,padding:"8px 18px",fontSize:10}}>Paralegal Guide</button><button onClick={()=>setScreen("master")} style={{background:C.ink,color:"#d4c49a",border:"none",padding:"9px 18px",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,letterSpacing:1}}>⚙ Firm Settings</button>{authProfile?.is_admin&&<button onClick={async()=>{const {data:users}=await supa.from("profiles").select("*").order("created_at",{ascending:false});const {data:deeds}=await supa.from("deeds").select("*").order("created_at",{ascending:false});setAdminUsers(users||[]);setAdminDeeds(deeds||[]);setScreen("admin");}} style={{background:"#8a2020",color:"#fff",border:"none",padding:"9px 18px",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,letterSpacing:1}}>⚑ Admin</button>}<button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"8px 14px",fontSize:10}}>Sign out</button></div>}/>
+      {(master.firmName||authProfile?.firm)&&<div style={{background:"#f9f6f0",borderBottom:`1px solid ${C.cream}`,padding:"5px 28px",fontSize:11,color:"#8a7a5a",letterSpacing:1,display:"flex",justifyContent:"space-between"}}><span>{master.firmName||authProfile?.firm}{master.firmCity?` · ${master.firmCity}`:""}</span><span style={{color:C.muted}}>{authProfile?.name||""}</span></div>}
       <div style={{maxWidth:820,margin:"0 auto",padding:"36px 20px",flex:1}}>
         <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:8}}>What would you like to draft today?</h2>
         <p style={{fontSize:14,color:C.muted,marginBottom:28,lineHeight:1.8}}>Select a document type. Dottie guides you through the rest.</p>
