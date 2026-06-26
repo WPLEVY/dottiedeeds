@@ -2574,7 +2574,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
 "+payload.buyerCity+", "+(payload.buyerState||"CA")+" "+(payload.buyerZip||""):""));
                       txt("Assessors parcel number", payload.apn);
                       txt("seller transferor", payload.sellerName);
-                      txt("Buyer's email address", payload.buyerEmail);
+                      txt("Buyer&#39;s email address", payload.buyerEmail);
                       txt("street address or physical location of real property", (payload.propertyAddress||"")+(payload.propertyCity?", "+payload.propertyCity:"")+(payload.propertyCounty?", "+payload.propertyCounty+" County, CA":""));
                       txt("mail property tax information to (name)", payload.mailTaxName||payload.buyerName);
                       txt("Mail property tax informatino to address", payload.mailTaxAddress||payload.buyerAddress);
