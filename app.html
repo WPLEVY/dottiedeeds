@@ -1373,11 +1373,12 @@ function DottieDeeds() {
           setAuthUser(session.user);
           const { data: profile } = await supa.from("profiles").select("*").eq("id", session.user.id).single();
           setAuthProfile(profile);
-          if (profile && !profile.is_approved) {
-            setScreen("pending");
-          } else if (profile && profile.is_approved) {
+          console.log("INIT PROFILE:", JSON.stringify(profile));
+          if (profile && profile.is_approved === true) {
             const m = localStorage.getItem("dd_master");
             setScreen((m && JSON.parse(m).firmName) ? "home" : "onboard");
+          } else if (profile) {
+            setScreen("pending");
           } else {
             setScreen("auth");
           }
@@ -1542,9 +1543,12 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   if (authMode==="login") {
                     const {data,error} = await supa.auth.signInWithPassword({email:authEmail,password:authPassword});
                     if (error) throw error;
-                    const {data:profile} = await supa.from("profiles").select("*").eq("id",data.user.id).single();
+                    const {data:profile, error:profileErr} = await supa.from("profiles").select("*").eq("id",data.user.id).single();
+                    console.log("PROFILE:", JSON.stringify(profile), "ERR:", profileErr?.message);
                     setAuthUser(data.user); setAuthProfile(profile);
-                    if (!profile||!profile.is_approved) { setScreen("pending"); }
+                    const approved = profile && profile.is_approved === true;
+                    console.log("IS_APPROVED:", profile?.is_approved, "approved:", approved);
+                    if (!approved) { setScreen("pending"); }
                     else {
                       const m = localStorage.getItem("dd_master");
                       if (profile.firm && !m) {
