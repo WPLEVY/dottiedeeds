@@ -2351,7 +2351,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   <div style={{display:"flex",gap:24,marginBottom:12}}>
                     {["YES","NO"].map(v=>(
                       <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.isPrimaryResidence===v?"bold":"normal"}}>
-                        <input type="radio" name="isPrimaryResidence" value={v} checked={pcorForm.isPrimaryResidence===v} onChange={()=>updPcor("isPrimaryResidence",v)} style={{width:15,height:15}}/>
+                        <input type="checkbox" checked={pcorForm.isPrimaryResidence===v} onChange={()=>updPcor("isPrimaryResidence",v)} style={{width:15,height:15}}/>
                         {v}
                       </label>
                     ))}
@@ -2364,7 +2364,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   <div style={{display:"flex",gap:24}}>
                     {["YES","NO"].map(v=>(
                       <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.isDisabledVet===v?"bold":"normal"}}>
-                        <input type="radio" name="isDisabledVet" value={v} checked={pcorForm.isDisabledVet===v} onChange={()=>updPcor("isDisabledVet",v)} style={{width:15,height:15}}/>
+                        <input type="checkbox" checked={pcorForm.isDisabledVet===v} onChange={()=>updPcor("isDisabledVet",v)} style={{width:15,height:15}}/>
                         {v}
                       </label>
                     ))}
@@ -2404,7 +2404,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                       <div style={{display:"flex",gap:16,flexShrink:0,paddingTop:2}}>
                         {["YES","NO"].map(v=>(
                           <label key={v} style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:12,fontWeight:pcorForm[key]===v?"bold":"normal",color:pcorForm[key]===v&&v==="YES"?C.green:pcorForm[key]===v&&v==="NO"?C.muted:"inherit"}}>
-                            <input type="radio" name={key} value={v} checked={pcorForm[key]===v} onChange={()=>updPcor(key,v)} style={{width:14,height:14}}/>
+                            <input type="checkbox" checked={pcorForm[key]===v} onChange={()=>updPcor(key,v)} style={{width:14,height:14}}/>
                             {v}
                           </label>
                         ))}
@@ -2442,7 +2442,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   <div style={{display:"flex",gap:24,marginBottom:pcorForm.partialInterest==="YES"?12:0}}>
                     {["YES","NO"].map(v=>(
                       <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13}}>
-                        <input type="radio" name="partialInterest" value={v} checked={pcorForm.partialInterest===v} onChange={()=>updPcor("partialInterest",v)} style={{width:15,height:15}}/>{v}
+                        <input type="checkbox" checked={pcorForm.partialInterest===v} onChange={()=>updPcor("partialInterest",v)} style={{width:15,height:15}}/>{v}
                       </label>
                     ))}
                   </div>
@@ -2467,7 +2467,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   <div style={{display:"flex",gap:24}}>
                     {["YES","NO"].map(v=>(
                       <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13}}>
-                        <input type="radio" name="producesIncome" value={v} checked={pcorForm.producesIncome===v} onChange={()=>updPcor("producesIncome",v)} style={{width:15,height:15}}/>{v}
+                        <input type="checkbox" checked={pcorForm.producesIncome===v} onChange={()=>updPcor("producesIncome",v)} style={{width:15,height:15}}/>{v}
                       </label>
                     ))}
                   </div>
@@ -2476,7 +2476,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
                     {["Good","Average","Fair","Poor"].map(v=>(
                       <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.propertyCondition===v?"bold":"normal"}}>
-                        <input type="radio" name="propertyCondition" value={v} checked={pcorForm.propertyCondition===v} onChange={()=>updPcor("propertyCondition",v)} style={{width:15,height:15}}/>{v}
+                        <input type="checkbox" checked={pcorForm.propertyCondition===v} onChange={()=>updPcor("propertyCondition",v)} style={{width:15,height:15}}/>{v}
                       </label>
                     ))}
                   </div>
@@ -2487,7 +2487,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   <div style={{display:"flex",gap:24}}>
                     {["YES","NO"].map(v=>(
                       <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.hasPersonalProperty===v?"bold":"normal"}}>
-                        <input type="radio" name="hasPersonalProperty" value={v} checked={pcorForm.hasPersonalProperty===v} onChange={()=>updPcor("hasPersonalProperty",v)} style={{width:15,height:15}}/>{v}
+                        <input type="checkbox" checked={pcorForm.hasPersonalProperty===v} onChange={()=>updPcor("hasPersonalProperty",v)} style={{width:15,height:15}}/>{v}
                       </label>
                     ))}
                   </div>
@@ -2497,7 +2497,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   <div style={{display:"flex",gap:24}}>
                     {["YES","NO"].map(v=>(
                       <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.hasManufacturedHome===v?"bold":"normal"}}>
-                        <input type="radio" name="hasManufacturedHome" value={v} checked={pcorForm.hasManufacturedHome===v} onChange={()=>updPcor("hasManufacturedHome",v)} style={{width:15,height:15}}/>{v}
+                        <input type="checkbox" checked={pcorForm.hasManufacturedHome===v} onChange={()=>updPcor("hasManufacturedHome",v)} style={{width:15,height:15}}/>{v}
                       </label>
                     ))}
                   </div>
