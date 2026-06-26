@@ -1292,18 +1292,18 @@ function DottieDeeds() {
   const [pcorForm, setPcorForm] = useState({
     buyerName:"", buyerAddress:"", buyerCity:"", buyerState:"CA", buyerZip:"",
     buyerPhone:"", buyerEmail:"",
-    isPrimaryResidence:"NO", occupancyDate:"",
-    isDisabledVet:"NO",
+    isPrimaryResidence:"", occupancyDate:"",
+    isDisabledVet:"",
     mailTaxName:"", mailTaxAddress:"", mailTaxCity:"", mailTaxState:"CA", mailTaxZip:"",
-    p1a:"NO", p1b:"NO", p1c:"NO", p1d:"NO", p1e:"NO", p1f:"NO", p1g:"NO",
-    p1h:"NO", p1i:"NO", p1j:"NO", p1k:"NO", p1l1:"NO", p1l2:"NO",
-    p1m:"NO", p1n:"NO", p1o:"NO", p1p:"NO", p1q:"NO", p1qDesc:"",
-    dateOfTransfer:"", transferType:"Other", transferTypeOther:"",
-    inheritanceDate:"", partialInterest:"NO", partialPct:"",
+    p1a:"", p1b:"", p1c:"", p1d:"", p1e:"", p1f:"", p1g:"",
+    p1h:"", p1i:"", p1j:"", p1k:"", p1l1:"", p1l2:"",
+    p1m:"", p1n:"", p1o:"", p1p:"", p1q:"", p1qDesc:"",
+    dateOfTransfer:"", transferType:"", transferTypeOther:"",
+    inheritanceDate:"", partialInterest:"", partialPct:"",
     totalPurchasePrice:"", downPayment:"",
-    propertyType:"Single-family residence", hasPersonalProperty:"NO",
-    hasManufacturedHome:"NO", producesIncome:"NO",
-    propertyCondition:"Good", conditionDesc:""
+    propertyType:"", hasPersonalProperty:"",
+    hasManufacturedHome:"", producesIncome:"",
+    propertyCondition:"", conditionDesc:""
   });
   const updPcor = (k,v) => setPcorForm(p=>({...p,[k]:v}));
   const [dragOver, setDragOver] = useState(false);
@@ -2265,17 +2265,6 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 mailTaxName: buyer,
                 mailTaxAddress: form.granteeAddress||"",
                 mailTaxCity: form.cityOfProperty||"",
-                isPrimaryResidence: form.sscp_isPrimaryResidence?"YES":"NO",
-                p1a: (isSpouseDeath||isInter)?"YES":"NO",
-                p1d: docType==="adjt"?"YES":"NO",
-                p1l1: (isTrust&&["T1","T5"].includes(form.trustTransferReason))?"YES":"NO",
-                p1l2: (isTrust&&["T2"].includes(form.trustTransferReason))?"YES":"NO",
-                p1n: isTrust?"YES":"NO",
-                transferType: (docType==="adjt"||docType==="sscp")?"Inheritance":
-                              (docType==="trustees"||docType==="sheriff")?"Foreclosure":
-                              (!form.exemptFromTax&&docType==="grant")?"Purchase":"Other",
-                inheritanceDate: form.dateOfDeathJT||form.dateOfDeath||"",
-                transferTypeOther: form.exemptReason||"",
               }));
               setPcorStep(1);
               setStep(4);
