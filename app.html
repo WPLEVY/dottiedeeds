@@ -2569,9 +2569,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                       };
 
                       // Fill fields
-                      txt("Name and mailing address of buyer/transferee", (payload.buyerName||"") + (payload.buyerAddress?"
-"+payload.buyerAddress:"") + (payload.buyerCity?"
-"+payload.buyerCity+", "+(payload.buyerState||"CA")+" "+(payload.buyerZip||""):""));
+                      txt("Name and mailing address of buyer/transferee", (payload.buyerName||"") + (payload.buyerAddress?"\n"+payload.buyerAddress:"") + (payload.buyerCity?"\n"+payload.buyerCity+", "+(payload.buyerState||"CA")+" "+(payload.buyerZip||""):""));
                       txt("Assessors parcel number", payload.apn);
                       txt("seller transferor", payload.sellerName);
                       txt("Buyer&#39;s email address", payload.buyerEmail);
