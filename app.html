@@ -2515,153 +2515,76 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 </div>
                 <div style={ST.warn}>Review all information above before printing. The PCOR must be filed with the county assessor at or before recording. Missing PCOR results in a $20 additional recording fee.</div>
                 <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
-                  <button onClick={async()=>{
-                    try {
-                      const payload = {
-                        buyerName: pcorForm.buyerName,
-                        buyerAddress: pcorForm.buyerAddress,
-                        buyerCity: pcorForm.buyerCity,
-                        buyerState: pcorForm.buyerState||"CA",
-                        buyerZip: pcorForm.buyerZip,
-                        buyerPhone: pcorForm.buyerPhone,
-                        buyerEmail: pcorForm.buyerEmail,
-                        sellerName: form.grantor,
-                        apn: form.apn,
-                        propertyAddress: form.propertyAddress,
-                        propertyCity: form.cityOfProperty,
-                        propertyCounty: form.county,
-                        isPrimaryResidence: pcorForm.isPrimaryResidence,
-                        occupancyDate: pcorForm.occupancyDate,
-                        isDisabledVet: pcorForm.isDisabledVet||"NO",
-                        mailTaxName: pcorForm.mailTaxName||pcorForm.buyerName,
-                        mailTaxAddress: pcorForm.mailTaxAddress||pcorForm.buyerAddress,
-                        mailTaxCity: pcorForm.mailTaxCity||pcorForm.buyerCity,
-                        mailTaxState: pcorForm.mailTaxState||"CA",
-                        p1a: pcorForm.p1a||"NO",
-                        p1b: pcorForm.p1b||"NO",
-                        p1c: pcorForm.p1c||"NO",
-                        p1d: pcorForm.p1d||"NO",
-                        p1e: pcorForm.p1e||"NO",
-                        p1f: pcorForm.p1f||"NO",
-                        p1g: pcorForm.p1g||"NO",
-                        p1h: pcorForm.p1h||"NO",
-                        p1i: pcorForm.p1i||"NO",
-                        p1j: pcorForm.p1j||"NO",
-                        p1k: pcorForm.p1k||"NO",
-                        p1l1: pcorForm.p1l1||"NO",
-                        p1l2: pcorForm.p1l2||"NO",
-                        p1m: pcorForm.p1m||"NO",
-                        p1n: pcorForm.p1n||"NO",
-                        p1o: pcorForm.p1o||"NO",
-                        p1p: pcorForm.p1p||"NO",
-                        p1q: pcorForm.p1q||"NO",
-                        p1qDesc: pcorForm.p1qDesc||"",
-                        dateOfDeath: pcorForm.inheritanceDate||form.dateOfDeathJT||form.dateOfDeath||"",
-                        dateOfDeathJT: form.dateOfDeathJT||"",
-                        dateOfTransfer: pcorForm.dateOfTransfer||"",
-                        transferType: pcorForm.transferType||"Other",
-                        transferTypeOther: pcorForm.transferTypeOther||"",
-                        partialInterest: pcorForm.partialInterest||"NO",
-                        partialPct: pcorForm.partialPct||"",
-                        totalPurchasePrice: pcorForm.totalPurchasePrice||"",
-                        downPayment: pcorForm.downPayment||"",
-                        propertyType: pcorForm.propertyType||"Single-family residence",
-                        producesIncome: pcorForm.producesIncome||"NO",
-                        propertyCondition: pcorForm.propertyCondition||"Good",
-                      };
-                      // Fetch PDF via Worker proxy (handles CORS)
-                      const pdfRes = await fetch("/boe502a.pdf");
-                      if(!pdfRes.ok) throw new Error("Could not fetch BOE-502-A PDF");
-                      const pdfBytes = await pdfRes.arrayBuffer();
-
-                      // Fill using pdf-lib loaded in page
-                      const { PDFDocument } = PDFLib;
-                      const pdfDoc = await PDFDocument.load(pdfBytes);
-                      const pdfForm = pdfDoc.getForm();
-
-                      const txt = (name, val) => {
-                        if (!val) return;
-                        try { pdfForm.getTextField(name).setText(String(val)); } catch(e) {}
-                      };
-                      const chk = (name, yes) => {
-                        try { const f = pdfForm.getCheckBox(name); yes ? f.check() : f.uncheck(); } catch(e) {}
-                      };
-
-                      // Fill fields
-                      txt("Name and mailing address of buyer/transferee", (payload.buyerName||"") + (payload.buyerAddress?"\n"+payload.buyerAddress:"") + (payload.buyerCity?"\n"+payload.buyerCity+", "+(payload.buyerState||"CA")+" "+(payload.buyerZip||""):""));
-                      txt("Assessors parcel number", payload.apn);
-                      txt("seller transferor", payload.sellerName);
-                      txt("Buyer&#39;s email address", payload.buyerEmail);
-                      txt("street address or physical location of real property", (payload.propertyAddress||"")+(payload.propertyCity?", "+payload.propertyCity:"")+(payload.propertyCounty?", "+payload.propertyCounty+" County, CA":""));
-                      txt("mail property tax information to (name)", payload.mailTaxName||payload.buyerName);
-                      txt("Mail property tax informatino to address", payload.mailTaxAddress||payload.buyerAddress);
-                      txt("city", payload.mailTaxCity||payload.buyerCity);
-                      txt("state", payload.mailTaxState||"CA");
-                      txt("DATE OF DEATH", payload.dateOfDeath||"");
-                      txt("Q. Other. his transfer is to", payload.p1qDesc||"");
-                      txt("A. Date of transfer, if other than recording date", payload.dateOfTransfer||"");
-                      if(payload.transferType==="Inheritance") txt("inheritance.  date of death", payload.dateOfDeath||"");
-                      if(payload.transferType==="Other") txt("other. please explain1", payload.transferTypeOther||"");
-                      if(payload.partialInterest==="YES") txt("if yes, indicate the percentage transferred", payload.partialPct||"");
-                      txt("Total purchase price", payload.totalPurchasePrice||"");
-                      txt("Cash down payment or value of trade or exchange excluding closing costs amount $", payload.downPayment||"");
-                      txt("Name of buyer/transferee/personal representative/corporate officer (please print)", payload.buyerName||"");
-
-                      // Checkboxes - Part 1
-                      chk("This property is intended as my principal residence. If YES, please indicate the date of occupancy or intended occupancy Yes", payload.isPrimaryResidence==="YES");
-                      chk("This property is intended as my principal residence. If YES, please indicate the date of occupancy or intended occupancy_no", payload.isPrimaryResidence!=="YES");
-                      chk("Are you a disabled veteran or an unmarried surviving spouse of a disabled veteran who was compensated at 100% by the Department of Veterans Affairs or an unmarried surviving spouse of a 100% rated disabled veteran? Yes", false);
-                      chk("Are you a disabled veteran or an unmarried surviving spouse of a disabled veteran who was compensated at 100% by the Department of Veterans Affairs or an unmarried surviving spouse of a 100% rated disabled veteran? No", true);
-                      chk("A. This transfer is solely between spouses (addition or removal of a spouse, death of a spouse, divorce settlement, etc.)­yes", payload.p1a==="YES");
-                      chk("A. This transfer is solely between spouses (addition or removal of a spouse, death of a spouse, divorce settlement, etc.)_no1", payload.p1a!=="YES");
-                      chk("B. This transfer is solely between domestic partners currently registered with the California Secretary of State (addition or removal of a partner, death of a partner, termination settlement, etc.)_yes", payload.p1b==="YES");
-                      chk("B. This transfer is solely between domestic partners currently registered with the California Secretary of State (addition or removal of a partner, death of a partner, termination settlement, etc.)_no", payload.p1b!=="YES");
-                      chk("D.This transfer is the result of a cotenant’s death_yes", payload.p1d==="YES");
-                      chk("D.This transfer is the result of a cotenant’s death_no", payload.p1d!=="YES");
-                      chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor’s spouse and/or registered domestic partner Yes", payload.p1l1==="YES");
-                      chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor’s spouse and/or registered domestic partner_no", payload.p1l1!=="YES");
-                      chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor’s trustor’s spouse grantor’s/trustor’s registered domestic partner Yes", payload.p1l2==="YES");
-                      chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor’s trustor’s spouse grantor’s/trustor’s registered domestic partner No", payload.p1l2!=="YES");
-                      chk("N. This is a transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel being transferred remain exactly the same after the transfer yes", payload.p1n==="YES");
-                      chk("N. This is a transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel being transferred remain exactly the same after the transfer no", payload.p1n!=="YES");
-
-                      // Transfer type
-                      chk("B. Type of transfer purchase", payload.transferType==="Purchase");
-                      chk("B. Type of transfer foreclosure", payload.transferType==="Foreclosure");
-                      chk("B. Type of transfer gift", payload.transferType==="Gift");
-                      chk("B. Type of transfer inheritance", payload.transferType==="Inheritance");
-                      chk("B. Type of transfer other", payload.transferType==="Other");
-
-                      // Property type
-                      chk("A. Type of property transferred single-family residence", payload.propertyType==="Single-family residence");
-                      chk("A. Type of property transferred Condominium", payload.propertyType==="Condominium");
-                      chk("A. Type of property transferred multiple-family residence", (payload.propertyType||"").includes("Multiple"));
-                      chk("A. Type of property transferred Unimproved lot", payload.propertyType==="Unimproved lot");
-                      chk("A. Type of property transferred Commercial/Industrial", payload.propertyType==="Commercial/Industrial");
-
-                      // Condition
-                      chk("E. The condition of the property at the time of sale was good", payload.propertyCondition==="Good");
-                      chk("E. The condition of the property at the time of sale was average1", payload.propertyCondition==="Average");
-                      chk("E. The condition of the property at the time of sale was fair", payload.propertyCondition==="Fair");
-                      chk("E. The condition of the property at the time of sale was poor3", payload.propertyCondition==="Poor");
-
-                      // Partial interest
-                      chk("C. Only a partial interest in the property was transferred. Yes", payload.partialInterest==="YES");
-                      chk("Only a partial interest in the property was transferred_no", payload.partialInterest!=="YES");
-
-                      // Save and download
-                      const filledBytes = await pdfDoc.save();
-                      const blob = new Blob([filledBytes], {type:"application/pdf"});
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href=url;
-                      a.download="PCOR_BOE502A_"+(form.apn||"draft").replace(/[^a-zA-Z0-9]/g,"-")+".pdf";
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    } catch(err) {
-                      alert("PCOR PDF error: "+err.message);
-                    }
-                  }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Download Official PCOR (BOE-502-A PDF)</button>
+                  <button onClick={()=>{
+                    const d = pcorForm;
+                    const f = form;
+                    const cb = (yes) => yes===true||yes==="YES" ?
+                      '<span style="display:inline-block;width:11px;height:11px;border:1.5px solid #000;background:#000;color:#fff;font-size:8px;text-align:center;line-height:11px;vertical-align:middle;">&#10003;</span>' :
+                      '<span style="display:inline-block;width:11px;height:11px;border:1.5px solid #000;vertical-align:middle;background:#fff;"></span>';
+                    const buyer = d.buyerName||(f.grantee||f.spouseName||f.survivingJointTenant||f.grantor||"");
+                    const seller = f.grantor||"";
+                    const apn = f.apn||"";
+                    const addr = f.propertyAddress||"";
+                    const city = f.cityOfProperty||"";
+                    const county = f.county||"";
+                    const css = `@page{size:8.5in 11in;margin:0.45in 0.55in;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,Helvetica,sans-serif;font-size:8pt;color:#000;background:#fff;}.page{width:100%;}.bold{font-weight:bold;}table{border-collapse:collapse;width:100%;}td{vertical-align:top;padding:0;}.fl{border-bottom:1px solid #000;min-height:13px;padding:1px 2px;font-size:8pt;}.lbl{font-size:6.5pt;font-style:italic;display:block;margin-bottom:1px;}.shdr{background:#000;color:#fff;padding:2px 4px;font-weight:bold;font-size:8pt;margin:3px 0 2px;}.row{display:flex;align-items:flex-start;margin-bottom:1px;padding:2px 0;border-bottom:1px solid #f0f0f0;}.yn{display:flex;gap:6px;flex-shrink:0;margin-right:5px;white-space:nowrap;padding-top:1px;}.it{font-size:7.5pt;line-height:1.35;flex:1;}.ind{margin-left:14px;}.sl{border-bottom:1px solid #000;min-height:16px;padding:1px;}@media print{.noprint{display:none!important;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}`;
+                    const rows1 = [
+                      ["p1a","A","This transfer is solely between spouses <em>(addition or removal of a spouse, death of a spouse, divorce settlement, etc.)</em>.",""],
+                      ["p1b","B","This transfer is solely between domestic partners currently registered with the California Secretary of State <em>(addition or removal of a partner, death of a partner, termination settlement, etc.)</em>.",""],
+                      ["p1d","D","This transfer is the result of a cotenant&#39;s death. Date of death: <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>"+(f.dateOfDeathJT?" "+f.dateOfDeathJT:""),"*"],
+                      ["p1e","E","This transaction is to replace a principal residence owned by a person 55 years of age or older.","*"],
+                      ["p1f","F","This transaction is to replace a principal residence by a person who is severely disabled.","*"],
+                      ["p1g","G","This transaction is to replace a principal residence substantially damaged or destroyed by a wildfire or natural disaster for which the Governor proclaimed a state of emergency.","*"],
+                      ["p1h","H","This transaction is only a correction of the name(s) of the person(s) holding title to the property. If YES, please explain: <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>",""],
+                      ["p1i","I","The recorded document creates, terminates, or reconveys a lender&#39;s interest in the property.",""],
+                      ["p1j","J","This transaction is recorded only as a requirement for financing purposes or to create, terminate, or reconvey a security interest <em>(e.g., cosigner)</em>. If YES, please explain: <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>",""],
+                      ["p1k","K","The recorded document substitutes a trustee of a trust, mortgage, or other similar document.",""],
+                    ];
+                    const rows2 = [
+                      ["p1m","M","This property is subject to a lease with a remaining lease term of 35 years or more including written options.",""],
+                      ["p1n","N","This is a transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel being transferred remain exactly the same after the transfer.",""],
+                      ["p1o","O","This is a transfer subject to subsidized low-income housing requirements with governmentally imposed restrictions, or restrictions imposed by specified nonprofit corporations.",""],
+                    ];
+                    const html = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>PCOR BOE-502-A — "+apn+"</title><style>"+css+"</style></head><body><div class=\"page\">"
+                    + "<div class=\"noprint\" style=\"background:#1a4a7a;color:#fff;padding:8px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:11px;\"><span><strong>BOE-502-A Preliminary Change of Ownership Report</strong> — Review carefully, then print. Sign before filing with the county recorder.</span><button onclick=\"window.print()\" style=\"background:#fff;color:#1a4a7a;border:none;padding:6px 18px;font-weight:bold;cursor:pointer;font-size:12px;border-radius:2px;\">&#128438; Print / Save PDF</button></div>"
+                    + "<table style=\"margin-bottom:3px;\"><tr><td style=\"width:68%;padding-right:8px;\"><div style=\"font-size:6.5pt;margin-bottom:1px;\">BOE-502-A (P1) REV. 19 (05-25)</div><div class=\"bold\" style=\"font-size:10.5pt;margin-bottom:2px;\">PRELIMINARY CHANGE OF OWNERSHIP REPORT</div><div style=\"font-size:7pt;line-height:1.4;\">To be completed by the transferee (buyer) prior to a transfer of subject property, in accordance with section 480.3 of the Revenue and Taxation Code. A <em>Preliminary Change of Ownership Report</em> must be <strong>filed with each conveyance in the County Recorder&#39;s office for the county where the property is located.</strong></div></td><td style=\"width:32%;border:1.5px solid #000;padding:4px;text-align:center;\"><div style=\"font-size:6.5pt;font-weight:bold;margin-bottom:2px;\">FOR RECORDER&#39;S USE ONLY</div><div style=\"font-size:6.5pt;\">DOCUMENT NO. / RECORDING DATE</div><div style=\"height:28px;border-top:1px solid #000;margin-top:4px;\"></div></td></tr></table>"
+                    + "<table style=\"border:1.5px solid #000;margin-bottom:0;\"><tr><td style=\"width:52%;border-right:1px solid #000;padding:3px;min-height:60px;\"><span class=\"lbl\">NAME AND MAILING ADDRESS OF BUYER/TRANSFEREE<br><em>(Make necessary corrections to the printed name and mailing address)</em></span><div style=\"min-height:45px;font-size:8pt;padding:2px;\">"+buyer+"<br>"+(d.buyerAddress||"")+"<br>"+(d.buyerCity?d.buyerCity+", "+(d.buyerState||"CA")+" "+(d.buyerZip||""):"")+"</div></td><td style=\"padding:3px;\"><span class=\"lbl\">ASSESSOR&#39;S PARCEL NUMBER</span><div class=\"fl\" style=\"margin-bottom:3px;\">"+apn+"</div><span class=\"lbl\">SELLER/TRANSFEROR</span><div class=\"fl\" style=\"margin-bottom:3px;\">"+seller+"</div><span class=\"lbl\">BUYER&#39;S DAYTIME TELEPHONE NUMBER</span><div class=\"fl\" style=\"margin-bottom:3px;\">( "+(d.buyerPhone||"")+" )</div><span class=\"lbl\">BUYER&#39;S EMAIL ADDRESS</span><div class=\"fl\">"+(d.buyerEmail||"")+"</div></td></tr></table>"
+                    + "<table style=\"border:1.5px solid #000;border-top:none;margin-bottom:0;\"><tr><td style=\"padding:3px;\"><span class=\"lbl\">STREET ADDRESS OR PHYSICAL LOCATION OF REAL PROPERTY</span><div class=\"fl\">"+addr+(city?", "+city:"")+(county?", "+county+" County, CA":"")+"</div></td></tr></table>"
+                    + "<table style=\"border:1.5px solid #000;border-top:none;margin-bottom:0;\"><tr><td style=\"padding:3px 4px;\"><div class=\"row\" style=\"border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:2px;\"><div class=\"yn\">"+cb(d.isPrimaryResidence==="YES")+" YES &nbsp; "+cb(d.isPrimaryResidence==="NO")+" NO</div><div class=\"it\">This property is intended as my principal residence. If YES, please indicate the date of occupancy or intended occupancy. &nbsp;&nbsp; MO <u>&nbsp;&nbsp;&nbsp;&nbsp;</u> DAY <u>&nbsp;&nbsp;&nbsp;&nbsp;</u> YEAR <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>"+(d.occupancyDate?" &nbsp;"+d.occupancyDate:"")+"</div></div><div class=\"row\" style=\"border-bottom:none;\"><div class=\"yn\">"+cb(d.isDisabledVet==="YES")+" YES &nbsp; "+cb(d.isDisabledVet==="NO")+" NO</div><div class=\"it\">Are you a 100% rated disabled veteran who was compensated at 100% by the Department of Veterans Affairs or an unmarried surviving spouse of a 100% rated disabled veteran?</div></div></td></tr></table>"
+                    + "<table style=\"border:1.5px solid #000;border-top:none;margin-bottom:3px;\"><tr><td style=\"padding:3px;border-right:1px solid #000;width:42%;\"><span class=\"lbl\">MAIL PROPERTY TAX INFORMATION TO (NAME)</span><div class=\"fl\" style=\"margin-bottom:3px;\">"+(d.mailTaxName||buyer)+"</div><span class=\"lbl\">MAIL PROPERTY TAX INFORMATION TO (ADDRESS)</span><div class=\"fl\">"+(d.mailTaxAddress||d.buyerAddress||"")+"</div></td><td style=\"padding:3px;border-right:1px solid #000;width:28%;\"><span class=\"lbl\">CITY</span><div class=\"fl\">"+(d.mailTaxCity||d.buyerCity||"")+"</div></td><td style=\"padding:3px;border-right:1px solid #000;width:14%;\"><span class=\"lbl\">STATE</span><div class=\"fl\">"+(d.mailTaxState||"CA")+"</div></td><td style=\"padding:3px;width:16%;\"><span class=\"lbl\">ZIP CODE</span><div class=\"fl\">"+(d.mailTaxZip||d.buyerZip||"")+"</div></td></tr></table>"
+                    + "<div class=\"shdr\">PART 1. TRANSFER INFORMATION &nbsp;<span style=\"font-weight:normal;font-style:italic;\">Please complete all statements.</span></div>"
+                    + "<div style=\"font-size:7pt;font-style:italic;margin-bottom:2px;\">This section contains possible exclusions from reassessment for certain types of transfers.</div>"
+                    + "<table style=\"margin-bottom:1px;\"><tr><td style=\"width:48px;font-weight:bold;font-size:7.5pt;padding-bottom:1px;\">YES &nbsp;NO</td><td></td></tr></table>"
+                    + rows1.map(([key,letter,text,star])=>"<div class=\"row\"><div style=\"width:48px;flex-shrink:0;\">"+cb(d[key]==="YES")+" "+cb(d[key]==="NO")+"</div><div class=\"it\">"+(star?star+" ":"")+letter+". "+text+"</div></div>").join("")
+                    + "<div class=\"row\"><div style=\"width:48px;flex-shrink:0;\">"+cb(d.p1l1==="YES"||d.p1l2==="YES")+" "+cb(d.p1l1!=="YES"&&d.p1l2!=="YES")+"</div><div class=\"it\">L. This is a transfer of property:<div class=\"ind\">1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor, and/or "+cb(d.p1l1==="YES")+" the transferor&#39;s spouse &nbsp; "+cb(false)+" registered domestic partner.</div><div class=\"ind\">2. to/from an irrevocable trust for the benefit of the "+cb(d.p1l2==="YES")+" creator/grantor/trustor and/or "+cb(false)+" grantor&#39;s/trustor&#39;s spouse &nbsp; "+cb(false)+" grantor&#39;s/trustor&#39;s registered domestic partner.</div></div></div>"
+                    + rows2.map(([key,letter,text,star])=>"<div class=\"row\"><div style=\"width:48px;flex-shrink:0;\">"+cb(d[key]==="YES")+" "+cb(d[key]==="NO")+"</div><div class=\"it\">"+(star?star+" ":"")+letter+". "+text+"</div></div>").join("")
+                    + "<div class=\"row\"><div style=\"width:48px;flex-shrink:0;\">"+cb(d.p1p==="YES")+" "+cb(d.p1p==="NO")+"</div><div class=\"it\">* P. This transfer is to the first purchaser of a new building containing a "+cb(false)+" leased &nbsp; "+cb(false)+" owned active solar energy system.</div></div>"
+                    + "<div class=\"row\" style=\"border-bottom:none;\"><div style=\"width:48px;flex-shrink:0;\">"+cb(d.p1q==="YES")+" "+cb(d.p1q==="NO")+"</div><div class=\"it\">Q. Other. This transfer is to: <u>&nbsp;"+(d.p1qDesc||"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")+"&nbsp;</u></div></div>"
+                    + "<div style=\"font-size:7pt;font-style:italic;margin:2px 0;\">* Please refer to the instructions for Part 1.</div>"
+                    + "<div style=\"font-size:7.5pt;font-weight:bold;margin-bottom:2px;\">Please provide any other information that will help the Assessor understand the nature of the transfer.</div>"
+                    + "<div style=\"border:1.5px solid #000;text-align:center;padding:2px;font-size:7.5pt;font-weight:bold;margin-bottom:4px;\">THIS DOCUMENT IS NOT SUBJECT TO PUBLIC INSPECTION</div>"
+                    + "<div style=\"font-size:6.5pt;margin-bottom:1px;margin-top:2px;\">BOE-502-A (P2) REV. 19 (05-25)</div>"
+                    + "<div class=\"shdr\">PART 2. OTHER TRANSFER INFORMATION &nbsp;<span style=\"font-weight:normal;font-style:italic;\">Check and complete as applicable.</span></div>"
+                    + "<div style=\"padding:2px 0;font-size:7.5pt;\"><strong>A. Date of transfer, if other than recording date:</strong> <u>&nbsp;"+(d.dateOfTransfer||"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")+"&nbsp;</u></div>"
+                    + "<div style=\"font-size:7.5pt;margin:2px 0 1px;\"><strong>B. Type of transfer:</strong></div>"
+                    + "<table style=\"font-size:7.5pt;margin-bottom:2px;\"><tr><td style=\"padding:1px 10px 1px 0;\">"+cb(d.transferType==="Purchase")+" Purchase</td><td style=\"padding:1px 10px 1px 0;\">"+cb(d.transferType==="Foreclosure")+" Foreclosure</td><td style=\"padding:1px 10px 1px 0;\">"+cb(d.transferType==="Gift")+" Gift</td><td style=\"padding:1px 10px 1px 0;\">"+cb(d.transferType==="Trade or exchange")+" Trade or exchange</td><td style=\"padding:1px 0;\">"+cb(false)+" Merger, stock, or partnership acquisition (Form BOE-100-B)</td></tr><tr><td colspan=\"2\" style=\"padding:1px 10px 1px 0;\">"+cb(d.transferType==="Contract of sale")+" Contract of sale. Date: <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u></td><td colspan=\"2\" style=\"padding:1px 10px 1px 0;\">"+cb(d.transferType==="Inheritance")+" Inheritance. Date of death: <u>&nbsp;"+(d.inheritanceDate||"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")+"&nbsp;</u></td><td style=\"padding:1px 0;\">"+cb(false)+" Boundary Adjustment</td></tr><tr><td style=\"padding:1px 10px 1px 0;\">"+cb(d.transferType==="Sale/leaseback")+" Sale/leaseback</td><td style=\"padding:1px 10px 1px 0;\">"+cb(false)+" Creation of a lease</td><td style=\"padding:1px 10px 1px 0;\">"+cb(false)+" Assignment of a lease</td><td colspan=\"2\" style=\"padding:1px 0;\">"+cb(false)+" Termination of a lease. Date lease began: <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u></td></tr><tr><td colspan=\"5\" style=\"padding:1px 0;\">"+cb(d.transferType==="Other")+" Other. Please explain: <u>&nbsp;"+(d.transferTypeOther||"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")+"&nbsp;</u></td></tr></table>"
+                    + "<div style=\"font-size:7.5pt;margin-bottom:3px;\">C. Only a partial interest in the property was transferred. "+cb(d.partialInterest==="YES")+" YES &nbsp; "+cb(d.partialInterest==="NO")+" NO &nbsp; If YES, indicate the percentage transferred: <u>&nbsp;"+(d.partialPct||"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")+"&nbsp;</u>%</div>"
+                    + "<div class=\"shdr\">PART 3. PURCHASE PRICE AND TERMS OF SALE &nbsp;<span style=\"font-weight:normal;font-style:italic;\">Check and complete as applicable.</span></div>"
+                    + "<table style=\"font-size:7.5pt;margin-bottom:3px;\"><tr><td style=\"padding:2px 8px 2px 0;width:48%;\">A. Total purchase price <u>&nbsp;"+(d.totalPurchasePrice?"$"+d.totalPurchasePrice:"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")+"&nbsp;</u></td><td style=\"padding:2px 0;\">B. Cash down payment or value of trade or exchange excluding closing costs &nbsp; Amount <u>&nbsp;"+(d.downPayment?"$"+d.downPayment:"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")+"&nbsp;</u></td></tr></table>"
+                    + "<div class=\"shdr\">PART 4. PROPERTY INFORMATION &nbsp;<span style=\"font-weight:normal;font-style:italic;\">Check and complete as applicable.</span></div>"
+                    + "<div style=\"font-size:7.5pt;margin-bottom:2px;\"><strong>A. Type of property transferred:</strong></div>"
+                    + "<table style=\"font-size:7.5pt;margin-bottom:3px;\"><tr><td style=\"padding:1px 16px 1px 0;\">"+cb(d.propertyType==="Single-family residence")+" Single-family residence</td><td style=\"padding:1px 16px 1px 0;\">"+cb(d.propertyType==="Co-op/Own-your-own")+" Co-op/Own-your-own</td><td style=\"padding:1px 0;\">"+cb(d.propertyType==="Manufactured home")+" Manufactured home</td></tr><tr><td style=\"padding:1px 16px 1px 0;\">"+cb((d.propertyType||"").includes("Multiple"))+" Multiple-family residence. Number of units: <u>&nbsp;&nbsp;&nbsp;&nbsp;</u></td><td style=\"padding:1px 16px 1px 0;\">"+cb(d.propertyType==="Condominium")+" Condominium</td><td style=\"padding:1px 0;\">"+cb(d.propertyType==="Unimproved lot")+" Unimproved lot</td></tr><tr><td style=\"padding:1px 16px 1px 0;\">"+cb(false)+" Other: <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u></td><td style=\"padding:1px 16px 1px 0;\">"+cb(d.propertyType==="Timeshare")+" Timeshare</td><td style=\"padding:1px 0;\">"+cb(d.propertyType==="Commercial/Industrial")+" Commercial/Industrial</td></tr></table>"
+                    + "<div class=\"row\"><div class=\"yn\">"+cb(false)+" YES &nbsp; "+cb(true)+" NO</div><div class=\"it\">B. Personal/business property, or incentives, provided by seller to buyer are included in the purchase price.</div></div>"
+                    + "<div class=\"row\"><div class=\"yn\">"+cb(false)+" YES &nbsp; "+cb(true)+" NO</div><div class=\"it\">C. A manufactured home is included in the purchase price.</div></div>"
+                    + "<div class=\"row\"><div class=\"yn\">"+cb(d.producesIncome==="YES")+" YES &nbsp; "+cb(d.producesIncome==="NO")+" NO</div><div class=\"it\">D. The property produces rental or other income.</div></div>"
+                    + "<div style=\"font-size:7.5pt;margin:2px 0 4px;\">E. The condition of the property at the time of sale was: "+cb(d.propertyCondition==="Good")+" Good &nbsp; "+cb(d.propertyCondition==="Average")+" Average &nbsp; "+cb(d.propertyCondition==="Fair")+" Fair &nbsp; "+cb(d.propertyCondition==="Poor")+" Poor</div>"
+                    + "<div style=\"border-top:2px solid #000;margin-top:4px;padding-top:4px;\"><div style=\"font-size:8pt;font-weight:bold;text-align:center;margin-bottom:3px;\">CERTIFICATION</div><div style=\"font-size:7pt;font-style:italic;margin-bottom:5px;\">I certify (or declare) that the foregoing and all information hereon, including any accompanying statements or documents, is true and correct to the best of my knowledge and belief.</div><table style=\"font-size:7pt;\"><tr><td style=\"width:50%;padding-right:8px;\"><div class=\"sl\"></div><div>SIGNATURE OF BUYER/TRANSFEREE OR CORPORATE OFFICER</div></td><td style=\"width:20%;padding-right:8px;\"><div class=\"sl\"></div><div>DATE</div></td><td style=\"width:30%;\"><div class=\"sl\"></div><div>TELEPHONE ( )</div></td></tr><tr><td style=\"padding-right:8px;padding-top:5px;\"><div class=\"sl\">"+buyer+"</div><div>NAME OF BUYER/TRANSFEREE (PLEASE PRINT)</div></td><td style=\"padding-right:8px;padding-top:5px;\"><div class=\"sl\"></div><div>TITLE</div></td><td style=\"padding-top:5px;\"><div class=\"sl\"></div><div>EMAIL ADDRESS</div></td></tr></table><div style=\"font-size:7pt;font-style:italic;margin-top:3px;\">The Assessor&#39;s office may contact you for additional information regarding this transaction.</div></div>"
+                    + "</div></body></html>";
+                    const w = window.open("","_blank");
+                    if(!w){alert("Please allow popups to open the PCOR.");return;}
+                    w.document.write(html);
+                    w.document.close();
+                  }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Print PCOR (BOE-502-A)</button>
                   <button onClick={()=>setPcorStep(3)} style={ST.btnS}>← Edit</button>
                   <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setPcorOutput("");setPcorStep(1);setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
                 </div>
