@@ -2611,7 +2611,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
 
                       const { PDFDocument, rgb, StandardFonts } = PDFLib;
                       const pdfDoc = await PDFDocument.load(pdfBytes);
-                      const form = pdfDoc.getForm();
+                      const pdfForm = pdfDoc.getForm();
                       const pages = pdfDoc.getPages();
                       const page1 = pages[0];
                       const { width, height } = page1.getSize();
@@ -2647,15 +2647,15 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                       // Helper functions
                       const txt = (name, val) => {
                         if (!val) return;
-                        try { form.getTextField(name).setText(String(val)); } catch(e) {}
+                        try { pdfForm.getTextField(name).setText(String(val)); } catch(e) {}
                       };
                       const chk = (name, yes) => {
-                        try { const fld = form.getCheckBox(name); yes ? fld.check() : fld.uncheck(); } catch(e) {}
+                        try { const fld = pdfForm.getCheckBox(name); yes ? fld.check() : fld.uncheck(); } catch(e) {}
                       };
 
                       // Uncheck ALL checkboxes first (clear any pre-checked state)
                       try {
-                        form.getFields().forEach(fld => {
+                        pdfForm.getFields().forEach(fld => {
                           try { if(fld.constructor.name==="PDFCheckBox") fld.uncheck(); } catch(e) {}
                         });
                       } catch(e) {}
