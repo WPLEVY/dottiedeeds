@@ -2618,30 +2618,31 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                       const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
                       const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-                      // WHITE OUT the entire top-right area where Santa Cruz header appears
-                      // PDF is 612x792 pts. Header spans roughly x:355-612, y:665-792
+                      // WHITE OUT only the Santa Cruz county header (top-right, above the form fields)
+                      // From pdftotext: header text is on lines 2-5, y roughly 718-787
+                      // Form fields start at "NAME AND MAILING ADDRESS" around y=700
                       page1.drawRectangle({
-                        x: 350,
-                        y: 660,
-                        width: 262,
-                        height: 132,
+                        x: 355,
+                        y: 716,
+                        width: 257,
+                        height: 72,
                         color: rgb(1, 1, 1),
                         borderWidth: 0,
                       });
 
-                      // Draw the correct county assessor info in that space
+                      // Draw the correct county assessor info
                       if (assessor.name) {
                         page1.drawText(assessor.name, {
-                          x: 355, y: 765,
-                          size: 9, font: helveticaBold, color: rgb(0,0,0)
+                          x: 358, y: 772,
+                          size: 8, font: helveticaBold, color: rgb(0,0,0)
                         });
                         page1.drawText(assessor.addr, {
-                          x: 355, y: 751,
-                          size: 8, font: helvetica, color: rgb(0,0,0)
+                          x: 358, y: 760,
+                          size: 7.5, font: helvetica, color: rgb(0,0,0)
                         });
                         page1.drawText(assessor.city, {
-                          x: 355, y: 739,
-                          size: 8, font: helvetica, color: rgb(0,0,0)
+                          x: 358, y: 749,
+                          size: 7.5, font: helvetica, color: rgb(0,0,0)
                         });
                       }
 
