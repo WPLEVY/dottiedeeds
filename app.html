@@ -2618,28 +2618,29 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                       const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
                       const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-                      // WHITE OUT the Santa Cruz county header (top right area of page 1)
-                      // The header is roughly at x:370, y:height-120, width:200, height:90
+                      // WHITE OUT the entire top-right area where Santa Cruz header appears
+                      // PDF is 612x792 pts. Header spans roughly x:355-612, y:665-792
                       page1.drawRectangle({
-                        x: 365,
-                        y: height - 125,
-                        width: 210,
-                        height: 100,
+                        x: 350,
+                        y: 660,
+                        width: 262,
+                        height: 132,
                         color: rgb(1, 1, 1),
+                        borderWidth: 0,
                       });
 
-                      // Draw the correct county assessor info
+                      // Draw the correct county assessor info in that space
                       if (assessor.name) {
                         page1.drawText(assessor.name, {
-                          x: 370, y: height - 65,
+                          x: 355, y: 765,
                           size: 9, font: helveticaBold, color: rgb(0,0,0)
                         });
                         page1.drawText(assessor.addr, {
-                          x: 370, y: height - 78,
+                          x: 355, y: 751,
                           size: 8, font: helvetica, color: rgb(0,0,0)
                         });
                         page1.drawText(assessor.city, {
-                          x: 370, y: height - 90,
+                          x: 355, y: 739,
                           size: 8, font: helvetica, color: rgb(0,0,0)
                         });
                       }
