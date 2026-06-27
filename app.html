@@ -2671,9 +2671,9 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                       if (d.buyerPhone) {
                         const digits = (d.buyerPhone||"").replace(/\D/g,"");
                         txt("area code", digits.substring(0,3));
-                        txt("buyer's daytime telephone number1", digits.substring(3));
+                        txt("buyer\u0027s daytime telephone number1", digits.substring(3));
                       }
-                      txt("Buyer's email address", d.buyerEmail||"");
+                      txt("Buyer\u0027s email address", d.buyerEmail||"");
                       txt("street address or physical location of real property",
                         (f.propertyAddress||"") +
                         (f.cityOfProperty?", "+f.cityOfProperty:"") +
@@ -2711,8 +2711,8 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                       if (d.p1c==="YES") {
                         chk("C. This is a transfer between parent(s) and child(ren)", d.p1cParentChild===true||d.p1cParentChild==="YES");
                         chk("C. This is a transfer between parent(s) and child(ren)_1", d.p1cGrandparent===true||d.p1cGrandparent==="YES");
-                        chk("Was this the transferor/grantor's principal residence? Yes", d.p1cPrimaryRes==="YES");
-                        chk("Was this the transferor/grantor's principal residence? No", d.p1cPrimaryRes==="NO");
+                        chk("Was this the transferor/grantor\u0027s principal residence? Yes", d.p1cPrimaryRes==="YES");
+                        chk("Was this the transferor/grantor\u0027s principal residence? No", d.p1cPrimaryRes==="NO");
                         chk("Is this a family farm? Yes", d.p1cFamilyFarm==="YES");
                         chk("Is this a family farm? No", d.p1cFamilyFarm==="NO");
                       }
@@ -2738,7 +2738,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                       chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor\u2019s spouse and/or registered domestic partner_no", d.p1l1==="NO");
                       if (d.p1l1==="YES") {
                         chk("This is a transfer of property 1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor, and/or", true);
-                        chk("This is a transfer of property 1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor's spouse", true);
+                        chk("This is a transfer of property 1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor\u0027s spouse", true);
                       }
                       // L2 - irrevocable trust
                       chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor\u2019s trustor\u2019s spouse grantor\u2019s/trustor\u2019s registered domestic partner Yes", d.p1l2==="YES");
