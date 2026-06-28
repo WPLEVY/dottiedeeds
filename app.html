@@ -827,10 +827,16 @@ const genRecon = (f,m) => {
   if (f.reconType==="sub_and_recon") {
     return recHdr(m) +
       '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">SUBSTITUTION OF TRUSTEE AND FULL RECONVEYANCE</div>' +
-      '<div class="two-col" style="margin-bottom:12pt;">' +
-        '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div><div>' + (f.grantor||"[TRUSTOR NAME]") + '<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div></div>' +
-        '<div class="col-r"><div class="col-label">The Undersigned Declare(s):</div><div>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $0<br>GC §27388.1(a)(2)(B)</div></div>' +
-      '</div>' +
+      '<table style="width:100%;border-collapse:collapse;margin-bottom:12pt;"><tr>' +
+        '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+          '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
+          '<div style="font-size:11pt;">' + (f.grantor||"[TRUSTOR NAME]") + '<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div>' +
+        '</td>' +
+        '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+          '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Declare(s):</div>' +
+          '<div style="font-size:11pt;">Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $0<br>GC §27388.1(a)(2)(B)</div>' +
+        '</td>' +
+      '</tr></table>' +
       '<hr class="rule">' +
       '<div class="body-text">WHEREAS, ' + (f.grantor||"[TRUSTOR NAME(S)]") + ', TRUSTORS, ' + (f.reconOriginalTrustee||f.reconTrustee||"[ORIGINAL TRUSTEE]") + ', TRUSTEE, and ' + (f.reconBeneficiary||"[ORIGINAL BENEFICIARY]") + ', BENEFICIARY, executed a Deed of Trust dated ' + (f.reconOriginalDeedDate||"[DEED DATE]") + ', recorded on ' + (f.reconRecordingDate||"[RECORDING DATE]") + ' as Document Number ' + (f.reconRecording||"[DOCUMENT NUMBER]") + ' in the Official Records of ' + (f.county||"[COUNTY]") + ' County, California, encumbering the following real property:</div>' +
       '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
