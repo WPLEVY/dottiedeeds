@@ -68,6 +68,21 @@
     .nav { padding: 0 20px; }
     .features, .pricing { padding-left: 20px; padding-right: 20px; }
   }
+
+  /* ── Mobile responsive ─────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .nav { padding: 0 16px; height: 52px; }
+    .nav-links a:not(.btn-primary) { display: none; }
+    .btn-primary { padding: 8px 16px; font-size: 10px; letter-spacing: 1px; }
+    .nav-logo-top, .nav-logo-bot { font-size: 9px; letter-spacing: 3px; }
+    .hero { padding: 48px 20px; }
+    .hero h1 { font-size: 36px; }
+    .hero p { font-size: 14px; }
+    .footer { flex-direction: column; gap: 16px; padding: 20px 20px; text-align: center; }
+    .footer > div:last-child { flex-direction: column; gap: 12px; align-items: center; }
+    section { padding: 48px 20px; }
+    .features-grid, .docs-grid, .pricing-grid { grid-template-columns: 1fr !important; }
+  }
 </style>
 </head>
 <body>
