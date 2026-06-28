@@ -921,10 +921,16 @@ const genDOTMod = (f,m) => {
   const yr = new Date().getFullYear();
   return recHdr(m) +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">MODIFICATION OF DEED OF TRUST</div>' +
-    '<div class="two-col" style="margin-bottom:12pt;">' +
-      '<div class="col-l"><div class="col-label">Mail Tax Statements To:</div><div>' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div></div>' +
-      '<div class="col-r"><div class="col-label">The Undersigned Declare(s):</div><div>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div></div>' +
-    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:12pt;"><tr>' +
+      '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
+        '<div style="font-size:11pt;">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div>' +
+      '</td>' +
+      '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Declare(s):</div>' +
+        '<div style="font-size:11pt;">Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
+      '</td>' +
+    '</tr></table>' +
     '<hr class="rule">' +
     '<div class="body-text">THIS MODIFICATION OF DEED OF TRUST is entered into as of ______________________, ' + yr + ', by and between:</div>' +
     '<div class="body-text">' +
