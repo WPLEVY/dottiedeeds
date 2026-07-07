@@ -1563,7 +1563,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
       const text = data.content?.map(b=>b.text||"").join("")||"";
       const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
       setExtracted(parsed); setExtractConf(parsed.confidence||{});
-      setForm(p=>({...p, grantor:parsed.grantor||"", apn:parsed.apn||"", county:parsed.county||p.county, cityOfProperty:parsed.city||p.cityOfProperty, propertyAddress:parsed.propertyAddress||p.propertyAddress||"", grantorAddress:parsed.grantorMailingAddress||p.grantorAddress||"", trustorAddress:parsed.grantorMailingAddress||p.trustorAddress||"", legalDescription:parsed.legalDescription||"", grantorCapacity:parsed.inferredCapacity||p.grantorCapacity||"", trustorCapacity:parsed.inferredCapacity||p.trustorCapacity||"", trustName:parsed.trustName||p.trustName, trustDate:parsed.trustDate||p.trustDate, settlorName:parsed.settlorName||p.settlorName, originalDeedDate:parsed.deedDate||p.originalDeedDate, originalDeedRecording:parsed.recordingInfo||p.originalDeedRecording, reconOriginalDeedDate:parsed.deedDate||p.reconOriginalDeedDate, reconRecording:parsed.recordingInfo||p.reconRecording }));
+      setForm(p=>({...p, grantor:parsed.grantor||"", apn:parsed.apn||"", county:parsed.county||p.county, cityOfProperty:parsed.city||p.cityOfProperty, propertyAddress:parsed.propertyAddress||p.propertyAddress||"", grantorAddress:parsed.grantorMailingAddress||p.grantorAddress||"", trustorAddress:parsed.grantorMailingAddress||p.trustorAddress||"", legalDescription:parsed.legalDescription||"", grantorCapacity:parsed.inferredCapacity||p.grantorCapacity||"", trustorCapacity:parsed.inferredCapacity||p.trustorCapacity||"", trustorVesting:parsed.grantor||p.trustorVesting||"", trustName:parsed.trustName||p.trustName, trustDate:parsed.trustDate||p.trustDate, settlorName:parsed.settlorName||p.settlorName, originalDeedDate:parsed.deedDate||p.originalDeedDate, originalDeedRecording:parsed.recordingInfo||p.originalDeedRecording, reconOriginalDeedDate:parsed.deedDate||p.reconOriginalDeedDate, reconRecording:parsed.recordingInfo||p.reconRecording }));
       setStep(1);
     } catch { setExtractError("Could not extract data. Please enter details manually."); setStep(1); }
     finally { setExtracting(false); }
@@ -1597,14 +1597,15 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
         trustorName: parsed.borrowerName||prev.trustorName,
         grantor: parsed.borrowerName||prev.grantor,
         trustorAddress: parsed.borrowerAddress||prev.trustorAddress||"",
+        grantorAddress: parsed.borrowerAddress||prev.grantorAddress||"",
         beneficiaryLenderName: parsed.lenderName||prev.beneficiaryLenderName,
-        beneficiaryLenderAddress: (parsed.lenderAddress||"")+(parsed.lenderCity?" "+parsed.lenderCity:"")||prev.beneficiaryLenderAddress||"",
+        beneficiaryLenderAddress: (parsed.lenderAddress?(parsed.lenderAddress+(parsed.lenderCity?" "+parsed.lenderCity:"")):"")||prev.beneficiaryLenderAddress||"",
         loanAmount: parsed.loanAmount||prev.loanAmount,
         loanAmountWords: amtWords||prev.loanAmountWords||"",
         interestRate: parsed.interestRate||prev.interestRate,
         loanDate: parsed.loanDate||prev.loanDate,
         maturityDate: parsed.maturityDate||prev.maturityDate,
-        loanType: parsed.loanType||prev.loanType||"Fixed Rate",
+        loanType: parsed.loanType||prev.loanType||"",
         monthlyPayment: parsed.monthlyPayment||prev.monthlyPayment||"",
       }));
     } catch(e) {
@@ -1669,15 +1670,14 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
       setSlExtracted(parsed);
       setForm(prev=>({
         ...prev,
-        seniorTrusteeName: parsed.seniorTrusteeName||prev.seniorTrusteeName||"",
-        seniorBeneficiaryName: parsed.seniorBeneficiaryName||prev.seniorBeneficiaryName||"",
-        seniorBeneficiaryAddress: parsed.seniorBeneficiaryAddress||prev.seniorBeneficiaryAddress||"",
-        seniorLoanAmount: parsed.seniorLoanAmount||prev.seniorLoanAmount||"",
-        seniorLoanDate: parsed.seniorLoanDate||prev.seniorLoanDate||"",
-        seniorRecordingNumber: parsed.seniorRecordingNumber||prev.seniorRecordingNumber||"",
+        // Senior lien fields (correct blank() names)
+        seniorLienHolder: parsed.seniorBeneficiaryName||prev.seniorLienHolder||"",
+        seniorLienAmount: parsed.seniorLoanAmount||prev.seniorLienAmount||"",
+        seniorLienRecording: parsed.seniorRecordingNumber||prev.seniorLienRecording||"",
+        seniorLienRecordingDate: parsed.seniorRecordingDate||prev.seniorLienRecordingDate||"",
         seniorLienType: parsed.seniorLoanType||prev.seniorLienType||"DEED OF TRUST",
         // Use same trustee for new DOT if not already set
-        trusteeName: prev.trusteeName||parsed.seniorTrusteeName||"",
+        dotTrustee: prev.dotTrustee||parsed.seniorTrusteeName||"",
         beneficiaryLenderAddress: prev.beneficiaryLenderAddress||parsed.seniorBeneficiaryAddress||"",
       }));
     } catch(e) {
@@ -2371,22 +2371,22 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               <Field label="Lien position"><div style={{display:"flex",gap:10}}>{["first","second"].map(pos=>(<div key={pos} onClick={()=>upd("dotPosition",pos)} style={{flex:1,padding:"11px 16px",border:`2px solid ${form.dotPosition===pos?C.gold:C.rule}`,borderRadius:2,cursor:"pointer",background:form.dotPosition===pos?C.cream:"#fff",fontSize:13,color:form.dotPosition===pos?C.ink:C.muted,textAlign:"center",textTransform:"capitalize",transition:"all .15s"}}>{pos} position</div>))}</div></Field>
               {form.dotPosition==="second"&&(<div style={{background:"#f0f8f0",border:"1px solid #b0d090",padding:"14px 16px",borderRadius:2,marginBottom:18}}>
                 <div style={{fontSize:11,color:"#3a6010",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Senior lien information</div>
-                <Field label="Senior lien holder"><input value={form.seniorLienHolder} onChange={e=>upd("seniorLienHolder",e.target.value)} placeholder="e.g. UBS Bank USA" style={ST.inp}/></Field>
+                <div style={{background:"#fff8e8",border:"1px solid #e8d080",borderRadius:4,padding:"8px 12px",fontSize:12,color:"#7a6020",marginBottom:12,fontStyle:"italic"}}>⚠ The following was extracted from the uploaded senior deed of trust. Please verify all fields before generating.</div><Field label="Senior lien holder"><input value={form.seniorLienHolder} onChange={e=>upd("seniorLienHolder",e.target.value)} placeholder="e.g. UBS Bank USA" style={ST.inp}/></Field>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Senior lien type"><select value={form.seniorLienType} onChange={e=>upd("seniorLienType",e.target.value)} style={ST.inp}><option value="">— Select —</option><option value="DEED OF TRUST">DEED OF TRUST</option><option value="MORTGAGE">MORTGAGE</option></select></Field><Field label="Senior lien amount ($)"><input value={form.seniorLienAmount} onChange={e=>upd("seniorLienAmount",e.target.value)} placeholder="e.g. 500,000" style={ST.inp}/></Field></div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Recording date"><input value={form.seniorLienRecordingDate} onChange={e=>upd("seniorLienRecordingDate",e.target.value)} placeholder="e.g. 01/25/2022" style={ST.inp}/></Field><Field label="Instrument number"><input value={form.seniorLienRecording} onChange={e=>upd("seniorLienRecording",e.target.value)} placeholder="e.g. 2022008090" style={ST.inp}/></Field></div>
                 <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:13,color:C.muted}}><input type="checkbox" checked={form.requestNOD} onChange={e=>upd("requestNOD",e.target.checked)} style={{width:15,height:15}}/>Request for notice of default on senior lien (CC §2924b)</label>
               </div>)}
-              <Field label="How trustor holds title"><select value={form.trustorVesting} onChange={e=>upd("trustorVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.trustorVesting==="custom"&&<input value={form.trustorCustomVesting} onChange={e=>upd("trustorCustomVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
-              <Field label="Trustor signing capacity"><select value={form.trustorCapacity} onChange={e=>upd("trustorCapacity",e.target.value)} style={ST.inp}><option value="">— Select capacity —</option>{["Individual","Trustee","Corporate Officer","LLC Manager / Member","General Partner","Attorney-in-Fact"].map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
+              <Field label="How trustor holds title"><div style={{fontSize:11,color:C.muted,fontStyle:"italic",marginTop:4}} style={{marginBottom:6}}>Inferred from prior deed. Confirm how your client currently holds title.</div><select value={form.trustorVesting} onChange={e=>upd("trustorVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom...</option></select>{form.trustorVesting==="custom"&&<input value={form.trustorCustomVesting} onChange={e=>upd("trustorCustomVesting",e.target.value)} placeholder="Custom vesting" style={{...ST.inp,marginTop:8}}/>}</Field>
+              <Field label="Trustor signing capacity"><div style={{fontSize:11,color:C.muted,fontStyle:"italic",marginTop:4}} style={{marginBottom:6}}>Inferred from prior deed. Confirm signing capacity with your client.</div><select value={form.trustorCapacity} onChange={e=>upd("trustorCapacity",e.target.value)} style={ST.inp}><option value="">— Select capacity —</option>{["Individual","Trustee","Corporate Officer","LLC Manager / Member","General Partner","Attorney-in-Fact"].map(c=><option key={c} value={c}>{c}</option>)}</select></Field>
               {form.trustorCapacity==="Trustee"&&<><Field label="Trust name"><input value={form.capTrustName} onChange={e=>upd("capTrustName",e.target.value)} placeholder="e.g. The Smith Family Trust" style={ST.inp}/></Field><Field label="Trust date"><input value={form.capTrustDate} onChange={e=>upd("capTrustDate",e.target.value)} placeholder="e.g. January 15, 2018" style={ST.inp}/></Field></>}
               {(form.trustorCapacity==="Corporate Officer"||form.trustorCapacity==="LLC Manager / Member")&&<><Field label="Entity name"><input value={form.capEntityName} onChange={e=>upd("capEntityName",e.target.value)} placeholder="e.g. Smith Properties Inc." style={ST.inp}/></Field><Field label="State of formation"><input value={form.capEntityState} onChange={e=>upd("capEntityState",e.target.value)} placeholder="California" style={ST.inp}/></Field><Field label="Officer/Manager name and title"><input value={form.capOfficerTitle} onChange={e=>upd("capOfficerTitle",e.target.value)} placeholder="e.g. Jane Smith, Managing Member" style={ST.inp}/></Field></>}
               {form.trustorCapacity==="Attorney-in-Fact"&&<><Field label="Principal name"><input value={form.capAifPrincipal} onChange={e=>upd("capAifPrincipal",e.target.value)} placeholder="e.g. John Robert Smith" style={ST.inp}/></Field><Field label="AIF name"><input value={form.capAifAgent} onChange={e=>upd("capAifAgent",e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/></Field></>}
               <Field label="Beneficiary (lender) name"><input value={form.beneficiaryLenderName} onChange={e=>upd("beneficiaryLenderName",e.target.value)} placeholder="e.g. John Doe, an unmarried man" style={ST.inp}/></Field>
-              <Field label="Beneficiary (lender) address"><input value={form.beneficiaryLenderAddress} onChange={e=>upd("beneficiaryLenderAddress",e.target.value)} placeholder="e.g. 123 Main St, Los Angeles, CA 90001" style={ST.inp}/></Field>
-              <Field label="Trustee"><input value={form.dotTrustee} onChange={e=>upd("dotTrustee",e.target.value)} style={ST.inp}/></Field>
-              <Field label="Trustor address"><input value={form.trustorAddress} onChange={e=>upd("trustorAddress",e.target.value)} placeholder="e.g. 123 Main Street, Sacramento, CA 95814" style={ST.inp}/></Field>
+              <Field label="Beneficiary (lender) address — extracted from promissory note, verify"><input value={form.beneficiaryLenderAddress} onChange={e=>upd("beneficiaryLenderAddress",e.target.value)} placeholder="e.g. 123 Main St, Los Angeles, CA 90001" style={ST.inp}/></Field>
+              <Field label="Trustee"><input value={form.dotTrustee} onChange={e=>upd("dotTrustee",e.target.value)} style={ST.inp}/>{slExtracted&&form.dotTrustee&&<div style={{fontSize:11,color:C.muted,fontStyle:"italic",marginTop:4}}>Pre-filled from senior deed of trust. Verify this is the correct trustee for the new loan.</div>}</Field>
+              <Field label="Trustor address"><input value={form.trustorAddress} onChange={e=>upd("trustorAddress",e.target.value)} placeholder="e.g. 123 Main Street, Sacramento, CA 95814" style={ST.inp}/>{pnExtracted&&form.trustorAddress&&<div style={{fontSize:11,color:C.muted,fontStyle:"italic",marginTop:4}}>Extracted from promissory note. Verify with your client.</div>}</Field>
               <Field label="Loan amount ($)"><input value={form.loanAmount} onChange={e=>upd("loanAmount",e.target.value)} placeholder="e.g. 500,000" style={ST.inp}/></Field>
-              <Field label="Loan amount in words"><input value={form.loanAmountWords} onChange={e=>upd("loanAmountWords",e.target.value)} placeholder="e.g. Five Hundred Thousand Dollars and No Cents" style={ST.inp}/></Field>
+              <Field label="Loan amount in words"><input value={form.loanAmountWords} onChange={e=>upd("loanAmountWords",e.target.value)} placeholder="e.g. Five Hundred Thousand Dollars and No Cents" style={ST.inp}/>{pnExtracted&&form.loanAmountWords&&<div style={{fontSize:11,color:C.muted,fontStyle:"italic",marginTop:4}}>Auto-converted from loan amount. Verify spelling before generating.</div>}</Field>
               <div style={{display:"flex",gap:24,flexWrap:"wrap",marginBottom:18}}>{[["dueOnSale","Due-on-sale clause"],["businessPurpose","Business purpose declaration"]].map(([k,l])=>(<label key={k} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:13,color:C.muted}}><input type="checkbox" checked={form[k]} onChange={e=>upd(k,e.target.checked)} style={{width:15,height:15}}/>{l}</label>))}</div>
             </>}
 
