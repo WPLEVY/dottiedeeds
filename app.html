@@ -1394,6 +1394,9 @@ function DottieDeeds() {
   const [extracted, setExtracted] = useState(null);
   const [extractError, setExtractError] = useState("");
   const [extractConf, setExtractConf] = useState({});
+  const [pnExtracted, setPnExtracted] = useState(null);
+  const [pnExtracting, setPnExtracting] = useState(false);
+  const [pnError, setPnError] = useState("");
   const [legalVerified, setLegalVerified] = useState(false);
   const [output, setOutput] = useState("");
   const [copied, setCopied] = useState(false);
