@@ -1397,6 +1397,9 @@ function DottieDeeds() {
   const [pnExtracted, setPnExtracted] = useState(null);
   const [pnExtracting, setPnExtracting] = useState(false);
   const [pnError, setPnError] = useState("");
+  const [slExtracted, setSlExtracted] = useState(null);
+  const [slExtracting, setSlExtracting] = useState(false);
+  const [slError, setSlError] = useState("");
   const [legalVerified, setLegalVerified] = useState(false);
   const [output, setOutput] = useState("");
   const [copied, setCopied] = useState(false);
@@ -1521,6 +1524,7 @@ function DottieDeeds() {
     setForm(blank(master||DEFAULT_MASTER));
     setExtracted(null); setExtractConf({}); setLegalVerified(false); setStep(0); setOutput("");
     setPnExtracted(null); setPnError("");
+    setSlExtracted(null); setSlError("");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docType]);
 
@@ -1552,14 +1556,14 @@ function DottieDeeds() {
         method:"POST", headers:{"Content-Type":"application/json"},
 body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",content:[
           {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
-         {type:"text",text:`Extract from this recorded deed. Return ONLY valid JSON:\n{"grantor":"the GRANTEE/TRANSFEREE full name and current vesting exactly as written on this prior deed — this is the CURRENT OWNER who will become the GRANTOR on the new deed being drafted, NOT the original grantor on this prior deed","apn":"assessor parcel number","county":"county name only","city":"city of property","legalDescription":"complete legal description verbatim","inferredCapacity":"one of: Individual, Trustee, Corporate Officer / LLC Manager, Attorney-in-Fact, Guardian / Conservator","trustName":"trust name if present else empty","trustDate":"trust date if present else empty","settlorName":"settlor name if present else empty","deedDate":"date of prior deed else empty","recordingInfo":"recording number else empty","confidence":{"grantor":"high|medium|low","apn":"high|medium|low","legalDescription":"high|medium|low","county":"high|medium|low"}}`}
+         {type:"text",text:`Extract from this recorded deed. Return ONLY valid JSON:\n{"grantor":"the GRANTEE/TRANSFEREE full name and current vesting exactly as written on this prior deed — this is the CURRENT OWNER who will become the GRANTOR on the new deed being drafted, NOT the original grantor on this prior deed","grantorMailingAddress":"the mail tax statements to address or mailing address of grantee/transferee if shown else empty","apn":"assessor parcel number","county":"county name only","city":"city of property","propertyAddress":"street address of the property e.g. 123 Main Street","legalDescription":"complete legal description verbatim","inferredCapacity":"one of: Individual, Trustee, Corporate Officer / LLC Manager, Attorney-in-Fact, Guardian / Conservator","trustName":"trust name if present else empty","trustDate":"trust date if present else empty","settlorName":"settlor name if present else empty","deedDate":"date of prior deed else empty","recordingInfo":"recording number else empty","confidence":{"grantor":"high|medium|low","apn":"high|medium|low","legalDescription":"high|medium|low","county":"high|medium|low"}}`}
         ]}]})
       });
       const data = await resp.json(); console.log("PROXY RESPONSE:", JSON.stringify(data));
       const text = data.content?.map(b=>b.text||"").join("")||"";
       const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
       setExtracted(parsed); setExtractConf(parsed.confidence||{});
-      setForm(p=>({...p, grantor:parsed.grantor||"", apn:parsed.apn||"", county:parsed.county||p.county, cityOfProperty:parsed.city||p.cityOfProperty, legalDescription:parsed.legalDescription||"", grantorCapacity:parsed.inferredCapacity||"Individual", trustorCapacity:parsed.inferredCapacity||"Individual", trustName:parsed.trustName||p.trustName, trustDate:parsed.trustDate||p.trustDate, settlorName:parsed.settlorName||p.settlorName, originalDeedDate:parsed.deedDate||p.originalDeedDate, originalDeedRecording:parsed.recordingInfo||p.originalDeedRecording, reconOriginalDeedDate:parsed.deedDate||p.reconOriginalDeedDate, reconRecording:parsed.recordingInfo||p.reconRecording }));
+      setForm(p=>({...p, grantor:parsed.grantor||"", apn:parsed.apn||"", county:parsed.county||p.county, cityOfProperty:parsed.city||p.cityOfProperty, propertyAddress:parsed.propertyAddress||p.propertyAddress||"", grantorAddress:parsed.grantorMailingAddress||p.grantorAddress||"", trustorAddress:parsed.grantorMailingAddress||p.trustorAddress||"", legalDescription:parsed.legalDescription||"", grantorCapacity:parsed.inferredCapacity||p.grantorCapacity||"", trustorCapacity:parsed.inferredCapacity||p.trustorCapacity||"", trustName:parsed.trustName||p.trustName, trustDate:parsed.trustDate||p.trustDate, settlorName:parsed.settlorName||p.settlorName, originalDeedDate:parsed.deedDate||p.originalDeedDate, originalDeedRecording:parsed.recordingInfo||p.originalDeedRecording, reconOriginalDeedDate:parsed.deedDate||p.reconOriginalDeedDate, reconRecording:parsed.recordingInfo||p.reconRecording }));
       setStep(1);
     } catch { setExtractError("Could not extract data. Please enter details manually."); setStep(1); }
     finally { setExtracting(false); }
@@ -1577,7 +1581,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
         body:JSON.stringify({model:MODEL, max_tokens:1000, messages:[{role:"user",content:[
           {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
           {type:"text",text:`Extract from this promissory note. Return ONLY valid JSON:
-{"borrowerName":"full legal name of borrower/trustor","lenderName":"full legal name of lender/beneficiary","loanAmount":"loan amount as written e.g. $500,000.00","interestRate":"interest rate e.g. 6.500%","loanDate":"date of note","maturityDate":"maturity/due date if stated else empty","loanType":"e.g. Fixed Rate, Adjustable Rate","monthlyPayment":"monthly payment amount if stated else empty"}`}
+{"borrowerName":"full legal name of borrower/trustor","borrowerAddress":"borrower street address if shown else empty","lenderName":"full legal name of lender/beneficiary","lenderAddress":"lender street address if shown else empty","lenderCity":"lender city state zip if shown else empty","loanAmount":"loan amount as written e.g. $500,000.00","interestRate":"interest rate e.g. 6.500%","loanDate":"date of note","maturityDate":"maturity/due date if stated else empty","loanType":"e.g. Fixed Rate, Adjustable Rate","monthlyPayment":"monthly payment amount if stated else empty"}`}
         ]}]})
       });
       const data = await resp.json();
@@ -1585,22 +1589,101 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
       const clean = text.replace(/^```json\n?/,"").replace(/\n?```$/,"").trim();
       const parsed = JSON.parse(clean);
       setPnExtracted(parsed);
+      // Convert loan amount to words
+      const amtWords = parsed.loanAmount ? numberToWords(parsed.loanAmount) : "";
       // Auto-populate DOT form fields from PN
       setForm(prev=>({
         ...prev,
         trustorName: parsed.borrowerName||prev.trustorName,
+        grantor: parsed.borrowerName||prev.grantor,
+        trustorAddress: parsed.borrowerAddress||prev.trustorAddress||"",
         beneficiaryLenderName: parsed.lenderName||prev.beneficiaryLenderName,
+        beneficiaryLenderAddress: (parsed.lenderAddress||"")+(parsed.lenderCity?" "+parsed.lenderCity:"")||prev.beneficiaryLenderAddress||"",
         loanAmount: parsed.loanAmount||prev.loanAmount,
+        loanAmountWords: amtWords||prev.loanAmountWords||"",
         interestRate: parsed.interestRate||prev.interestRate,
         loanDate: parsed.loanDate||prev.loanDate,
         maturityDate: parsed.maturityDate||prev.maturityDate,
-        loanType: parsed.loanType||prev.loanType,
-        monthlyPayment: parsed.monthlyPayment||prev.monthlyPayment,
+        loanType: parsed.loanType||prev.loanType||"Fixed Rate",
+        monthlyPayment: parsed.monthlyPayment||prev.monthlyPayment||"",
       }));
     } catch(e) {
       setPnError("Could not extract from promissory note. Please fill fields manually.");
     }
     setPnExtracting(false);
+  }, []);
+
+  // Convert number to words for loan amount
+  const numberToWords = (num) => {
+    const ones = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+    const tens = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+    const scales = ["","Thousand","Million","Billion"];
+    if (!num) return "";
+    // Strip $ and commas
+    const clean = String(num).replace(/[$,]/g,"").trim();
+    const parts = clean.split(".");
+    const dollars = parseInt(parts[0])||0;
+    const cents = parts[1] ? parseInt(parts[1].padEnd(2,"0").substring(0,2)) : 0;
+    if (dollars === 0 && cents === 0) return "Zero Dollars";
+    const convertHundreds = (n) => {
+      if (n === 0) return "";
+      if (n < 20) return ones[n];
+      if (n < 100) return tens[Math.floor(n/10)] + (n%10?" "+ones[n%10]:"");
+      return ones[Math.floor(n/100)]+" Hundred"+(n%100?" "+convertHundreds(n%100):"");
+    };
+    let result = "";
+    let remaining = dollars;
+    let scaleIdx = 0;
+    while (remaining > 0) {
+      const chunk = remaining % 1000;
+      if (chunk !== 0) {
+        const chunkWords = convertHundreds(chunk);
+        result = chunkWords + (scales[scaleIdx]?" "+scales[scaleIdx]:"") + (result?" "+result:"");
+      }
+      remaining = Math.floor(remaining/1000);
+      scaleIdx++;
+    }
+    result += " Dollars";
+    if (cents > 0) result += " and "+cents+"/100";
+    else result += " and No/100";
+    return result;
+  };
+
+  // Extract from Senior Lien document
+  const handleSLFile = useCallback(async (file) => {
+    if (!file||file.type!=="application/pdf") { setSlError("Please upload a PDF file."); return; }
+    setSlError(""); setSlExtracting(true);
+    try {
+      const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+      const resp = await fetch(PROXY,{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:MODEL, max_tokens:1000, messages:[{role:"user",content:[
+          {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
+          {type:"text",text:'Extract from this deed of trust or mortgage (senior lien). Return ONLY valid JSON:\n{"seniorTrusteeName":"trustee name on the senior deed of trust","seniorBeneficiaryName":"lender/beneficiary on senior deed of trust","seniorBeneficiaryAddress":"beneficiary/lender address if shown else empty","seniorLoanAmount":"original loan amount e.g. $500,000.00","seniorLoanDate":"date of senior deed of trust","seniorRecordingDate":"recording date if shown else empty","seniorRecordingNumber":"document/recording number if shown else empty","seniorLoanType":"e.g. Deed of Trust or Mortgage"}'}
+        ]}]})
+      });
+      const data = await resp.json();
+      const text = data.content?.map(b=>b.text||"").join("")||"";
+      const clean = text.replace(/^```json\n?/,"").replace(/\n?```$/,"").trim();
+      const parsed = JSON.parse(clean);
+      setSlExtracted(parsed);
+      setForm(prev=>({
+        ...prev,
+        seniorTrusteeName: parsed.seniorTrusteeName||prev.seniorTrusteeName||"",
+        seniorBeneficiaryName: parsed.seniorBeneficiaryName||prev.seniorBeneficiaryName||"",
+        seniorBeneficiaryAddress: parsed.seniorBeneficiaryAddress||prev.seniorBeneficiaryAddress||"",
+        seniorLoanAmount: parsed.seniorLoanAmount||prev.seniorLoanAmount||"",
+        seniorLoanDate: parsed.seniorLoanDate||prev.seniorLoanDate||"",
+        seniorRecordingNumber: parsed.seniorRecordingNumber||prev.seniorRecordingNumber||"",
+        seniorLienType: parsed.seniorLoanType||prev.seniorLienType||"DEED OF TRUST",
+        // Use same trustee for new DOT if not already set
+        trusteeName: prev.trusteeName||parsed.seniorTrusteeName||"",
+        beneficiaryLenderAddress: prev.beneficiaryLenderAddress||parsed.seniorBeneficiaryAddress||"",
+      }));
+    } catch(e) {
+      setSlError("Could not extract from senior lien. Please fill fields manually.");
+    }
+    setSlExtracting(false);
   }, []);
 
   const handleGenerate = () => {
@@ -2106,6 +2189,32 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 {pnExtracted.loanDate&&<div style={{marginBottom:4}}><strong>Note Date:</strong> {pnExtracted.loanDate}</div>}
                 {pnExtracted.maturityDate&&<div style={{marginBottom:4}}><strong>Maturity Date:</strong> {pnExtracted.maturityDate}</div>}
                 {pnExtracted.monthlyPayment&&<div style={{marginBottom:4}}><strong>Monthly Payment:</strong> {pnExtracted.monthlyPayment}</div>}
+              </div>}
+            </div>}
+
+            {/* Senior Lien upload - DOT only */}
+            {docType==="dot"&&<div style={{marginTop:24}}>
+              <div style={{fontSize:11,letterSpacing:3,textTransform:"uppercase",color:C.muted,marginBottom:12}}>Step 3 — Upload Senior Deed of Trust (if refinance or 2nd DOT)</div>
+              <div
+                onDragOver={e=>{e.preventDefault();}}
+                onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)handleSLFile(f);}}
+                onClick={()=>document.getElementById("slFileInput").click()}
+                style={{border:`2px dashed ${slExtracted?C.gold:"#c8bfa8"}`,borderRadius:4,padding:"32px 40px",textAlign:"center",cursor:"pointer",background:slExtracted?"#fffbf0":"transparent",transition:"all .2s"}}>
+                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{slExtracting?"⏳":"🏦"}</div>
+                <div style={{fontSize:15,color:C.muted,marginBottom:6}}>
+                  {slExtracting?"Extracting senior lien info...":slExtracted?"✅ Senior lien extracted — drop another to replace":"Drop the senior deed of trust here, or click to browse"}
+                </div>
+                <div style={{fontSize:11,color:"#a09070",letterSpacing:1}}>PDF format only · Optional</div>
+                <input id="slFileInput" type="file" accept=".pdf" style={{display:"none"}} onChange={e=>e.target.files[0]&&handleSLFile(e.target.files[0])}/>
+              </div>
+              {slError&&<div style={{color:"#c0392b",fontSize:12,marginTop:8}}>{slError}</div>}
+              {slExtracted&&<div style={{marginTop:16,background:"#f9f6f0",border:`1px solid ${C.rule}`,borderRadius:4,padding:"12px 16px",fontSize:12}}>
+                <div style={{fontWeight:"bold",marginBottom:8,fontSize:11,letterSpacing:2,textTransform:"uppercase",color:C.gold}}>Extracted from Senior Lien</div>
+                {slExtracted.seniorTrusteeName&&<div style={{marginBottom:4}}><strong>Trustee:</strong> {slExtracted.seniorTrusteeName}</div>}
+                {slExtracted.seniorBeneficiaryName&&<div style={{marginBottom:4}}><strong>Beneficiary:</strong> {slExtracted.seniorBeneficiaryName}</div>}
+                {slExtracted.seniorLoanAmount&&<div style={{marginBottom:4}}><strong>Original Amount:</strong> {slExtracted.seniorLoanAmount}</div>}
+                {slExtracted.seniorLoanDate&&<div style={{marginBottom:4}}><strong>Date:</strong> {slExtracted.seniorLoanDate}</div>}
+                {slExtracted.seniorRecordingNumber&&<div style={{marginBottom:4}}><strong>Recording No:</strong> {slExtracted.seniorRecordingNumber}</div>}
               </div>}
             </div>}
             {extractError&&<div style={{marginTop:12,...ST.err}}>{extractError}</div>}
