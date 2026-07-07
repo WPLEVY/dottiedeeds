@@ -1517,6 +1517,7 @@ function DottieDeeds() {
   useEffect(() => {
     setForm(blank(master||DEFAULT_MASTER));
     setExtracted(null); setExtractConf({}); setLegalVerified(false); setStep(0); setOutput("");
+    setPnExtracted(null); setPnError("");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docType]);
 
@@ -1562,6 +1563,45 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
   },[]);
 
   const onDrop = useCallback((e)=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files[0]; if(f)handleFile(f); },[handleFile]);
+  // Extract from Promissory Note (for DOT)
+  const handlePNFile = useCallback(async (file) => {
+    if (!file||file.type!=="application/pdf") { setPnError("Please upload a PDF file."); return; }
+    setPnError(""); setPnExtracting(true);
+    try {
+      const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+      const resp = await fetch(PROXY,{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:MODEL, max_tokens:1000, messages:[{role:"user",content:[
+          {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
+          {type:"text",text:`Extract from this promissory note. Return ONLY valid JSON:
+{"borrowerName":"full legal name of borrower/trustor","lenderName":"full legal name of lender/beneficiary","loanAmount":"loan amount as written e.g. $500,000.00","interestRate":"interest rate e.g. 6.500%","loanDate":"date of note","maturityDate":"maturity/due date if stated else empty","loanType":"e.g. Fixed Rate, Adjustable Rate","monthlyPayment":"monthly payment amount if stated else empty"}`}
+        ]}]})
+      });
+      const data = await resp.json();
+      const text = data.content?.map(b=>b.text||"").join("")||"";
+      const clean = text.replace(/^```json
+?/,"").replace(/
+?```$/,"").trim();
+      const parsed = JSON.parse(clean);
+      setPnExtracted(parsed);
+      // Auto-populate DOT form fields from PN
+      setForm(prev=>({
+        ...prev,
+        trustorName: parsed.borrowerName||prev.trustorName,
+        beneficiaryLenderName: parsed.lenderName||prev.beneficiaryLenderName,
+        loanAmount: parsed.loanAmount||prev.loanAmount,
+        interestRate: parsed.interestRate||prev.interestRate,
+        loanDate: parsed.loanDate||prev.loanDate,
+        maturityDate: parsed.maturityDate||prev.maturityDate,
+        loanType: parsed.loanType||prev.loanType,
+        monthlyPayment: parsed.monthlyPayment||prev.monthlyPayment,
+      }));
+    } catch(e) {
+      setPnError("Could not extract from promissory note. Please fill fields manually.");
+    }
+    setPnExtracting(false);
+  }, []);
+
   const handleGenerate = () => {
     const doc = generateDoc(docType,form,master);
     setOutput(doc);
