@@ -1556,14 +1556,16 @@ function DottieDeeds() {
         method:"POST", headers:{"Content-Type":"application/json"},
 body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",content:[
           {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
-         {type:"text",text:`Extract from this recorded deed. Return ONLY valid JSON:\n{"grantor":"the GRANTEE/TRANSFEREE full name and current vesting exactly as written on this prior deed — this is the CURRENT OWNER who will become the GRANTOR on the new deed being drafted, NOT the original grantor on this prior deed","grantorMailingAddress":"the mail tax statements to address or mailing address of grantee/transferee if shown else empty","apn":"assessor parcel number","county":"county name only","city":"city of property","propertyAddress":"street address of the property e.g. 123 Main Street","legalDescription":"complete legal description verbatim","inferredCapacity":"one of: Individual, Trustee, Corporate Officer / LLC Manager, Attorney-in-Fact, Guardian / Conservator","trustName":"trust name if present else empty","trustDate":"trust date if present else empty","settlorName":"settlor name if present else empty","deedDate":"date of prior deed else empty","recordingInfo":"recording number else empty","confidence":{"grantor":"high|medium|low","apn":"high|medium|low","legalDescription":"high|medium|low","county":"high|medium|low"}}`}
+         {type:"text",text:`Extract from this recorded deed. Return ONLY valid JSON:\n{"grantor":"the GRANTEE/TRANSFEREE full name and current vesting exactly as written on this prior deed — this is the CURRENT OWNER who will become the GRANTOR on the new deed being drafted, NOT the original grantor on this prior deed","grantorMailingAddress":"the mail tax statements to address or mailing address of grantee/transferee if shown else empty","apn":"assessor parcel number","county":"county name only","city":"city of property","propertyAddress":"street address of the property e.g. 123 Main Street","legalDescription":"complete legal description verbatim","inferredCapacity":"one of exactly: Individual, Trustee, Successor Trustee, LLC Manager / Member, Corporate Officer, General Partner, Attorney-in-Fact, Personal Representative, Guardian / Conservator — infer from the grantee name and vesting","trustName":"trust name if present else empty","trustDate":"trust date if present else empty","settlorName":"settlor name if present else empty","deedDate":"date of prior deed else empty","recordingInfo":"recording number else empty","confidence":{"grantor":"high|medium|low","apn":"high|medium|low","legalDescription":"high|medium|low","county":"high|medium|low"}}`}
         ]}]})
       });
       const data = await resp.json(); console.log("PROXY RESPONSE:", JSON.stringify(data));
       const text = data.content?.map(b=>b.text||"").join("")||"";
       const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
       setExtracted(parsed); setExtractConf(parsed.confidence||{});
-      setForm(p=>({...p, grantor:parsed.grantor||"", apn:parsed.apn||"", county:parsed.county||p.county, cityOfProperty:parsed.city||p.cityOfProperty, propertyAddress:parsed.propertyAddress||p.propertyAddress||"", grantorAddress:parsed.grantorMailingAddress||p.grantorAddress||"", trustorAddress:parsed.grantorMailingAddress||p.trustorAddress||"", legalDescription:parsed.legalDescription||"", grantorCapacity:parsed.inferredCapacity||p.grantorCapacity||"", trustorCapacity:parsed.inferredCapacity||p.trustorCapacity||"", trustorVesting:parsed.grantor||p.trustorVesting||"", trustName:parsed.trustName||p.trustName, trustDate:parsed.trustDate||p.trustDate, settlorName:parsed.settlorName||p.settlorName, originalDeedDate:parsed.deedDate||p.originalDeedDate, originalDeedRecording:parsed.recordingInfo||p.originalDeedRecording, reconOriginalDeedDate:parsed.deedDate||p.reconOriginalDeedDate, reconRecording:parsed.recordingInfo||p.reconRecording }));
+      setForm(p=>({...p, grantor:parsed.grantor||"", apn:parsed.apn||"", county:parsed.county||p.county, cityOfProperty:parsed.city||p.cityOfProperty, propertyAddress:parsed.propertyAddress||p.propertyAddress||"", grantorAddress:parsed.grantorMailingAddress||p.grantorAddress||"", trustorAddress:parsed.grantorMailingAddress||p.trustorAddress||"", legalDescription:parsed.legalDescription||"", grantorCapacity:inferCapacity(parsed.grantor, parsed.inferredCapacity)||p.grantorCapacity||"",
+          trustorCapacity:inferCapacity(parsed.grantor, parsed.inferredCapacity)||p.trustorCapacity||"",
+          trustorVesting:inferVesting(parsed.grantor)||p.trustorVesting||"", trustName:parsed.trustName||p.trustName, trustDate:parsed.trustDate||p.trustDate, settlorName:parsed.settlorName||p.settlorName, originalDeedDate:parsed.deedDate||p.originalDeedDate, originalDeedRecording:parsed.recordingInfo||p.originalDeedRecording, reconOriginalDeedDate:parsed.deedDate||p.reconOriginalDeedDate, reconRecording:parsed.recordingInfo||p.reconRecording }));
       setStep(1);
     } catch { setExtractError("Could not extract data. Please enter details manually."); setStep(1); }
     finally { setExtracting(false); }
@@ -1650,6 +1652,38 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
     return result;
   };
 
+  // Infer vesting from grantor name string
+  const inferVesting = (name) => {
+    if (!name) return "";
+    const n = name.toLowerCase();
+    if (n.includes("llc") || n.includes("limited liability")) return "a California limited liability company";
+    if (n.includes("corporation") || n.includes("corp.") || n.includes(", inc.")) return "a California corporation";
+    if (n.includes("joint tenants") || n.includes("jtwros")) return "as joint tenants";
+    if (n.includes("tenants in common") || n.includes("tic")) return "as tenants in common";
+    if (n.includes("community property with right of survivorship")) return "husband and wife as community property with right of survivorship";
+    if (n.includes("community property")) return "husband and wife as community property";
+    if (n.includes("husband and wife") && n.includes("joint")) return "husband and wife as joint tenants";
+    if (n.includes("unmarried")) return "an unmarried man/woman";
+    if (n.includes("sole and separate")) return "a married man/woman as his/her sole and separate property";
+    if (n.includes("trust") || n.includes("trustee")) return "";
+    return "";
+  };
+
+  // Infer capacity from grantor name string
+  const inferCapacity = (name, inferredFromClaude) => {
+    if (inferredFromClaude && inferredFromClaude !== "Individual") return inferredFromClaude;
+    if (!name) return "";
+    const n = name.toLowerCase();
+    if (n.includes("llc") || n.includes("limited liability")) return "LLC Manager / Member";
+    if (n.includes("corporation") || n.includes("corp.") || n.includes(", inc.")) return "Corporate Officer";
+    if (n.includes("trustee") || n.includes("trust")) return "Trustee";
+    if (n.includes("attorney-in-fact") || n.includes("aif")) return "Attorney-in-Fact";
+    if (n.includes("general partner") || n.includes("limited partnership") || n.includes(", lp")) return "General Partner";
+    if (n.includes("guardian") || n.includes("conservator")) return "Guardian / Conservator";
+    if (n.includes("executor") || n.includes("administrator") || n.includes("personal representative")) return "Personal Representative";
+    return inferredFromClaude || "";
+  };
+
   // Extract from Senior Lien document
   const handleSLFile = useCallback(async (file) => {
     if (!file||file.type!=="application/pdf") { setSlError("Please upload a PDF file."); return; }
@@ -1675,7 +1709,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
         seniorLienAmount: parsed.seniorLoanAmount||prev.seniorLienAmount||"",
         seniorLienRecording: parsed.seniorRecordingNumber||prev.seniorLienRecording||"",
         seniorLienRecordingDate: parsed.seniorRecordingDate||prev.seniorLienRecordingDate||"",
-        seniorLienType: parsed.seniorLoanType||prev.seniorLienType||"DEED OF TRUST",
+        seniorLienType: (parsed.seniorLoanType||"").toUpperCase().includes("MORTGAGE")?"MORTGAGE":(parsed.seniorLoanType?"DEED OF TRUST":prev.seniorLienType||""),
         // Use same trustee for new DOT if not already set
         dotTrustee: prev.dotTrustee||parsed.seniorTrusteeName||"",
         beneficiaryLenderAddress: prev.beneficiaryLenderAddress||parsed.seniorBeneficiaryAddress||"",
