@@ -10,6 +10,13 @@
   gtag('config', 'G-10LR8DVQ7G');
 </script>
     <meta charset="UTF-8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Dottie Deeds">
+  <meta name="theme-color" content="#1a1a14">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/dottie.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dottie Deeds — California Deed Drafting</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -333,7 +340,7 @@ const grantorLine = (f) => {
   if (cap==="Successor Trustee") return name + ", as Successor Trustee of " + trust;
   if (cap==="Attorney-in-Fact") return (f.capAifAgent||name) + ", as Attorney-in-Fact for " + (f.capAifPrincipal||"[PRINCIPAL NAME]");
   if (cap==="Corporate Officer") return (f.capEntityName||"[CORPORATION NAME]") + ", a " + (f.capEntityState||"California") + " corporation\nBy: " + (f.capOfficerTitle||"[OFFICER NAME AND TITLE]");
-  if (cap==="LLC Manager / Member") return (f.capEntityName||"[LLC NAME]") + ", a " + (f.capEntityState||"California") + " limited liability company\nBy: " + (f.capOfficerTitle||"[MANAGER/MEMBER NAME AND TITLE]");
+  if (cap==="LLC Manager / Member") { const mgr = f.capOfficerTitle||"[MANAGER NAME]"; return (f.capEntityName||"[LLC NAME]") + ", a " + (f.capEntityState||"California") + " limited liability company\n\nBy: ___________________________\n" + mgr + ", Manager"; }
   if (cap==="General Partner") return (f.capPartnershipName||"[PARTNERSHIP NAME]") + ", a " + (f.capPartnershipType||"LP") + "\nBy: " + (f.capPartnerTitle||"[PARTNER NAME AND TITLE]");
   if (cap==="Personal Representative") return name + ", as " + (f.capPRRole||"Executor") + " of the " + (f.capEstateName||"[ESTATE NAME]");
   if (cap==="Guardian / Conservator") return name + ", as " + (f.capGCRole||"Guardian") + " of " + (f.capWardName||"[WARD NAME]");
@@ -547,24 +554,34 @@ const genDOT = (f,m) => {
   const partB = "The following provisions are an integral part of this Deed of Trust:\n\n1. Trustee&#39;s Obligations Upon Payment in Full. Upon written request of Beneficiar"+(isSecond?"y":"ies")+" stating that all sums secured hereby have been paid in full, and upon surrender of this Deed of Trust and the Note to Trustee, Trustee shall reconvey, without warranty, the property then held hereunder.\n\n2. Trustee&#39;s Authority; Acceptance of Trust. Trustee accepts this trust when this Deed of Trust, duly executed and acknowledged, is made a public record as provided by law.\n\n3. Trustee&#39;s Fees and Costs. Trustee shall be entitled to reasonable compensation for all services rendered in the administration of this trust.\n\n4. Substitution of Trustee. Beneficiar"+(isSecond?"y":"ies")+" may substitute a successor Trustee by instrument in writing duly acknowledged and recorded.\n\n5. Authority to Collect Rents, Issues, and Profits. Upon default by Trustor, Beneficiar"+(isSecond?"y":"ies")+" shall have the right to collect the rents, issues, and profits of the property.\n\n6. Acceleration Upon Default; Power of Sale. Upon default, Beneficiar"+(isSecond?"y":"ies")+" may declare all sums secured hereby immediately due and payable and shall cause Trustee to execute a written notice of default and election to sell.\n\n7. Trustee&#39;s Deed Upon Sale. Trustee shall deliver to the purchaser its deed conveying the property, without any covenant or warranty, express or implied.\n\n8. Application of Proceeds of Sale. After deducting all costs, fees, and expenses, Trustee shall apply proceeds to: (a) sums expended hereunder; (b) all other sums secured; and (c) the remainder to persons legally entitled.\n\n9. Inspection of Property. Beneficiar"+(isSecond?"y":"ies")+" may make reasonable entries and inspections of the property upon reasonable prior written notice.\n\n10. Condemnation. The proceeds of any condemnation award are hereby assigned to Beneficiar"+(isSecond?"y":"ies")+".";
 
   const titleStr = isSecond ? "SECOND DEED OF TRUST" : "FIRST DEED OF TRUST";
-  const mailTo = '<div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">AND WHEN RECORDED MAIL TO:</div>' +
-    '<div style="font-size:11pt;margin-bottom:14pt;">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div>';
+  // mailTo handled by recHdr
+
+  // Trustor name - for DOT use trustorName if set, else grantor
+  const trustorDisplay = f.trustorName||f.grantor||"[TRUSTOR NAME]";
+  // Legal description - use legalDescription field
+  const legalDesc = f.legalDescription||"[LEGAL DESCRIPTION]";
 
   const body = isSecond
     ? '<div class="body-text"><strong>APN:</strong> ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; <strong>County:</strong> ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; <strong>City:</strong> '+f.cityOfProperty:'') + '</div>' +
-      '<div class="body-text">THIS SECOND DEED OF TRUST, made this ______ day of _________________, ' + yr + ', between ' + (f.trustorName||"[TRUSTOR NAME]") + ', herein called "Trustor", whose address is ' + (f.trustorAddress||"[TRUSTOR ADDRESS]") + ', and ' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + ', herein called "Trustee" and "Beneficiary",</div>' +
-      '<div class="body-text">WITNESSETH: That Trustor irrevocably grants, transfers and assigns to the Beneficiary, in trust, with power of sale, that real property in the County of ' + (f.county||"[COUNTY]") + ', State of California, described as follows:</div>' +
-      '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
-      '<div class="body-text">Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>APN: ' + (f.apn||"_______________") + '</div>' +
-      '<div class="body-text">THIS SECOND DEED OF TRUST IS SUBJECT TO AND SUBORDINATE TO THE FIRST ' + (f.seniorLienType||"DEED OF TRUST") + ' IN FAVOR OF ' + (f.seniorLienHolder||"[SENIOR LENDER]") + ', RECORDED ON ' + (f.seniorLienRecordingDate||"[DATE]") + ', AS INSTRUMENT NO. ' + (f.seniorLienRecording||"[INSTRUMENT NO.]") + ' IN THE OFFICIAL RECORDS OF ' + (f.county||"[COUNTY]").toUpperCase() + ' COUNTY, STATE OF CALIFORNIA.</div>' +
-      '<div class="body-text">TOGETHER WITH the rents, issues, and profits thereof, for the purpose of securing payment of the indebtedness evidenced by a promissory note of even date herewith, executed by Trustor in the sum of ' + (f.loanAmountWords||"[LOAN AMOUNT IN WORDS]") + ' ($' + (f.loanAmount||"_______________") + ').</div>' +
-      (f.dueOnSale?'<div class="body-text">In the event the herein described property is sold, conveyed, or alienated by Trustor, all obligations secured by this instrument shall, at the option of the holder, immediately become due and payable.</div>':'') +
-      (f.requestNOD?'<div class="body-text">Beneficiary requests that a copy of any Notice of Default and Notice of Sale hereunder be mailed to Beneficiary at the address given herein.</div>':'') +
-      '<div class="body-text">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div>' +
-      '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-      '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + grantorLine({...f, grantor:f.trustorName, grantorCapacity:f.trustorCapacity}) + '</div></div>' +
-      notaryHTML(f.trustorCapacity||"Individual", f) +
-      '<div class="body-text" style="margin-top:16pt;">Second Deed of Trust for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>APN: ' + (f.apn||"_______________") + '</div>'
+      '<div class="body-text">THIS SECOND DEED OF TRUST (\"Deed of Trust\"), made as of ______ day of _________________, ' + yr + ', between ' + trustorDisplay + ', a California limited liability company (\"Trustor\"), whose mailing address is ' + (f.trustorAddress||"[TRUSTOR ADDRESS]") + ', and ' + (f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]") + ', herein called \"Trustee,\" and ' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + ', herein called \"Beneficiary\", whose mailing address is ' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '.</div>' +
+      '<div class="body-text">WITNESSETH: That Trustor irrevocably grants, transfers and conveys to Trustee, in trust, with power of sale, for the benefit of Beneficiary, the land situated in the County of ' + (f.county||"[COUNTY]") + ', City of ' + (f.cityOfProperty||"[CITY]") + ', State of California,</div>' +
+      '<div class="body-text">and is described as follows:</div>' +
+      '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + legalDesc + '</div>' +
+      '<div class="body-text">Commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', California':'') + '<br>APN: ' + (f.apn||"_______________") + '</div>' +
+      '<div class="body-text" style="font-weight:bold;">THIS SECOND DEED OF TRUST IS SUBJECT AND SUBORDINATE TO THAT CERTAIN ' + (f.seniorLienType||"DEED OF TRUST") + ' DATED ' + (f.seniorLoanDate||"[DATE]") + ', EXECUTED BY ' + trustorDisplay.toUpperCase() + ', RECORDED ' + (f.seniorLienRecordingDate||"[RECORDING DATE]") + ', AS INSTRUMENT NO. ' + (f.seniorLienRecording||"[INSTRUMENT NO.]") + ' OF THE OFFICIAL RECORDS OF ' + (f.county||"[COUNTY]").toUpperCase() + ' COUNTY, CALIFORNIA, IN FAVOR OF ' + (f.seniorLienHolder||"[SENIOR LENDER]").toUpperCase() + ', AND ANY EXTENSIONS, MODIFICATIONS, RENEWALS, REPLACEMENTS, REFINANCINGS, CONSOLIDATIONS, OR ASSIGNMENTS THEREOF (COLLECTIVELY, THE \"SENIOR DEED OF TRUST\").</div>' +
+      '<div class="body-text">TOGETHER WITH the rents, issues, and profits thereof, SUBJECT, HOWEVER, to the right, power, and authority given to and conferred upon Beneficiary by Paragraph 5 of Part B of the provisions incorporated herein by reference to collect and apply such rents, issues, and profits, for the purpose of securing payment of the indebtedness evidenced by that certain Secured Promissory Note dated ' + (f.loanDate||"[NOTE DATE]") + ' (the \"Note\"), executed by Trustor in favor of Beneficiary in the maximum principal amount of ' + (f.loanAmountWords||"[LOAN AMOUNT IN WORDS]") + ' ($' + (f.loanAmount||"_______________") + '), together with all interest, fees, costs, and other amounts payable thereunder, any lawful charge made by Beneficiary for a statement regarding the obligations secured hereby, and the performance of each agreement herein contained.</div>' +
+      '<div class="body-text"><strong>PART A - COVENANTS OF TRUSTOR</strong></div>' +
+      '<div class="body-text">' + partA + '</div>' +
+      '<div class="body-text"><strong>PART B - TRUSTEE AND BENEFICIARY PROVISIONS</strong></div>' +
+      '<div class="body-text">' + partB + '</div>' +
+      '<div class="body-text">In the event the Property, or any part thereof or interest therein, is sold, conveyed, assigned, transferred, or otherwise alienated by Trustor, whether voluntarily, involuntarily, by operation of law, or otherwise, except as expressly permitted under the Secured Promissory Note or other Loan Documents, then, at the option of Beneficiary and without demand or notice, all obligations secured by this Deed of Trust, regardless of the stated maturity thereof, shall immediately become due and payable.</div>' +
+      '<div class="body-text">Beneficiary hereby requests that a copy of any Notice of Default and any Notice of Sale recorded pursuant to this Deed of Trust be mailed to Beneficiary at the address set forth herein, or at such other address as Beneficiary may designate by written notice, in accordance with applicable California law.</div>' +
+      '<div class="body-text"><strong>' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '</strong><br><strong>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</strong></div>' +
+      '<div class="body-text" style="font-style:italic;">[Remainder of page left intentionally blank; Signature Page follows]</div>' +
+      '<div class="body-text">Executed on __________ day of _________________, ' + yr + ', in _____________________, California.</div>' +
+      '<div class="sig-block"><div class="sig-name">' + grantorLine({...f, grantor:trustorDisplay, grantorCapacity:f.trustorCapacity||"LLC Manager / Member"}) + '</div></div>' +
+      notaryHTML(f.trustorCapacity||"LLC Manager / Member", f) +
+      '<div class="body-text" style="margin-top:16pt;font-style:italic;">Second Deed of Trust for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', California':'') + '<br>APN: ' + (f.apn||"_______________") + '</div>'
     : '<div class="body-text">THIS FIRST DEED OF TRUST, made this ______ day of _________________, ' + yr + ', between ' + (f.trustorName||"[TRUSTOR NAME]") + ', whose address is ' + (f.trustorAddress||"[TRUSTOR ADDRESS]") + ', herein called "Trustors", ' + (f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]") + ', a California corporation, as "Trustee," and ' + (f.beneficiaryLenderName||"[BENEFICIARY / LENDER NAME]") + ', herein called "Beneficiaries",</div>' +
       '<div class="body-text">WITNESSETH: That Trustors irrevocably grant, transfer and assign to the Trustee, in trust, with power of sale, Trustors\' interest in the real property situated in the County of ' + (f.county||"[COUNTY]") + ', State of California, described in "Exhibit A" attached hereto.</div>' +
       '<div class="body-text"><strong>APN(s):</strong> ' + (f.apn||"_______________") + '</div>' +
@@ -2580,7 +2597,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:4}}>Document ready</h2>
             <div style={{fontSize:12,color:C.muted,marginBottom:20,letterSpacing:1}}>{dt?.label} · {form.county} County · {new Date().toLocaleDateString()}</div>
             <div style={{background:"#fff",border:"1px solid #bbb",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",marginBottom:16,maxHeight:480,overflowY:"auto"}}>
-              <div style={{padding:"20px 28px",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000"}} dangerouslySetInnerHTML={{__html: wrapDocHTML(output, dt?.label||"deed", form.apn)}}/>
+              <div style={{padding:"6px 28px 2px",background:"#f0f8e8",borderBottom:"1px solid #c8e0c0",fontSize:11,color:"#4a6a3a",fontStyle:"italic"}}>✏️ Document is editable — click anywhere to make changes before downloading.</div><div style={{padding:"20px 28px",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000"}} dangerouslySetInnerHTML={{__html: wrapDocHTML(output, dt?.label||"deed", form.apn)}} contentEditable={true} suppressContentEditableWarning={true} onInput={e=>{setOutput(e.currentTarget.innerHTML);}} style={{outline:"none"}}/>
             </div>
             <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
               <button onClick={copyAndDownload} style={{...ST.btnP,background:copied?"#5a9a5a":C.gold}}>{copied?"✓ Copied & Downloaded":"Copy + Download .txt"}</button>
