@@ -40,6 +40,7 @@ const MODEL = "claude-sonnet-4-6";
 const SUPA_URL = "https://mmhodgxhpsractyhxazw.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1taG9kZ3hocHNyYWN0eWh4YXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0Mjk2OTYsImV4cCI6MjA5ODAwNTY5Nn0.lbfc_K_ZvgeH9Gm5Thv7uADlgVHC7cnZaCtN8gK1vb4";
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+let ddToken = "";
 
 const COUNTY_ASSESSORS = {
   "Alameda": { name: "Phong La, County Assessor", addr: "1221 Oak Street, Room 145", city: "Oakland, CA 94612" },
@@ -1545,6 +1546,7 @@ function DottieDeeds() {
         const { data: { session } } = await supa.auth.getSession();
         if (session) {
           setAuthUser(session.user);
+          ddToken = session.access_token || "";
           const { data: profile } = await supa.from("profiles").select("*").eq("id", session.user.id).single();
           setAuthProfile(profile);
           console.log("INIT PROFILE:", JSON.stringify(profile));
@@ -1578,6 +1580,7 @@ function DottieDeeds() {
     };
     initAuth();
     const { data: { subscription } } = supa.auth.onAuthStateChange(async (event, session) => {
+      ddToken = session ? (session.access_token || "") : "";
       if (event === "SIGNED_OUT") { setAuthUser(null); setAuthProfile(null); setScreen("auth"); }
     });
     return () => subscription.unsubscribe();
@@ -1636,7 +1639,7 @@ function DottieDeeds() {
       const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
      const resp = await fetch(PROXY,{
         method:"POST", headers:{"Content-Type":"application/json"},
-body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",content:[
+body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{role:"user",content:[
           {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
          {type:"text",text:`Extract from this recorded deed. Return ONLY valid JSON:\n{"grantor":"the GRANTEE/TRANSFEREE full name and current vesting exactly as written on this prior deed — this is the CURRENT OWNER who will become the GRANTOR on the new deed being drafted, NOT the original grantor on this prior deed","grantorMailingAddress":"the mail tax statements to address or mailing address of grantee/transferee if shown else empty","apn":"assessor parcel number","county":"county name only","city":"city of property","propertyAddress":"street address of the property e.g. 123 Main Street","legalDescription":"complete legal description verbatim","inferredCapacity":"one of exactly: Individual, Trustee, Successor Trustee, LLC Manager / Member, Corporate Officer, General Partner, Attorney-in-Fact, Personal Representative, Guardian / Conservator — infer from the grantee name and vesting","entityName":"if grantee is a corporation or LLC, the entity name only without state or entity type e.g. Amicita LLC becomes Amicita LLC, else empty","stateOfFormation":"if grantee is a corporation or LLC, the state of formation e.g. California, else empty","trustName":"trust name if present else empty","trustDate":"trust date if present else empty","settlorName":"settlor name if present else empty","deedDate":"date of prior deed else empty","recordingInfo":"recording number else empty","confidence":{"grantor":"high|medium|low","apn":"high|medium|low","legalDescription":"high|medium|low","county":"high|medium|low"}}`}
         ]}]})
@@ -1664,7 +1667,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
       const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
       const resp = await fetch(PROXY,{
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:MODEL, max_tokens:1000, messages:[{role:"user",content:[
+        body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1000, messages:[{role:"user",content:[
           {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
           {type:"text",text:`Extract from this promissory note. Return ONLY valid JSON:
 {"borrowerName":"full legal name of borrower/trustor e.g. 11 Amicita LLC, a California limited liability company","borrowerAddress":"borrower street address if shown else empty","signingOfficerName":"if borrower is an entity, the individual name signing on behalf of the entity e.g. John Smith — look in signature block or borrower section, else empty","signingOfficerTitle":"title of the signing officer e.g. Manager, CEO, Member, Managing Member, else empty","lenderName":"full legal name of lender/beneficiary","lenderAddress":"lender street address if shown else empty","lenderCity":"lender city state zip if shown else empty","loanAmount":"loan amount as written e.g. $500,000.00","interestRate":"interest rate e.g. 6.500%","loanDate":"date of note","maturityDate":"maturity/due date if stated else empty","loanType":"e.g. Fixed Rate, Adjustable Rate","monthlyPayment":"monthly payment amount if stated else empty"}`}
@@ -1778,7 +1781,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
       const base64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
       const resp = await fetch(PROXY,{
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:MODEL, max_tokens:1000, messages:[{role:"user",content:[
+        body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1000, messages:[{role:"user",content:[
           {type:"document",source:{type:"base64",media_type:"application/pdf",data:base64}},
           {type:"text",text:'Extract from this deed of trust or mortgage (senior lien). Return ONLY valid JSON:\n{"seniorTrusteeName":"trustee name on the senior deed of trust","seniorBeneficiaryName":"lender/beneficiary on senior deed of trust","seniorBeneficiaryAddress":"beneficiary/lender address if shown else empty","seniorLoanAmount":"original loan amount e.g. $500,000.00","seniorLoanDate":"date of senior deed of trust","seniorRecordingDate":"recording date if shown else empty","seniorRecordingNumber":"document/recording number if shown else empty","seniorLoanType":"e.g. Deed of Trust or Mortgage"}'}
         ]}]})
