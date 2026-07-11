@@ -2247,7 +2247,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
             <p style={{fontSize:14,color:C.muted,marginBottom:28,lineHeight:1.8}}>Dottie reads the prior deed and extracts all information automatically. You verify before anything is used.</p>
             <div onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onDrop={onDrop} onClick={()=>document.getElementById("fileInput").click()} style={{border:`2px dashed ${dragOver?C.gold:"#c8bfa8"}`,borderRadius:4,padding:"52px 40px",textAlign:"center",cursor:"pointer",background:dragOver?C.cream:"transparent",transition:"all .2s"}}>
               <div style={{fontSize:32,marginBottom:12,opacity:.4}}>⬆</div>
-              <div style={{fontSize:15,color:C.muted,marginBottom:6}}>Drop the prior recorded deed here, or click to browse</div>
+              <div style={{fontSize:15,color:C.muted,marginBottom:6}}>{docType==="sheriff"?"Drop a copy of the certified court order here, or click to browse":(docType==="recon"||docType==="dotmod")?"Drop the prior deed of trust here, or click to browse":"Drop the prior recorded deed here, or click to browse"}</div>
               <div style={{fontSize:11,color:"#a09070",letterSpacing:1}}>PDF format only</div>
               <input id="fileInput" type="file" accept=".pdf" style={{display:"none"}} onChange={e=>e.target.files[0]&&handleFile(e.target.files[0])}/>
             </div>
