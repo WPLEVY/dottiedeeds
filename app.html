@@ -440,7 +440,7 @@ const CHECKLISTS = {
   quitclaim:    {steps:["Confirm purpose with supervising attorney","Grantor signs before notary","PCOR required","Confirm DTT exemption code"],rejections:["PCOR missing","Wrong DTT exemption code","Notary acknowledgment incomplete"]},
   interspousal: {steps:["Confirm parties are legally married","Only transferring spouse signs","PCOR strongly recommended — county charges $25 additional fee and requires supplemental information if not submitted. Check Item A and enter date of death","For refinance — confirm lender timing"],rejections:["PCOR Item A not checked","Both spouses signed"]},
   adjt:         {steps:["Obtain certified copy of death certificate","Verify prior deed recording reference","Surviving joint tenant signs before notary","PCOR — check Item D with date of death","Submit affidavit and death certificate together"],rejections:["Death certificate is photocopy — must be certified","Affidavit and death certificate not together","PCOR Item D not checked"]},
-  adtr:         {steps:["Obtain certified copy of death certificate","Confirm successor trustee authority from trust instrument","Successor trustee signs in trustee capacity","Submit affidavit and death certificate together","PCOR optional — if filed, mark box K (trustee substitution, no change in ownership)"],rejections:["Death certificate not certified","Individual acknowledgment used"]},
+  adtr:         {steps:["Obtain certified copy of death certificate","Confirm successor trustee authority from trust instrument","Successor trustee signs in trustee capacity","Submit affidavit and death certificate together","File PCOR — death of trustee is commonly a change in ownership (often parent to child); complete Part 1"],rejections:["Death certificate not certified","Individual acknowledgment used","PCOR omitted"]},
   sscp:         {steps:["Obtain certified copy of death certificate","Confirm property held as community property","Confirm 40 days have passed since date of death","Surviving spouse signs before notary","PCOR — check Item A"],rejections:["Death certificate not certified","40-day waiting period not satisfied","PCOR missing or Item A not checked"]},
   tod:          {steps:["Confirm owner currently vested of record","Owner signs before notary AND two witnesses simultaneously","MUST RECORD WITHIN 60 DAYS OF NOTARIZATION","Exempt from PCOR (R&T §480.3)","Exempt from DTT (R&T §11930)"],rejections:["Recorded more than 60 days after notarization — void","Two witnesses not obtained","PCOR incorrectly included"]},
   recon:        {steps:["Confirm loan fully paid","Trustee executes — not the lender","Verify original DOT recording reference","No PCOR required","SB2 fee of $75 applies"],rejections:["Lender signed instead of trustee","Original DOT recording reference wrong","PCOR incorrectly included"]},
@@ -1034,7 +1034,7 @@ const PCOR_DOCS = ["grant","granttrust","quitclaim","interspousal","adjt","sscp"
 
 // ─── PCOR reason code mapping ─────────────────────────────────────────────────
 const getPCORReason = (docType, f) => {
-  if (docType==="adtr") return {box:"K", desc:"Substitution of trustee due to death of trustee; not a change in ownership"};
+  if (docType==="adtr") return {box:"C", desc:"Change in ownership on death of trustee. Date of death: "+( f.dateOfDeathJT||"_______________")};
   if (docType==="interspousal") return {box:"A", desc:"Transfer between spouses"};
   if (docType==="adjt") return {box:"D", desc:"Death of joint tenant. Date of death: "+( f.dateOfDeathJT||"_______________")};
   if (docType==="sscp") return {box:"A", desc:"Death of spouse — community property succession"};
@@ -2650,8 +2650,8 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               <div style={{background:"#f0f8f0",border:`1px solid #b0d090`,borderLeft:`3px solid ${C.green}`,padding:"16px 20px",borderRadius:2,marginBottom:16}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
                   <div>
-                    <div style={{fontSize:13,fontWeight:"bold",color:"#2a5010",marginBottom:4}}>📋 {docType==="adtr"?"PCOR available (optional)":"PCOR Required for this deed"}</div>
-                    <div style={{fontSize:12,color:"#3a6010",lineHeight:1.7}}>{docType==="adtr"?<>A change of trustee is generally not a change in ownership, so a PCOR is optional here. If filed, it is marked as a trustee substitution (box K), not a taxable transfer.</>:<>A Preliminary Change of Ownership Report must be filed with the county assessor.<br/>Without it, the recorder charges an additional <strong>$25.00 fee</strong> and requires supplemental information after recording.</>}</div>
+                    <div style={{fontSize:13,fontWeight:"bold",color:"#2a5010",marginBottom:4}}>📋 PCOR Required for this deed</div>
+                    <div style={{fontSize:12,color:"#3a6010",lineHeight:1.7}}>A Preliminary Change of Ownership Report must be filed with the county assessor.<br/>Without it, the recorder charges an additional <strong>$25.00 fee</strong> and requires supplemental information after recording.</div>
                   </div>
                   <button onClick={()=>{
               const reason = getPCORReason(docType,form);
