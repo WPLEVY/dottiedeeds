@@ -602,7 +602,7 @@ const genDOT = (f,m) => {
       notaryHTML(f.trustorCapacity||"Individual", f) +
       '<div class="body-text" style="margin-top:16pt;">First Deed of Trust for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>APNs: ' + (f.apn||"_______________") + '</div>';
 
-  return recHdr(m) + mailTo +
+  return recHdr(m) +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">' + titleStr + '</div>' +
     body;
 };
@@ -775,8 +775,8 @@ const genSSCP = (f,m) => {
     ? 'Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B) — Residential dwelling to owner-occupier'
     : 'Building Homes and Jobs Act Fee: $___<br>GC §27388.1 (beginning Jan. 1, 2018)';
   return recHdr(m) +
-    '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 4pt;">AFFIDAVIT OF DEATH</div>' +
-    '<div style="text-align:center;font-size:11pt;margin-bottom:4pt;">Surviving Spouse Succeeding to Title to Community Property</div>' +
+    '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 4pt;">AFFIDAVIT OF SURVIVING SPOUSE</div>' +
+    '<div style="text-align:center;font-size:11pt;margin-bottom:4pt;">Succeeding to Title to Community Property</div>' +
     '<div style="text-align:center;font-size:11pt;margin-bottom:12pt;">(Probate Code §13540, State of California)</div>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:12pt;"><tr>' +
       '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
@@ -804,10 +804,8 @@ const genSSCP = (f,m) => {
     '<div class="body-text">That this Affidavit is made for the protection and benefit of the surviving spouse, his/her successors, assigns and personal representatives and all other parties hereafter dealing with or who may acquire an interest in the above described property.</div>' +
     '<div class="body-text">I declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[SURVIVING SPOUSE NAME]") + '</div></div>' +
-    juratBoxHTML(f.grantor, yr) +
-    '<div class="body-text" style="margin-top:16pt;">Affidavit of Death for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>Assessor&#39;s Parcel Number: ' + (f.apn||"_______________") + '</div>' +
-    '<div class="body-text"><strong>MAIL TAX STATEMENTS AS DIRECTED ABOVE</strong></div>';
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ', Declarant</div></div>' +
+    juratBoxHTML(f.grantor, yr);
 };
 
 
@@ -1065,6 +1063,11 @@ const genPCOR = (docType, f, m, pf={}) => {
   const p1l1 = pf.p1l1||((isTrustTransfer&&["T1","T5"].includes(f.trustTransferReason)) ? "YES" : "NO");
   const p1l2 = pf.p1l2||((isTrustTransfer&&["T2"].includes(f.trustTransferReason)) ? "YES" : "NO");
   const p1n = pf.p1n||((isTrustTransfer) ? "YES" : "NO");
+  const p1c = pf.p1c||"NO";
+  const p1m = pf.p1m||"NO";
+  const p1o = pf.p1o||"NO";
+  const p1p = pf.p1p||"NO";
+  const p1q = pf.p1q||(reason.box==="other"?"YES":"NO");
 
   // Part 2 transfer type
   let transferType = pf.transferType||"Other";
@@ -1191,13 +1194,13 @@ const genPCOR = (docType, f, m, pf={}) => {
   <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
   <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">B. This transfer is solely between domestic partners currently registered with the California Secretary of State <em>(addition or removal of a partner, death of a partner, termination settlement, etc.)</em>.</div>
 
-  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
-  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">C. This is a transfer: ${cb("NO")} between parent(s) and child(ren) &nbsp; ${cb("NO")} between grandparent(s) and grandchild(ren).<br>
-  <span class="indent">Was this the transferor/grantor&#39;s principal residence? ${cb("NO")} YES ${cb("YES")} NO</span><br>
-  <span class="indent">Is this a family farm? ${cb("NO")} YES ${cb("YES")} NO</span></div>
+  <div style="padding:2px 4px;">${cb(p1c)} ${cb(p1c==="YES"?"NO":"YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">C. This is a transfer: ${cb(pf.p1cRel==="parentchild"?"YES":"NO")} between parent(s) and child(ren) &nbsp; ${cb(pf.p1cRel==="grandparent"?"YES":"NO")} between grandparent(s) and grandchild(ren).<br>
+  <span class="indent">Was this the transferor/grantor&#39;s principal residence? ${cb(pf.p1cPrimary==="YES"?"YES":"NO")} YES ${cb(pf.p1cPrimary==="NO"?"YES":"NO")} NO</span><br>
+  <span class="indent">Is this a family farm? ${cb(pf.p1cFarm==="YES"?"YES":"NO")} YES ${cb(pf.p1cFarm==="NO"?"YES":"NO")} NO</span></div>
 
   <div style="padding:2px 4px;">${cb(p1d)} ${cb(p1d==="YES"?"NO":"YES")}</div>
-  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* D. This transfer is the result of a cotenant’s death. Date of death: ${f.dateOfDeathJT||"___________________"}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* D. This transfer is the result of a cotenant’s death. Date of death: ${pf.inheritanceDate||f.dateOfDeathJT||"___________________"}</div>
 
   <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
   <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* E. This transaction is to replace a principal residence owned by a person 55 years of age or older.</div>
@@ -1225,20 +1228,20 @@ const genPCOR = (docType, f, m, pf={}) => {
   <span class="indent">1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor, and/or ${cb(p1l1)} the transferor’s spouse ${cb("NO")} registered domestic partner.</span><br>
   <span class="indent">2. to/from an irrevocable trust for the benefit of the ${cb(p1l2)} creator/grantor/trustor and/or ${cb("NO")} grantor’s/trustor’s spouse ${cb("NO")} grantor’s/trustor’s registered domestic partner.</span></div>
 
-  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div style="padding:2px 4px;">${cb(p1m)} ${cb(p1m==="YES"?"NO":"YES")}</div>
   <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">M. This property is subject to a lease with a remaining lease term of 35 years or more including written options.</div>
 
   <div style="padding:2px 4px;">${cb(p1n)} ${cb(p1n==="YES"?"NO":"YES")}</div>
   <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">N. This is a transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel being transferred remain exactly the same after the transfer.</div>
 
-  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
+  <div style="padding:2px 4px;">${cb(p1o)} ${cb(p1o==="YES"?"NO":"YES")}</div>
   <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">O. This is a transfer subject to subsidized low-income housing requirements with governmentally imposed restrictions.</div>
 
-  <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
-  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* P. This transfer is to the first purchaser of a new building containing a ${cb("NO")} leased ${cb("NO")} owned active solar energy system.</div>
+  <div style="padding:2px 4px;">${cb(p1p)} ${cb(p1p==="YES"?"NO":"YES")}</div>
+  <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">* P. This transfer is to the first purchaser of a new building containing a ${cb(pf.p1pType==="leased"?"YES":"NO")} leased ${cb(pf.p1pType==="owned"?"YES":"NO")} owned active solar energy system.</div>
 
-  <div style="padding:2px 4px;">${cb(reason.box==="other"?"YES":"NO")} ${cb(reason.box==="other"?"NO":"YES")}</div>
-  <div class="cb-label" style="padding:2px 0;">Q. Other. This transfer is to: ${reason.box==="other"?reason.desc:""}</div>
+  <div style="padding:2px 4px;">${cb(p1q)} ${cb(p1q==="YES"?"NO":"YES")}</div>
+  <div class="cb-label" style="padding:2px 0;">Q. Other. This transfer is to: ${p1q==="YES"?(pf.p1qDesc||reason.desc||""):""}</div>
 </div>
 
 <div style="font-size:7.5pt;margin:4px 0;font-style:italic;">* Please refer to the instructions for Part 1.</div>
@@ -2718,6 +2721,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                 {[
                   {key:"p1a", label:"A. This transfer is solely between spouses (addition or removal of a spouse, death of a spouse, divorce settlement, etc.)."},
                   {key:"p1b", label:"B. This transfer is solely between domestic partners currently registered with the California Secretary of State."},
+                  {key:"p1c", label:"C. This is a transfer between parent(s) and child(ren), or between grandparent(s) and grandchild(ren)."},
                   {key:"p1d", label:"D. This transfer is the result of a cotenant’s death."},
                   {key:"p1e", label:"E. This transaction is to replace a principal residence owned by a person 55 years of age or older."},
                   {key:"p1f", label:"F. This transaction is to replace a principal residence by a person who is severely disabled."},
@@ -2728,7 +2732,11 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                   {key:"p1k", label:"K. The recorded document substitutes a trustee of a trust, mortgage, or other similar document."},
                   {key:"p1l1", label:"L1. Transfer to/from a revocable trust that may be revoked by the transferor for the benefit of the transferor and/or transferor’s spouse."},
                   {key:"p1l2", label:"L2. Transfer to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor&#39;s spouse."},
+                  {key:"p1m", label:"M. This property is subject to a lease with a remaining lease term of 35 years or more including written options."},
                   {key:"p1n", label:"N. Transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel remain exactly the same after the transfer."},
+                  {key:"p1o", label:"O. This is a transfer subject to subsidized low-income housing requirements with governmentally imposed restrictions."},
+                  {key:"p1p", label:"P. This transfer is to the first purchaser of a new building containing an active solar energy system."},
+                  {key:"p1q", label:"Q. Other. If none of the above apply, mark YES and describe the transfer."},
                 ].map(({key,label})=>(
                   <div key={key} style={{...ST.card,marginBottom:8,padding:"12px 16px"}}>
                     <div style={{display:"flex",alignItems:"flex-start",gap:16}}>
@@ -2745,6 +2753,27 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
                     {key==="p1d"&&pcorForm.p1d==="YES"&&(
                       <div style={{marginTop:8,paddingLeft:80}}>
                         <Field label="Date of death"><input value={pcorForm.inheritanceDate} onChange={e=>updPcor("inheritanceDate",e.target.value)} placeholder="e.g. 01/15/2026" style={{...ST.inp,marginTop:4}}/></Field>
+                      </div>
+                    )}
+                    {key==="p1c"&&pcorForm.p1c==="YES"&&(
+                      <div style={{marginTop:8,paddingLeft:80}}>
+                        <Field label="Relationship">
+                          <select value={pcorForm.p1cRel||""} onChange={e=>updPcor("p1cRel",e.target.value)} style={ST.inp}>
+                            <option value="">— Select —</option>
+                            <option value="parentchild">Between parent(s) and child(ren)</option>
+                            <option value="grandparent">Between grandparent(s) and grandchild(ren)</option>
+                          </select>
+                        </Field>
+                        <div style={{display:"flex",gap:24,margin:"8px 0",fontSize:12,alignItems:"center"}}><span>Transferor&#39;s principal residence?</span>{["YES","NO"].map(v=>(<label key={v} style={{display:"flex",gap:4,cursor:"pointer",fontWeight:pcorForm.p1cPrimary===v?"bold":"normal"}}><input type="checkbox" checked={pcorForm.p1cPrimary===v} onChange={()=>updPcor("p1cPrimary",v)}/>{v}</label>))}</div>
+                        <div style={{display:"flex",gap:24,fontSize:12,alignItems:"center"}}><span>Family farm?</span>{["YES","NO"].map(v=>(<label key={v} style={{display:"flex",gap:4,cursor:"pointer",fontWeight:pcorForm.p1cFarm===v?"bold":"normal"}}><input type="checkbox" checked={pcorForm.p1cFarm===v} onChange={()=>updPcor("p1cFarm",v)}/>{v}</label>))}</div>
+                      </div>
+                    )}
+                    {key==="p1p"&&pcorForm.p1p==="YES"&&(
+                      <div style={{marginTop:8,paddingLeft:80,display:"flex",gap:24,fontSize:12,alignItems:"center"}}><span>Solar energy system is:</span>{["leased","owned"].map(v=>(<label key={v} style={{display:"flex",gap:4,cursor:"pointer",fontWeight:pcorForm.p1pType===v?"bold":"normal"}}><input type="checkbox" checked={pcorForm.p1pType===v} onChange={()=>updPcor("p1pType",v)}/>{v}</label>))}</div>
+                    )}
+                    {key==="p1q"&&pcorForm.p1q==="YES"&&(
+                      <div style={{marginTop:8,paddingLeft:80}}>
+                        <Field label="Describe the transfer"><input value={pcorForm.p1qDesc||""} onChange={e=>updPcor("p1qDesc",e.target.value)} style={{...ST.inp,marginTop:4}}/></Field>
                       </div>
                     )}
                   </div>
