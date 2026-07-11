@@ -1968,6 +1968,7 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               {authMode==="login"&&<><span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("signup");setAuthError("");}}>Request beta access</span> · <span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("forgot");setAuthError("");}}>Forgot password?</span></>}
               {authMode==="signup"&&<span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("login");setAuthError("");}}>Already have an account? Sign in</span>}
               {authMode==="forgot"&&<span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("login");setAuthError("");}}>Back to sign in</span>}
+              <div style={{marginTop:14,fontSize:11,color:C.muted}}>By using Dottie you agree to our <a href="/terms.html" style={{color:C.gold}}>Terms</a> and <a href="/privacy.html" style={{color:C.gold}}>Privacy Policy</a>.</div>
             </div>
           </div>
         </div>
