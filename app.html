@@ -459,6 +459,23 @@ const DEFAULT_MASTER = {
   provisions:[], masterVersion:1, masterUpdated:"",
 };
 
+const mailTaxDeclHTML = (f, dttDefault) => {
+  const dtt = f.dttAmount || dttDefault;
+  const who = f.mailTaxTo || f.grantee || f.survivingJointTenant || f.grantor || "[MAIL TAX STATEMENTS TO]";
+  const addr = f.mailTaxAddress || f.propertyAddress || "[ADDRESS]";
+  const city = f.cityOfProperty ? ('<br>' + f.cityOfProperty + ', CA') : '';
+  const exemption = f.sb2Exemption || 'GC §27388.1(a)(2)(B) — Residential dwelling to owner-occupier';
+  return '<table style="width:100%;border-collapse:collapse;margin:6pt 0 12pt;"><tr>' +
+    '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+      '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
+      '<div style="font-size:11pt;">' + who + '<br>' + addr + city + '</div>' +
+    '</td>' +
+    '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+      '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Declare(s):</div>' +
+      '<div style="font-size:11pt;">Documentary Transfer Tax: $' + dtt + '<br>Building Homes and Jobs Act Fee: $-0-<br>' + exemption + '</div>' +
+    '</td>' +
+  '</tr></table>';
+};
 const recHdr = (m) => {
   const fn = (m&&m.firmName)||"[FIRM NAME]";
   const fa = (m&&m.firmAddress)||"[FIRM ADDRESS]";
@@ -678,6 +695,7 @@ const genADJT = (f,m) => {
   const yr = new Date().getFullYear();
   const aka = f.deceasedJointTenantAKA ? '<br>(Also known as ' + f.deceasedJointTenantAKA + ')' : '';
   return recHdr(m) +
+    mailTaxDeclHTML(f, "0") +
     '<hr class="rule">' +
     '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:12pt 0;">AFFIDAVIT OF DEATH OF JOINT TENANT</div>' +
     '<hr class="rule">' +
@@ -980,6 +998,7 @@ const genTrusteeDeed = (f,m) => {
   const yr = new Date().getFullYear();
   const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
   return recHdr(m) +
+    mailTaxDeclHTML(f, "_______________") +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">TRUSTEE&#39;S DEED UPON SALE</div>' +
     '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
     '<div class="body-text">' + (f.reconTrustee||"[TRUSTEE NAME]") + ' (hereinafter "Grantor"), as Trustee under that certain Deed of Trust dated ' + (f.reconOriginalDeedDate||"[DEED DATE]") + ', executed by ' + (f.grantor||"[TRUSTOR / BORROWER NAME]") + ', recorded on ' + (f.reconRecordingDate||"[RECORDING DATE]") + ' as Document Number ' + (f.reconRecording||"[DOCUMENT NUMBER]") + ' in the Official Records of ' + (f.county||"[COUNTY]") + ' County, California, does hereby GRANT AND CONVEY, but without covenant or warranty, to:</div>' +
@@ -1003,6 +1022,7 @@ const genSheriff = (f,m) => {
   const yr = new Date().getFullYear();
   const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
   return recHdr(m) +
+    mailTaxDeclHTML(f, "_______________") +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">SHERIFF&#39;S DEED</div>' +
     '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
     '<div class="body-text">' + (f.sheriffName||"[SHERIFF&#39;S NAME]") + ', Sheriff of ' + (f.county||"[COUNTY]") + ' County, California, pursuant to a Writ of Execution/Sale issued out of the ' + (f.courtName||"[COURT NAME]") + ', Case Number ' + (f.caseNumber||"[CASE NUMBER]") + ', entitled ' + (f.caseName||"[PLAINTIFF] v. [DEFENDANT]") + ', pursuant to a Judgment entered on ' + (f.judgmentDate||"[JUDGMENT DATE]") + ', in favor of ' + (f.judgmentCreditor||"[JUDGMENT CREDITOR]") + ' and against ' + (f.judgmentDebtor||"[JUDGMENT DEBTOR]") + ', does hereby GRANT AND CONVEY to:</div>' +
