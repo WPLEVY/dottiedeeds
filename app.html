@@ -459,12 +459,10 @@ const DEFAULT_MASTER = {
   provisions:[], masterVersion:1, masterUpdated:"",
 };
 
-const mailTaxDeclHTML = (f, dttDefault) => {
-  const dtt = f.dttAmount || dttDefault;
+const mailTaxDeclHTML = (f, dttStr, declLines) => {
   const who = f.mailTaxTo || f.grantee || f.survivingJointTenant || f.grantor || "[MAIL TAX STATEMENTS TO]";
   const addr = f.mailTaxAddress || f.propertyAddress || "[ADDRESS]";
   const city = f.cityOfProperty ? ('<br>' + f.cityOfProperty + ', CA') : '';
-  const exemption = f.sb2Exemption || 'GC §27388.1(a)(2)(B) — Residential dwelling to owner-occupier';
   return '<table style="width:100%;border-collapse:collapse;margin:6pt 0 12pt;"><tr>' +
     '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
       '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
@@ -472,7 +470,7 @@ const mailTaxDeclHTML = (f, dttDefault) => {
     '</td>' +
     '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
       '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Declare(s):</div>' +
-      '<div style="font-size:11pt;">Documentary Transfer Tax: $' + dtt + '<br>Building Homes and Jobs Act Fee: $-0-<br>' + exemption + '</div>' +
+      '<div style="font-size:11pt;">Documentary Transfer Tax: ' + dttStr + '<br>' + declLines + '</div>' +
     '</td>' +
   '</tr></table>';
 };
@@ -695,7 +693,7 @@ const genADJT = (f,m) => {
   const yr = new Date().getFullYear();
   const aka = f.deceasedJointTenantAKA ? '<br>(Also known as ' + f.deceasedJointTenantAKA + ')' : '';
   return recHdr(m) +
-    mailTaxDeclHTML(f, "0") +
+    mailTaxDeclHTML(f, "$0", 'Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B) — Residential dwelling to owner-occupier') +
     '<hr class="rule">' +
     '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:12pt 0;">AFFIDAVIT OF DEATH OF JOINT TENANT</div>' +
     '<hr class="rule">' +
@@ -998,7 +996,7 @@ const genTrusteeDeed = (f,m) => {
   const yr = new Date().getFullYear();
   const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
   return recHdr(m) +
-    mailTaxDeclHTML(f, "_______________") +
+    mailTaxDeclHTML(f, (f.exemptFromTax?('EXEMPT — '+(f.exemptReason||"see deed")):('$'+(f.dtt||"_______________"))), 'Building Homes and Jobs Act Fee: $'+(f.sb2Fee||"_______")) +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">TRUSTEE&#39;S DEED UPON SALE</div>' +
     '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
     '<div class="body-text">' + (f.reconTrustee||"[TRUSTEE NAME]") + ' (hereinafter "Grantor"), as Trustee under that certain Deed of Trust dated ' + (f.reconOriginalDeedDate||"[DEED DATE]") + ', executed by ' + (f.grantor||"[TRUSTOR / BORROWER NAME]") + ', recorded on ' + (f.reconRecordingDate||"[RECORDING DATE]") + ' as Document Number ' + (f.reconRecording||"[DOCUMENT NUMBER]") + ' in the Official Records of ' + (f.county||"[COUNTY]") + ' County, California, does hereby GRANT AND CONVEY, but without covenant or warranty, to:</div>' +
@@ -1021,8 +1019,15 @@ const genTrusteeDeed = (f,m) => {
 const genSheriff = (f,m) => {
   const yr = new Date().getFullYear();
   const v = f.granteeVesting==="custom"?f.customVesting:f.granteeVesting;
+  const redemption = f.sheriffRedemption==="3month"
+    ? 'The property was sold subject to the right of redemption. The three-month redemption period provided by Code of Civil Procedure section 729.030(a) has expired without redemption of the property.'
+    : f.sheriffRedemption==="1year"
+    ? 'The property was sold subject to the right of redemption. The one-year redemption period provided by Code of Civil Procedure section 729.030(b) has expired without redemption of the property.'
+    : f.sheriffRedemption==="none"
+    ? 'The sale was not subject to any right of redemption.'
+    : '[REDEMPTION STATUS REQUIRED — state either: the sale was not subject to any right of redemption; OR the property was sold subject to the right of redemption and the applicable three-month (CCP 729.030(a)) or one-year (CCP 729.030(b)) redemption period has expired without redemption.]';
   return recHdr(m) +
-    mailTaxDeclHTML(f, "_______________") +
+    mailTaxDeclHTML(f, (f.exemptFromTax?('EXEMPT — '+(f.exemptReason||"see deed")):('$'+(f.dtt||"_______________"))), 'Building Homes and Jobs Act Fee: $'+(f.sb2Fee||"_______")) +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 12pt;">SHERIFF&#39;S DEED</div>' +
     '<div class="body-text">APN: ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; County: ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; City: '+f.cityOfProperty:'') + '</div>' +
     '<div class="body-text">' + (f.sheriffName||"[SHERIFF&#39;S NAME]") + ', Sheriff of ' + (f.county||"[COUNTY]") + ' County, California, pursuant to a Writ of Execution/Sale issued out of the ' + (f.courtName||"[COURT NAME]") + ', Case Number ' + (f.caseNumber||"[CASE NUMBER]") + ', entitled ' + (f.caseName||"[PLAINTIFF] v. [DEFENDANT]") + ', pursuant to a Judgment entered on ' + (f.judgmentDate||"[JUDGMENT DATE]") + ', in favor of ' + (f.judgmentCreditor||"[JUDGMENT CREDITOR]") + ' and against ' + (f.judgmentDebtor||"[JUDGMENT DEBTOR]") + ', does hereby GRANT AND CONVEY to:</div>' +
@@ -1030,16 +1035,12 @@ const genSheriff = (f,m) => {
     '<div class="body-text">all right, title, and interest of ' + (f.judgmentDebtor||"[JUDGMENT DEBTOR]") + ' in and to the following described real property in the County of ' + (f.county||"[COUNTY]") + ', State of California:</div>' +
     '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||"[LEGAL DESCRIPTION]") + '</div>' +
     '<div class="body-text">Assessor&#39;s Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
-    '<div class="body-text">' +
-      'Date of Sale: ' + (f.trusteeSaleDate||"[SALE DATE]") + '<br>' +
-      'Sale Location: ' + (f.trusteeSaleLocation||"[SALE LOCATION]") + '<br>' +
-      'Judgment Amount: $' + (f.reconLoanAmount||"[JUDGMENT AMOUNT]") + '<br>' +
-      'Purchase Price: $' + (f.trusteeSalePrice||"[PURCHASE PRICE]") + '</div>' +
-    '<div class="body-text">This deed is made without covenant or warranty and conveys only such right, title and interest as the judgment debtor held at the time of the levy of execution.</div>' +
-    '<div class="body-text">Documentary Transfer Tax: ' + (f.exemptFromTax?'EXEMPT — '+(f.exemptReason||"R&T §11922"):'$'+(f.dtt||"___________")) + '<br>Building Homes and Jobs Act Fee: $-0-</div>' +
+    '<div class="body-text">The above-described property was sold at public auction on ' + (f.trusteeSaleDate||"[SALE DATE]") + ', at ' + (f.trusteeSaleLocation||"[SALE LOCATION]") + ', pursuant to said Writ and the Notice of Sale duly given as required by law. At the sale, ' + (f.grantee||"[PURCHASER NAME]") + ' was the highest bidder and became the purchaser of the property for the sum of $' + (f.trusteeSalePrice||"[BID AMOUNT]") + ', which sum was paid.</div>' +
+    '<div class="body-text">' + redemption + '</div>' +
+    '<div class="body-text">This deed is made without covenant or warranty, express or implied, and conveys only such right, title, and interest as the judgment debtor, ' + (f.judgmentDebtor||"[JUDGMENT DEBTOR]") + ', held at the time of levy.</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.sheriffName||"[SHERIFF&#39;S NAME]") + '<br>Sheriff, ' + (f.county||"[COUNTY]") + ' County</div></div>' +
-    notaryHTML("Individual", f);
+    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.sheriffName||"[SHERIFF&#39;S NAME]") + '<br>Sheriff, ' + (f.county||"[COUNTY]") + ' County, California</div></div>' +
+    notaryHTML("Sheriff / Public Official", f);
 };
 
 
