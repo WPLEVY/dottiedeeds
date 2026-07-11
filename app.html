@@ -440,7 +440,7 @@ const CHECKLISTS = {
   quitclaim:    {steps:["Confirm purpose with supervising attorney","Grantor signs before notary","PCOR required","Confirm DTT exemption code"],rejections:["PCOR missing","Wrong DTT exemption code","Notary acknowledgment incomplete"]},
   interspousal: {steps:["Confirm parties are legally married","Only transferring spouse signs","PCOR strongly recommended — county charges $25 additional fee and requires supplemental information if not submitted. Check Item A and enter date of death","For refinance — confirm lender timing"],rejections:["PCOR Item A not checked","Both spouses signed"]},
   adjt:         {steps:["Obtain certified copy of death certificate","Verify prior deed recording reference","Surviving joint tenant signs before notary","PCOR — check Item D with date of death","Submit affidavit and death certificate together"],rejections:["Death certificate is photocopy — must be certified","Affidavit and death certificate not together","PCOR Item D not checked"]},
-  adtr:         {steps:["Obtain certified copy of death certificate","Confirm successor trustee authority from trust instrument","Successor trustee signs in trustee capacity","Submit affidavit and death certificate together","No PCOR required"],rejections:["Death certificate not certified","Individual acknowledgment used","PCOR incorrectly included"]},
+  adtr:         {steps:["Obtain certified copy of death certificate","Confirm successor trustee authority from trust instrument","Successor trustee signs in trustee capacity","Submit affidavit and death certificate together","PCOR optional — if filed, mark box K (trustee substitution, no change in ownership)"],rejections:["Death certificate not certified","Individual acknowledgment used"]},
   sscp:         {steps:["Obtain certified copy of death certificate","Confirm property held as community property","Confirm 40 days have passed since date of death","Surviving spouse signs before notary","PCOR — check Item A"],rejections:["Death certificate not certified","40-day waiting period not satisfied","PCOR missing or Item A not checked"]},
   tod:          {steps:["Confirm owner currently vested of record","Owner signs before notary AND two witnesses simultaneously","MUST RECORD WITHIN 60 DAYS OF NOTARIZATION","Exempt from PCOR (R&T §480.3)","Exempt from DTT (R&T §11930)"],rejections:["Recorded more than 60 days after notarization — void","Two witnesses not obtained","PCOR incorrectly included"]},
   recon:        {steps:["Confirm loan fully paid","Trustee executes — not the lender","Verify original DOT recording reference","No PCOR required","SB2 fee of $75 applies"],rejections:["Lender signed instead of trustee","Original DOT recording reference wrong","PCOR incorrectly included"]},
@@ -456,6 +456,7 @@ const DEFAULT_MASTER = {
   lateChargeDays:"10", lateChargePercent:"6", defaultDueOnSale:true,
   standardCovenants:"", defaultExemptReason:"R&T §11930 — transfer to/from trust",
   prepaymentLanguage:"This Deed of Trust may be prepaid in whole or in part at any time without penalty.",
+  provisions:[], masterVersion:1, masterUpdated:"",
 };
 
 const recHdr = (m) => {
@@ -1029,10 +1030,11 @@ const genSheriff = (f,m) => {
 
 
 // ─── PCOR applicable doc types ───────────────────────────────────────────────
-const PCOR_DOCS = ["grant","granttrust","quitclaim","interspousal","adjt","sscp","easement","trustees","sheriff"];
+const PCOR_DOCS = ["grant","granttrust","quitclaim","interspousal","adjt","sscp","easement","trustees","sheriff","adtr"];
 
 // ─── PCOR reason code mapping ─────────────────────────────────────────────────
 const getPCORReason = (docType, f) => {
+  if (docType==="adtr") return {box:"K", desc:"Substitution of trustee due to death of trustee; not a change in ownership"};
   if (docType==="interspousal") return {box:"A", desc:"Transfer between spouses"};
   if (docType==="adjt") return {box:"D", desc:"Death of joint tenant. Date of death: "+( f.dateOfDeathJT||"_______________")};
   if (docType==="sscp") return {box:"A", desc:"Death of spouse — community property succession"};
@@ -1325,7 +1327,21 @@ const genPCOR = (docType, f, m, pf={}) => {
 };
 
 
-const generateDoc = (docType, f, m) => {
+const esc = (v) => String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const firmProvisionsHTML = (m, docType) => {
+  const list = (m && m.provisions) || [];
+  const app = list.filter(pr => pr && pr.enabled!==false && pr.body && String(pr.body).trim() && (!pr.applyTo || pr.applyTo==="all" || pr.applyTo===docType));
+  if (!app.length) return "";
+  return '<div class="body-text"><strong>ADDITIONAL PROVISIONS</strong></div>' +
+    app.map(pr => '<div class="body-text">' + (pr.title?('<strong>'+esc(pr.title)+'.</strong> '):'') + esc(pr.body).replace(/\n/g,'<br>') + '</div>').join('');
+};
+const withFirmProvisions = (html, docType, m) => {
+  const prov = firmProvisionsHTML(m, docType);
+  if (!prov) return html;
+  const i = html.indexOf('<div class="sig-block"');
+  return i===-1 ? (html + prov) : (html.slice(0,i) + prov + html.slice(i));
+};
+const _genDocRaw = (docType, f, m) => {
   switch(docType) {
     case "grant":        return genGrant(f,m);
     case "granttrust":   return genTrust(f,m);
@@ -1344,6 +1360,7 @@ const generateDoc = (docType, f, m) => {
     default:             return "";
   }
 };
+const generateDoc = (docType, f, m) => withFirmProvisions(_genDocRaw(docType, f, m), docType, m);
 
 const docPageCSS = '@page{size:8.5in 11in;margin:1in;}*{box-sizing:border-box;}body{font-family:Times New Roman,serif;font-size:11pt;color:#000;background:#fff;line-height:1.6;}.doc-wrap{max-width:6.5in;margin:0 auto;}.rec-hdr{font-size:10pt;margin-bottom:4pt;}.rec-rule{border:none;border-top:1px solid #000;margin:6pt 0 2pt;}.rec-space{font-size:8pt;text-align:center;color:#444;margin:0 0 6pt;}.doc-title{text-align:center;font-size:13pt;font-weight:bold;margin:18pt 0 12pt;}.doc-subtitle{text-align:center;font-size:11pt;margin:0 0 12pt;}.two-col{display:table;width:100%;margin:8pt 0;}.col-l{display:table-cell;width:50%;vertical-align:top;padding-right:12pt;}.col-r{display:table-cell;width:50%;vertical-align:top;padding-left:12pt;}.col-label{font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;}.rule{border:none;border-top:1px solid #000;margin:10pt 0;}.body-text{font-size:11pt;margin:8pt 0;text-align:justify;line-height:1.7;}.indent{margin-left:36pt;}.sig-block{margin:24pt 0 8pt;}.sig-line{border-bottom:1px solid #000;width:220pt;display:inline-block;margin-bottom:3pt;}.sig-name{font-size:11pt;}.notary-box{border:1.5pt solid #000;padding:8pt 10pt;margin:16pt 0 8pt;font-size:10pt;line-height:1.6;}.jurat-title{text-align:center;font-weight:bold;font-size:11pt;margin:12pt 0 8pt;letter-spacing:2px;}.jurat-block{font-size:11pt;margin:8pt 0;line-height:1.8;}.ss-block{margin-left:20pt;}.footer-note{font-size:9pt;color:#444;margin-top:24pt;border-top:1px solid #ccc;padding-top:6pt;}.doc-pre{font-family:Times New Roman,serif;font-size:11pt;white-space:pre-wrap;line-height:1.7;margin:0;padding:0;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
 
@@ -1564,7 +1581,7 @@ function DottieDeeds() {
     } catch(e) {}
   };
 
-  const saveMaster = () => { try { localStorage.setItem("dd_master",JSON.stringify(master)); } catch {} setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500); };
+  const saveMaster = () => { const nm={...master,masterVersion:(master.masterVersion||1)+1,masterUpdated:new Date().toLocaleDateString()}; setMaster(nm); try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {} setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500); };
   const finish = async () => { const nm={...DEFAULT_MASTER,...oForm}; setMaster(nm); setForm(blank(nm)); try{localStorage.setItem("dd_master",JSON.stringify(nm));}catch{} if(authUser){try{await supa.from("profiles").update({firm:oForm.firmName}).eq("id",authUser.id);}catch(e){}} setScreen("home"); };
 
   const handleFile = useCallback(async (file) => {
@@ -2162,6 +2179,25 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
         <Field label="Standard DOT covenants" hint="Leave blank to use California standard covenants"><textarea value={master.standardCovenants} onChange={e=>setMaster(p=>({...p,standardCovenants:e.target.value}))} rows={4} style={{...ST.inp,resize:"vertical",lineHeight:1.6}}/></Field>
         <div style={ST.sec}>Transfer Defaults</div>
         <Field label="Default DTT exemption language"><input value={master.defaultExemptReason} onChange={e=>setMaster(p=>({...p,defaultExemptReason:e.target.value}))} style={ST.inp}/></Field>
+        <Field label="Default prepayment language" hint="Used on Deeds of Trust"><textarea value={master.prepaymentLanguage} onChange={e=>setMaster(p=>({...p,prepaymentLanguage:e.target.value}))} rows={2} style={{...ST.inp,resize:"vertical",lineHeight:1.6}}/></Field>
+        <div style={{...ST.sec,marginTop:20}}>Custom Provisions</div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.6}}>Firm-authored provisions are inserted into the documents you choose, directly above the signature block. Pick which document each one applies to, or apply it to all.</div>
+        {(master.provisions||[]).map((pv,idx)=>(
+          <div key={idx} style={{...ST.card,marginBottom:12,padding:"14px 16px"}}>
+            <div style={{display:"flex",gap:10,marginBottom:8,alignItems:"center",flexWrap:"wrap"}}>
+              <input value={pv.title||""} onChange={e=>setMaster(p=>{const a=[...(p.provisions||[])];a[idx]={...a[idx],title:e.target.value};return{...p,provisions:a};})} placeholder="Provision title (optional)" style={{...ST.inp,flex:1,minWidth:160,marginBottom:0}}/>
+              <select value={pv.applyTo||"all"} onChange={e=>setMaster(p=>{const a=[...(p.provisions||[])];a[idx]={...a[idx],applyTo:e.target.value};return{...p,provisions:a};})} style={{...ST.inp,width:210,marginBottom:0}}>
+                <option value="all">All documents</option>
+                {DOC_TYPES.map(d=><option key={d.id} value={d.id}>{d.label}</option>)}
+              </select>
+              <button onClick={()=>setMaster(p=>{const a=[...(p.provisions||[])];a.splice(idx,1);return{...p,provisions:a};})} style={{...ST.btnS,padding:"8px 12px",color:"#a44"}}>Delete</button>
+            </div>
+            <textarea value={pv.body||""} onChange={e=>setMaster(p=>{const a=[...(p.provisions||[])];a[idx]={...a[idx],body:e.target.value};return{...p,provisions:a};})} rows={3} placeholder="Provision text" style={{...ST.inp,resize:"vertical",lineHeight:1.6,marginBottom:0}}/>
+            <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:12,color:C.muted,marginTop:8}}><input type="checkbox" checked={pv.enabled!==false} onChange={e=>setMaster(p=>{const a=[...(p.provisions||[])];a[idx]={...a[idx],enabled:e.target.checked};return{...p,provisions:a};})} style={{width:14,height:14}}/>Active</label>
+          </div>
+        ))}
+        <button onClick={()=>setMaster(p=>({...p,provisions:[...(p.provisions||[]),{title:"",body:"",applyTo:"all",enabled:true}]}))} style={{...ST.btnS,marginBottom:10}}>+ Add provision</button>
+        <div style={{fontSize:11,color:C.muted,marginBottom:8}}>Firm template version {master.masterVersion||1}{master.masterUpdated?(" · last saved "+master.masterUpdated):""}</div>
         <div style={{display:"flex",gap:12,marginTop:8}}><button onClick={saveMaster} style={{...ST.btnP,background:masterSaved?"#5a9a5a":C.gold}}>{masterSaved?"✓ Saved":"Save Firm Settings"}</button><button onClick={()=>setMaster(DEFAULT_MASTER)} style={ST.btnS}>Reset</button></div>
       </div>
     </div>
@@ -2614,8 +2650,8 @@ body:JSON.stringify({model:MODEL, max_tokens:1500, messages:[{role:"user",conten
               <div style={{background:"#f0f8f0",border:`1px solid #b0d090`,borderLeft:`3px solid ${C.green}`,padding:"16px 20px",borderRadius:2,marginBottom:16}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
                   <div>
-                    <div style={{fontSize:13,fontWeight:"bold",color:"#2a5010",marginBottom:4}}>📋 PCOR Required for this deed</div>
-                    <div style={{fontSize:12,color:"#3a6010",lineHeight:1.7}}>A Preliminary Change of Ownership Report must be filed with the county assessor.<br/>Without it, the recorder charges an additional <strong>$25.00 fee</strong> and requires supplemental information after recording.</div>
+                    <div style={{fontSize:13,fontWeight:"bold",color:"#2a5010",marginBottom:4}}>📋 {docType==="adtr"?"PCOR available (optional)":"PCOR Required for this deed"}</div>
+                    <div style={{fontSize:12,color:"#3a6010",lineHeight:1.7}}>{docType==="adtr"?<>A change of trustee is generally not a change in ownership, so a PCOR is optional here. If filed, it is marked as a trustee substitution (box K), not a taxable transfer.</>:<>A Preliminary Change of Ownership Report must be filed with the county assessor.<br/>Without it, the recorder charges an additional <strong>$25.00 fee</strong> and requires supplemental information after recording.</>}</div>
                   </div>
                   <button onClick={()=>{
               const reason = getPCORReason(docType,form);
