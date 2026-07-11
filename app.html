@@ -1550,13 +1550,20 @@ function DottieDeeds() {
           console.log("INIT PROFILE:", JSON.stringify(profile));
           if (profile && profile.is_approved === true) {
             const m = localStorage.getItem("dd_master");
-            const hasFirm = (m && JSON.parse(m).firmName) || profile.firm;
-            if (profile.firm && !(m && JSON.parse(m).firmName)) {
-              const nm = {...JSON.parse(m||"{}"), firmName: profile.firm};
+            if (profile.master && typeof profile.master === "object") {
+              const nm = {...DEFAULT_MASTER, ...JSON.parse(m||"{}"), ...profile.master};
+              setMaster(nm);
               try { localStorage.setItem("dd_master", JSON.stringify(nm)); } catch(e) {}
-              setMaster(prev => ({...prev, firmName: profile.firm}));
+              setScreen(nm.firmName ? "home" : "onboard");
+            } else {
+              const hasFirm = (m && JSON.parse(m).firmName) || profile.firm;
+              if (profile.firm && !(m && JSON.parse(m).firmName)) {
+                const nm = {...JSON.parse(m||"{}"), firmName: profile.firm};
+                try { localStorage.setItem("dd_master", JSON.stringify(nm)); } catch(e) {}
+                setMaster(prev => ({...prev, firmName: profile.firm}));
+              }
+              setScreen(hasFirm ? "home" : "onboard");
             }
-            setScreen(hasFirm ? "home" : "onboard");
           } else if (profile) {
             setScreen("pending");
           } else {
@@ -1600,7 +1607,7 @@ function DottieDeeds() {
     } catch(e) {}
   };
 
-  const saveMaster = () => { const nm={...master,masterVersion:(master.masterVersion||1)+1,masterUpdated:new Date().toLocaleDateString()}; setMaster(nm); try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {} setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500); };
+  const saveMaster = () => { const nm={...master,masterVersion:(master.masterVersion||1)+1,masterUpdated:new Date().toLocaleDateString()}; setMaster(nm); try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {} if(authUser){ try { supa.from("profiles").update({master:nm, firm:nm.firmName}).eq("id",authUser.id).then(()=>{},()=>{}); } catch(e){} } setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500); };
   const saveDocument = async (title) => {
     if (!authUser) { setSaveMsg("Sign in to save."); setTimeout(()=>setSaveMsg(""),3000); return; }
     setSaveMsg("Saving…");
