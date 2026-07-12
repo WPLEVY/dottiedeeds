@@ -1,20 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import * as supabase from '@supabase/supabase-js';
 import * as PDFLib from 'pdf-lib';
+import { MODEL, PROXY, SUPA_URL, SUPA_KEY, STRIPE_WORKER, ENFORCE_SUBSCRIPTION, PLAN_META, PLAN_FEATURES, C, ST } from './config.js';
+import { supa } from './supabase.js';
 
         const { useState, useCallback, useEffect } = React;
 
-const MODEL = "claude-sonnet-4-6";
-        const PROXY = "https://dottie-proxy.wplevy.workers.dev";
-const SUPA_URL = "https://mmhodgxhpsractyhxazw.supabase.co";
-const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1taG9kZ3hocHNyYWN0eWh4YXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0Mjk2OTYsImV4cCI6MjA5ODAwNTY5Nn0.lbfc_K_ZvgeH9Gm5Thv7uADlgVHC7cnZaCtN8gK1vb4";
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 let ddToken = "";
-const STRIPE_WORKER = "https://dottie-stripe.wplevy.workers.dev";
-const ENFORCE_SUBSCRIPTION = false; // flip true to require an active plan to generate
-const PLAN_META = { solo:{label:"Solo",price:"$99/mo",included:10,over:"$10",users:"2 users"}, firm:{label:"Firm",price:"$199/mo",included:30,over:"$8",users:"Up to 6 users"} };
-const PLAN_FEATURES = ["All 14 California deed & transfer generators","AI deed extraction & triple-document analysis","Automatic PCOR (BOE-502-A), all 58 counties","Saved documents & firm master settings"];
 
 const COUNTY_ASSESSORS = {
   "Alameda": { name: "Phong La, County Assessor", addr: "1221 Oak Street, Room 145", city: "Oakland, CA 94612" },
@@ -75,18 +67,6 @@ const COUNTY_ASSESSORS = {
   "Ventura": { name: "Keith Taylor, County Assessor", addr: "800 South Victoria Avenue", city: "Ventura, CA 93009" },
   "Yolo": { name: "Jesse Salinas, County Assessor/Clerk-Recorder", addr: "625 Court Street, Room 104", city: "Woodland, CA 95695" },
   "Yuba": { name: "Stephen S. Duckels, County Assessor", addr: "915 8th Street, Suite 101", city: "Marysville, CA 95901" },
-};
-const C = { gold:"#b8960c", goldlt:"#e8c84a", ink:"#1a1710", paper:"#f5f0e8", cream:"#ede7d8", rule:"#e0d8c8", muted:"#7a7060", green:"#3a7a3a", amber:"#c07a10", red:"#c03020" };
-const ST = {
-  inp:{ width:"100%", background:"#fff", border:`1px solid ${C.rule}`, color:C.ink, padding:"10px 14px", fontSize:14, fontFamily:"Georgia,serif", borderRadius:2, outline:"none", boxSizing:"border-box" },
-  lbl:{ display:"block", fontSize:10, letterSpacing:3, textTransform:"uppercase", color:C.muted, marginBottom:6 },
-  btnP:{ background:C.gold, color:"#fff", border:"none", padding:"12px 32px", fontSize:11, letterSpacing:3, textTransform:"uppercase", cursor:"pointer", fontFamily:"Georgia,serif", borderRadius:2 },
-  btnS:{ background:"none", border:`1px solid ${C.rule}`, color:C.muted, padding:"12px 24px", fontSize:11, letterSpacing:3, textTransform:"uppercase", cursor:"pointer", fontFamily:"Georgia,serif", borderRadius:2 },
-  btnG:{ background:"none", border:"none", color:"#a09070", padding:"12px 20px", fontSize:11, letterSpacing:2, textTransform:"uppercase", cursor:"pointer", fontFamily:"Georgia,serif" },
-  sec:{ fontSize:10, letterSpacing:3, textTransform:"uppercase", color:C.gold, marginBottom:12, marginTop:24, paddingBottom:8, borderBottom:`1px solid ${C.rule}` },
-  card:{ background:"#fff", border:`1px solid ${C.rule}`, borderRadius:2, padding:"18px 22px", marginBottom:12 },
-  warn:{ background:"#fff8f0", border:`1px solid #e8c060`, borderLeft:`3px solid ${C.gold}`, padding:"12px 16px", fontSize:12, color:"#5a4010", lineHeight:1.8, marginBottom:16 },
-  err:{ background:"#fff0f0", border:`1px solid #e09080`, borderLeft:`3px solid ${C.red}`, padding:"12px 16px", fontSize:12, color:"#5a1010", lineHeight:1.8, marginBottom:12 },
 };
 
 const Field = ({label, children, hint, warn, required}) => (
@@ -3415,3 +3395,4 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
 
         const root = createRoot(document.getElementById('root'));
         root.render(<DottieDeeds />);
+
