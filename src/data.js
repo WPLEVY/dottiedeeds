@@ -339,7 +339,7 @@ export const CHECKLISTS = {
 
 export const DEFAULT_MASTER = {
   firmName:"", firmAddress:"", firmCity:"", firmState:"California", firmZip:"",
-  defaultTrustee:"First American Title Insurance Company",
+  defaultTrustee:"",
   lateChargeDays:"10", lateChargePercent:"6", defaultDueOnSale:true,
   standardCovenants:"", defaultExemptReason:"R&T §11930 — transfer to/from trust",
   prepaymentLanguage:"This Deed of Trust may be prepaid in whole or in part at any time without penalty.",
