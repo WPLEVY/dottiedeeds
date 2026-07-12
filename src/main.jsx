@@ -251,6 +251,7 @@ function DottieDeeds() {
   const [masterSaved, setMasterSaved] = useState(false);
   const [masterVersions, setMasterVersions] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [masterNote, setMasterNote] = useState("");
   const [oStep, setOStep] = useState(0);
   const [oForm, setOForm] = useState({firmName:"",firmAddress:"",firmCity:"",firmState:"California",firmZip:"",defaultTrustee:""});
   const [gDoc, setGDoc] = useState("grant");
@@ -456,9 +457,21 @@ function DottieDeeds() {
     try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {}
     if(authUser){
       try { await supa.from("profiles").update({master:nm, firm:nm.firmName}).eq("id",authUser.id); } catch(e){}
-      try { await supa.from("master_versions").insert({ user_id: authUser.id, version_no: nm.masterVersion, snapshot: nm }); } catch(e){}
+      try { await supa.from("master_versions").insert({ user_id: authUser.id, version_no: nm.masterVersion, snapshot: nm, note: (masterNote||"").trim()||null }); } catch(e){}
     }
+    setMasterNote("");
     setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500);
+  };
+  const isMasterDirty = () => { try { return JSON.stringify(master) !== JSON.stringify({...DEFAULT_MASTER, ...JSON.parse(localStorage.getItem("dd_master")||"{}")}); } catch { return false; } };
+  const leaveMaster = () => { if(isMasterDirty() && !window.confirm("You have unsaved changes to your firm settings. Leave without saving?")) return; setScreen("home"); };
+  const MASTER_DIFF_FIELDS=[["firmName","firm name"],["firmAddress","address"],["firmCity","city"],["firmState","state"],["firmZip","zip"],["defaultTrustee","default trustee"],["lateChargeDays","late charge days"],["lateChargePercent","late charge %"],["defaultDueOnSale","due-on-sale default"],["standardCovenants","standard covenants"],["defaultExemptReason","default DTT exemption"],["prepaymentLanguage","prepayment language"]];
+  const diffMasters = (prev, curr) => {
+    if(!prev) return "Initial version.";
+    const changed=[]; MASTER_DIFF_FIELDS.forEach(([k,label])=>{ if(JSON.stringify(prev[k]??"")!==JSON.stringify(curr[k]??"")) changed.push(label); });
+    const key=x=>((x.title||"")+"|"+(x.body||"")); const pv=(prev.provisions||[]).map(key), cv=(curr.provisions||[]).map(key);
+    const added=cv.filter(k=>!pv.includes(k)).length, removed=pv.filter(k=>!cv.includes(k)).length;
+    const parts=[]; if(changed.length) parts.push("Changed: "+changed.join(", ")); if(added) parts.push("+"+added+" provision"+(added>1?"s":"")); if(removed) parts.push("-"+removed+" provision"+(removed>1?"s":""));
+    return parts.length?parts.join(" · "):"No tracked changes.";
   };
   const loadMasterVersions = async () => {
     if(!authUser){ setMasterVersions([]); return; }
@@ -1151,7 +1164,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   // ── Firm Settings ──────────────────────────────────────────────────────────
   if (screen==="master") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-      <Header subtitle="Firm Settings" onHome={()=>setScreen("home")} rightContent={<button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"8px 16px",fontSize:10}}>← Back</button>}/>
+      <Header subtitle="Firm Settings" onHome={leaveMaster} rightContent={<button onClick={leaveMaster} style={{...ST.btnS,padding:"8px 16px",fontSize:10}}>← Back</button>}/>
       <div style={{maxWidth:680,margin:"0 auto",padding:"32px 20px 48px",flex:1}}>
         <div style={ST.sec}>Firm Information</div>
         <Field label="Firm name"><input value={master.firmName} onChange={e=>setMaster(p=>({...p,firmName:e.target.value}))} placeholder="e.g. Smith & Jones, APC" style={ST.inp}/></Field>
@@ -1183,9 +1196,11 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
           </div>
         ))}
         <button onClick={()=>setMaster(p=>({...p,provisions:[...(p.provisions||[]),{title:"",body:"",applyTo:"all",enabled:true,source:"firm"}]}))} style={{...ST.btnS,marginBottom:10}}>+ Add provision</button>
+        <div style={{fontSize:11,color:C.muted,marginBottom:14,fontStyle:"italic"}}>Provisions and all firm settings on this screen are saved only when you click Save Firm Settings below.</div>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8,flexWrap:"wrap"}}><div style={{fontSize:11,color:C.muted}}>Firm template version {master.masterVersion||1}{master.masterUpdated?(" · last saved "+master.masterUpdated):""}</div><button onClick={()=>{ if(!showHistory) loadMasterVersions(); setShowHistory(v=>!v); }} style={{...ST.btnS,padding:"5px 10px",fontSize:10}}>{showHistory?"Hide history":"Version history"}</button></div>
-        {showHistory&&(<div style={{...ST.card,marginBottom:12,padding:"10px 14px",maxHeight:240,overflowY:"auto"}}>{masterVersions.length===0?<div style={{fontSize:12,color:C.muted}}>No saved versions yet. Saving your firm settings creates a version you can restore later.</div>:masterVersions.map(v=>(<div key={v.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,padding:"6px 0",borderBottom:`1px solid ${C.rule}`}}><div style={{fontSize:12,color:C.ink}}>Version {v.version_no}<span style={{color:C.muted}}> · {new Date(v.created_at).toLocaleString()} · {((v.snapshot&&v.snapshot.provisions)||[]).length} provision(s)</span></div><button onClick={()=>restoreMasterVersion(v.snapshot)} style={{...ST.btnS,padding:"4px 10px",fontSize:10}}>Restore</button></div>))}</div>)}
-        <div style={{display:"flex",gap:12,marginTop:8}}><button onClick={saveMaster} style={{...ST.btnP,background:masterSaved?"#5a9a5a":C.gold}}>{masterSaved?"✓ Saved":"Save Firm Settings"}</button><button onClick={()=>setMaster(DEFAULT_MASTER)} style={ST.btnS}>Reset</button></div>
+        {showHistory&&(<div style={{...ST.card,marginBottom:12,padding:"10px 14px",maxHeight:240,overflowY:"auto"}}>{masterVersions.length===0?<div style={{fontSize:12,color:C.muted}}>No saved versions yet. Saving your firm settings creates a version you can restore later.</div>:masterVersions.map((v,i)=>(<div key={v.id} style={{padding:"8px 0",borderBottom:`1px solid ${C.rule}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}><div style={{fontSize:12,color:C.ink}}>Version {v.version_no}<span style={{color:C.muted}}> · {new Date(v.created_at).toLocaleString()} · {((v.snapshot&&v.snapshot.provisions)||[]).length} provision(s)</span></div><button onClick={()=>restoreMasterVersion(v.snapshot)} style={{...ST.btnS,padding:"4px 10px",fontSize:10}}>Restore</button></div><div style={{fontSize:11,color:C.muted,marginTop:3}}>{diffMasters(masterVersions[i+1]&&masterVersions[i+1].snapshot, v.snapshot)}</div>{v.note&&<div style={{fontSize:11,color:C.ink,marginTop:2,fontStyle:"italic"}}>Note: {v.note}</div>}</div>))}</div>)}
+        <input value={masterNote} onChange={e=>setMasterNote(e.target.value)} placeholder="What changed (optional). Shown in version history." style={{...ST.inp,marginTop:4,marginBottom:8}}/>
+        <div style={{display:"flex",gap:12,marginTop:8,alignItems:"center"}}><button onClick={saveMaster} style={{...ST.btnP,background:masterSaved?"#5a9a5a":C.gold}}>{masterSaved?"✓ Saved":"Save Firm Settings"}</button><button onClick={()=>setMaster(DEFAULT_MASTER)} style={ST.btnS}>Reset</button>{isMasterDirty()&&!masterSaved&&<span style={{fontSize:11,color:C.amber,alignSelf:"center"}}>● Unsaved changes</span>}</div>
       </div>
     </div>
   );
