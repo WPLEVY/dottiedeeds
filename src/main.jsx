@@ -999,7 +999,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Dottie</div>
             <div style={{fontFamily:"monospace",fontSize:9,color:C.ink,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Deeds</div>
           </div>
-          <button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"6px 14px",fontSize:10}}>Back to sign in</button>
+          <button onClick={()=>{window.location.href="/";}} style={{...ST.btnS,padding:"6px 14px",fontSize:10}}>Home</button>
         </div>
         <div style={{height:2,background:`linear-gradient(90deg,${C.gold},${C.goldlt},${C.gold})`}}/>
       </div>
@@ -1008,7 +1008,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
           <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><Icon t="clock" size={46} color={C.amber} sw={1.6}/></div>
           <h2 style={{fontSize:26,fontWeight:300,marginBottom:12}}>Access Pending</h2>
           <p style={{fontSize:14,color:C.muted,lineHeight:1.8,marginBottom:24}}>
-            Your request is in. We'll email <strong>{authUser?.email}</strong> as soon as your access is approved. You can close this page and come back anytime, just sign in again to check your status.
+            Your request is in. We'll email you at <strong>{authUser?.email}</strong> once your access is approved, with a link to sign in. Nothing else to do for now.
           </p>
           <p style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
             Questions? Contact <a href="mailto:william@cunninghamlegal.com" style={{color:C.gold}}>william@cunninghamlegal.com</a>
@@ -1261,7 +1261,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
         <div style={{fontSize:11,color:C.muted,marginBottom:14,fontStyle:"italic"}}>Provisions and all firm settings on this screen are saved only when you click Save Firm Settings below.</div>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8,flexWrap:"wrap"}}><div style={{fontSize:11,color:C.muted}}>Firm template version {master.masterVersion||1}{master.masterUpdated?(" · last saved "+master.masterUpdated):""}</div><button onClick={()=>{ if(!showHistory) loadMasterVersions(); setShowHistory(v=>!v); }} style={{...ST.btnS,padding:"5px 10px",fontSize:10}}>{showHistory?"Hide history":"Version history"}</button></div>
         {showHistory&&(<div style={{...ST.card,marginBottom:12,padding:"10px 14px",maxHeight:240,overflowY:"auto"}}>{masterVersions.length===0?<div style={{fontSize:12,color:C.muted}}>No saved versions yet. Saving your firm settings creates a version you can restore later.</div>:masterVersions.map((v,i)=>(<div key={v.id} style={{padding:"8px 0",borderBottom:`1px solid ${C.rule}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}><div style={{fontSize:12,color:C.ink}}>Version {v.version_no}<span style={{color:C.muted}}> · {new Date(v.created_at).toLocaleString()} · {((v.snapshot&&v.snapshot.provisions)||[]).length} provision(s)</span></div><button onClick={()=>restoreMasterVersion(v.snapshot)} style={{...ST.btnS,padding:"4px 10px",fontSize:10}}>Restore</button></div><div style={{fontSize:11,color:C.muted,marginTop:3}}>{diffMasters(masterVersions[i+1]&&masterVersions[i+1].snapshot, v.snapshot)}</div>{v.note&&<div style={{fontSize:11,color:C.ink,marginTop:2,fontStyle:"italic"}}>Note: {v.note}</div>}</div>))}</div>)}
-        <input value={masterNote} onChange={e=>setMasterNote(e.target.value)} placeholder="Note about this change (optional)" style={{...ST.inp,marginTop:4,marginBottom:8}}/>
+        {isMasterDirty()&&<input value={masterNote} onChange={e=>setMasterNote(e.target.value)} placeholder="Describe what you changed (optional)" style={{...ST.inp,marginTop:4,marginBottom:8}}/>}
         <div style={{display:"flex",gap:12,marginTop:8,alignItems:"center"}}><button onClick={saveMaster} style={{...ST.btnP,background:masterSaved?"#5a9a5a":C.gold}}>{masterSaved?"✓ Saved":"Save Firm Settings"}</button><button onClick={()=>setMaster(DEFAULT_MASTER)} style={ST.btnS}>Reset</button>{isMasterDirty()&&!masterSaved&&<span style={{fontSize:11,color:C.amber,alignSelf:"center"}}>● Unsaved changes</span>}</div>
         <div style={{...ST.sec,marginTop:32}}>Data & Privacy</div>
         <div style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.6}}>Your firm settings, version history, and any matters you save are stored in your account. Saved matters include the client and property information you enter. Use these controls to permanently remove your data.</div>
