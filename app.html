@@ -1961,14 +1961,14 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   // ── Auth Screen (Login / Signup / Forgot) ──────────────────────────────────
   if (screen==="billing") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-      <Header subtitle="Billing & Plan" onHome={()=>setScreen("home")} rightContent={<button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"8px 16px",fontSize:10}}>\u2190 Back</button>}/>
+      <Header subtitle="Billing & Plan" onHome={()=>setScreen("home")} rightContent={<button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"8px 16px",fontSize:10}}>← Back</button>}/>
       <div style={{maxWidth:720,margin:"0 auto",padding:"36px 20px",flex:1,width:"100%"}}>
         {checkoutMsg&&<div style={{background:"#f9f6f0",border:`1px solid ${C.rule}`,borderLeft:`3px solid ${C.gold}`,padding:"12px 16px",fontSize:13,marginBottom:20,borderRadius:2}}>{checkoutMsg}</div>}
         <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:6,padding:"22px 24px",marginBottom:22}}>
           <div style={{fontSize:11,letterSpacing:2,textTransform:"uppercase",color:C.muted,fontFamily:"monospace",marginBottom:8}}>Current plan</div>
           {authProfile?.plan ? (
             <div>
-              <div style={{fontSize:22,fontWeight:"normal"}}>{PLAN_META[authProfile.plan]?.label||authProfile.plan} <span style={{fontSize:14,color:C.muted}}>\u00b7 {PLAN_META[authProfile.plan]?.price}</span></div>
+              <div style={{fontSize:22,fontWeight:"normal"}}>{PLAN_META[authProfile.plan]?.label||authProfile.plan} <span style={{fontSize:14,color:C.muted}}>· {PLAN_META[authProfile.plan]?.price}</span></div>
               <div style={{fontSize:13,color:hasActiveSub()?C.green:C.amber,marginTop:4}}>Status: {authProfile.subscription_status||"\u2014"}</div>
               {periodDeeds!=null&&<div style={{fontSize:13,color:C.ink,marginTop:8}}>Deeds this month: <b>{periodDeeds}</b>{authProfile.plan&&` \u00b7 ${PLAN_META[authProfile.plan].included} included, then ${PLAN_META[authProfile.plan].over}/deed`}</div>}
               <button disabled={billingBusy} onClick={openPortal} style={{...ST.btnS,marginTop:16}}>Manage billing & payment</button>
