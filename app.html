@@ -44,6 +44,9 @@ const SUPA_URL = "https://mmhodgxhpsractyhxazw.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1taG9kZ3hocHNyYWN0eWh4YXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0Mjk2OTYsImV4cCI6MjA5ODAwNTY5Nn0.lbfc_K_ZvgeH9Gm5Thv7uADlgVHC7cnZaCtN8gK1vb4";
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 let ddToken = "";
+const STRIPE_WORKER = "https://dottie-stripe.wplevy.workers.dev";
+const ENFORCE_SUBSCRIPTION = false; // flip true to require an active plan to generate
+const PLAN_META = { solo:{label:"Solo",price:"$99/mo",included:10,over:"$10"}, firm:{label:"Firm",price:"$199/mo",included:30,over:"$8"} };
 
 const COUNTY_ASSESSORS = {
   "Alameda": { name: "Phong La, County Assessor", addr: "1221 Oak Street, Room 145", city: "Oakland, CA 94612" },
@@ -1473,6 +1476,9 @@ function DottieDeeds() {
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
+  const [checkoutMsg, setCheckoutMsg] = useState("");
+  const [billingBusy, setBillingBusy] = useState(false);
+  const [periodDeeds, setPeriodDeeds] = useState(null);
   const [authFirm, setAuthFirm] = useState("");
   const [authRole, setAuthRole] = useState("");
   const [authMode, setAuthMode] = useState("login"); // login | signup | forgot
@@ -1588,6 +1594,7 @@ function DottieDeeds() {
           setAuthProfile(profile);
           console.log("INIT PROFILE:", JSON.stringify(profile));
           if (profile && profile.is_approved === true) {
+          if (!localStorage.getItem("dd_sid")) registerSession(session.user.id);
             const m = localStorage.getItem("dd_master");
             if (profile.master && typeof profile.master === "object") {
               const nm = {...DEFAULT_MASTER, ...JSON.parse(m||"{}"), ...profile.master};
@@ -1623,6 +1630,32 @@ function DottieDeeds() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Single active session: sign out if the account is used elsewhere
+  useEffect(() => {
+    if (!authUser) return;
+    const iv = setInterval(async () => {
+      try {
+        const { data } = await supa.from("profiles").select("active_session").eq("id",authUser.id).single();
+        const local = localStorage.getItem("dd_sid");
+        if (data && data.active_session && local && data.active_session !== local) {
+          clearInterval(iv);
+          await supa.auth.signOut();
+          alert("You have been signed out because your account was used on another device.");
+          setAuthUser(null); setAuthProfile(null); setScreen("auth");
+        }
+      } catch(e){}
+    }, 45000);
+    return () => clearInterval(iv);
+  }, [authUser]);
+
+  // Handle return from Stripe Checkout
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get("checkout");
+    if (p === "success") setCheckoutMsg("\u2713 Subscription active. Thank you.");
+    else if (p === "cancel") setCheckoutMsg("Checkout canceled \u2014 no charge was made.");
+    if (p) { const u = new URL(window.location.href); u.searchParams.delete("checkout"); window.history.replaceState({}, "", u.toString()); setTimeout(()=>setCheckoutMsg(""), 6000); }
+  }, []);
+
   useEffect(() => {
     setForm(blank(master||DEFAULT_MASTER));
     setExtracted(null); setExtractConf({}); setLegalVerified(false); setStep(0); setOutput("");
@@ -1644,9 +1677,40 @@ function DottieDeeds() {
       });
       // Update last_seen
       await supa.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", authUser.id);
+      try { fetch(STRIPE_WORKER+"/report-usage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,quantity:1})}).catch(()=>{}); } catch(e){}
     } catch(e) {}
   };
 
+  const hasActiveSub = () => ["active","trialing"].includes(authProfile?.subscription_status);
+  const registerSession = async (userId) => { try { const sid = (crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()); localStorage.setItem("dd_sid", sid); await supa.from("profiles").update({active_session:sid}).eq("id",userId); } catch(e){} };
+  const startCheckout = async (plan, annual) => {
+    setBillingBusy(true); setCheckoutMsg("");
+    try {
+      const r = await fetch(STRIPE_WORKER+"/create-checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,plan,annual:!!annual})});
+      const d = await r.json();
+      if (d.url) { window.location.href = d.url; return; }
+      setCheckoutMsg(d.error||"Could not start checkout. Please try again.");
+    } catch(e){ setCheckoutMsg("Could not reach billing. Please try again."); }
+    setBillingBusy(false);
+  };
+  const openPortal = async () => {
+    setBillingBusy(true); setCheckoutMsg("");
+    try {
+      const r = await fetch(STRIPE_WORKER+"/portal",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken})});
+      const d = await r.json();
+      if (d.url) { window.location.href = d.url; return; }
+      setCheckoutMsg(d.error||"Could not open the billing portal.");
+    } catch(e){ setCheckoutMsg("Could not reach the billing portal."); }
+    setBillingBusy(false);
+  };
+  const loadPeriodUsage = async () => {
+    if (!authUser) { setPeriodDeeds(null); return; }
+    try {
+      const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
+      const { count } = await supa.from("deeds").select("*",{count:"exact",head:true}).eq("user_id",authUser.id).gte("created_at",start.toISOString());
+      setPeriodDeeds(count||0);
+    } catch(e){ setPeriodDeeds(null); }
+  };
   const saveMaster = () => { const nm={...master,masterVersion:(master.masterVersion||1)+1,masterUpdated:new Date().toLocaleDateString()}; setMaster(nm); try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {} if(authUser){ try { supa.from("profiles").update({master:nm, firm:nm.firmName}).eq("id",authUser.id).then(()=>{},()=>{}); } catch(e){} } setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500); };
   const saveDocument = async (title) => {
     if (!authUser) { setSaveMsg("Sign in to save."); setTimeout(()=>setSaveMsg(""),3000); return; }
@@ -1847,6 +1911,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   }, []);
 
   const handleGenerate = () => {
+    if (ENFORCE_SUBSCRIPTION && !hasActiveSub() && !authProfile?.is_approved) { loadPeriodUsage(); setScreen("billing"); return; }
     const doc = generateDoc(docType,form,master);
     setOutput(doc);
     setStep(3);
@@ -1894,6 +1959,42 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   );
 
   // ── Auth Screen (Login / Signup / Forgot) ──────────────────────────────────
+  if (screen==="billing") return (
+    <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+      <Header subtitle="Billing & Plan" onHome={()=>setScreen("home")} rightContent={<button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"8px 16px",fontSize:10}}>\u2190 Back</button>}/>
+      <div style={{maxWidth:720,margin:"0 auto",padding:"36px 20px",flex:1,width:"100%"}}>
+        {checkoutMsg&&<div style={{background:"#f9f6f0",border:`1px solid ${C.rule}`,borderLeft:`3px solid ${C.gold}`,padding:"12px 16px",fontSize:13,marginBottom:20,borderRadius:2}}>{checkoutMsg}</div>}
+        <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:6,padding:"22px 24px",marginBottom:22}}>
+          <div style={{fontSize:11,letterSpacing:2,textTransform:"uppercase",color:C.muted,fontFamily:"monospace",marginBottom:8}}>Current plan</div>
+          {authProfile?.plan ? (
+            <div>
+              <div style={{fontSize:22,fontWeight:"normal"}}>{PLAN_META[authProfile.plan]?.label||authProfile.plan} <span style={{fontSize:14,color:C.muted}}>\u00b7 {PLAN_META[authProfile.plan]?.price}</span></div>
+              <div style={{fontSize:13,color:hasActiveSub()?C.green:C.amber,marginTop:4}}>Status: {authProfile.subscription_status||"\u2014"}</div>
+              {periodDeeds!=null&&<div style={{fontSize:13,color:C.ink,marginTop:8}}>Deeds this month: <b>{periodDeeds}</b>{authProfile.plan&&` \u00b7 ${PLAN_META[authProfile.plan].included} included, then ${PLAN_META[authProfile.plan].over}/deed`}</div>}
+              <button disabled={billingBusy} onClick={openPortal} style={{...ST.btnS,marginTop:16}}>Manage billing & payment</button>
+            </div>
+          ) : (
+            <div>
+              <div style={{fontSize:15,marginBottom:4}}>No active plan{authProfile?.is_approved?" (beta access)":""}.</div>
+              {periodDeeds!=null&&<div style={{fontSize:13,color:C.ink}}>Deeds this month: <b>{periodDeeds}</b></div>}
+            </div>
+          )}
+        </div>
+        {!authProfile?.plan&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+          {["solo","firm"].map(pl=>(
+            <div key={pl} style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:6,padding:"20px 22px"}}>
+              <div style={{fontSize:18}}>{PLAN_META[pl].label}</div>
+              <div style={{fontSize:24,fontWeight:"normal",margin:"6px 0"}}>{PLAN_META[pl].price}</div>
+              <div style={{fontSize:12.5,color:C.gold,fontWeight:"bold",marginBottom:6}}>{PLAN_META[pl].included} deeds included, then {PLAN_META[pl].over} each</div>
+              <div style={{fontSize:12,color:C.muted,marginBottom:16}}>{pl==="solo"?"2 users":"Up to 6 users"}</div>
+              <button disabled={billingBusy} onClick={()=>startCheckout(pl,false)} style={{...ST.btnP,width:"100%"}}>{billingBusy?"\u2026":`Choose ${PLAN_META[pl].label}`}</button>
+            </div>
+          ))}
+        </div>}
+      </div>
+    </div>
+  );
+
   if (screen==="auth") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`}}>
@@ -1956,6 +2057,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                     const {data:profile, error:profileErr} = await supa.from("profiles").select("*").eq("id",data.user.id).single();
                     console.log("PROFILE:", JSON.stringify(profile), "ERR:", profileErr?.message);
                     setAuthUser(data.user); setAuthProfile(profile);
+                    if (profile?.is_approved) registerSession(data.user.id);
                     const approved = profile && profile.is_approved === true;
                     console.log("IS_APPROVED:", profile?.is_approved, "approved:", approved);
                     if (!approved) { setScreen("pending"); }
@@ -2314,7 +2416,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
 
   if (screen==="home") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-      <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"nowrap"}}><button onClick={()=>{loadMyDocuments();setScreen("mydocs");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>My Docs</button><button onClick={()=>setScreen("guide")} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Guide</button><button onClick={()=>setScreen("master")} style={{background:C.ink,color:"#d4c49a",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}><Icon t="settings" size={12} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Settings</button>{authProfile?.is_admin&&<button onClick={async()=>{const {data:users}=await supa.from("profiles").select("*").order("created_at",{ascending:false});const {data:deeds}=await supa.from("deeds").select("*").order("created_at",{ascending:false});setAdminUsers(users||[]);setAdminDeeds(deeds||[]);setScreen("admin");}} style={{background:"#8a2020",color:"#fff",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}>⚑ Admin</button>}<button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,whiteSpace:"nowrap"}}>Sign out</button></div>}/>
+      <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"nowrap"}}><button onClick={()=>{loadMyDocuments();setScreen("mydocs");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>My Docs</button><button onClick={()=>setScreen("guide")} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Guide</button><button onClick={()=>{loadPeriodUsage();setScreen("billing");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Billing</button><button onClick={()=>setScreen("master")} style={{background:C.ink,color:"#d4c49a",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}><Icon t="settings" size={12} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Settings</button>{authProfile?.is_admin&&<button onClick={async()=>{const {data:users}=await supa.from("profiles").select("*").order("created_at",{ascending:false});const {data:deeds}=await supa.from("deeds").select("*").order("created_at",{ascending:false});setAdminUsers(users||[]);setAdminDeeds(deeds||[]);setScreen("admin");}} style={{background:"#8a2020",color:"#fff",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}>⚑ Admin</button>}<button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,whiteSpace:"nowrap"}}>Sign out</button></div>}/>
       {(master.firmName||authProfile?.firm)&&<div style={{background:"#f9f6f0",borderBottom:`1px solid ${C.cream}`,padding:"5px 28px",fontSize:11,color:"#8a7a5a",letterSpacing:1,display:"flex",justifyContent:"space-between"}}><span>{master.firmName||authProfile?.firm}{master.firmCity?` · ${master.firmCity}`:""}</span><span style={{color:C.muted}}>{authProfile?.name||""}</span></div>}
       <div style={{maxWidth:820,margin:"0 auto",padding:"36px 20px",flex:1}}>
         <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:8}}>What would you like to draft today?</h2>
