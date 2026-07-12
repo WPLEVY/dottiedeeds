@@ -17,6 +17,8 @@
   <meta name="theme-color" content="#1a1a14">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/dottie.png">
+  <link rel="icon" type="image/svg+xml" href="/dottie.svg">
+  <link rel="icon" type="image/png" href="/dottie.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dottie Deeds — California Deed Drafting</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -1907,6 +1909,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
       <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"40px 20px"}}>
         <div style={{maxWidth:440,width:"100%"}}>
           <div style={{textAlign:"center",marginBottom:28}}>
+            <img src="/dottie.svg" alt="Dottie" width="92" height="92" style={{display:"block",margin:"0 auto 16px"}}/>
             <div style={{fontSize:11,letterSpacing:4,textTransform:"uppercase",color:C.gold,fontFamily:"monospace",marginBottom:10}}>
               {authMode==="login"?"Welcome Back":authMode==="signup"?"Request Beta Access":"Reset Password"}
             </div>
