@@ -258,6 +258,33 @@ export default {
         return json({ url: ps.url });
       }
 
+      // ---------- CHANGE PLAN (swap base + metered prices on existing sub) ----------
+      if (path === "/change-plan") {
+        const target = body.plan === "firm" ? "firm" : "solo";
+        const subId = profile?.stripe_subscription_id;
+        if (!subId) return json({ error: "no active subscription to change" }, 400);
+        const newBase = target === "firm" ? env.PRICE_FIRM_BASE : env.PRICE_SOLO_BASE;
+        const newMetered = target === "firm" ? env.PRICE_FIRM_METERED : env.PRICE_SOLO_METERED;
+        if (!newBase) return json({ error: "target base price not configured" }, 400);
+        const sub = await stripe(env, `subscriptions/${subId}`, "GET");
+        const items = sub.items?.data || [];
+        const updates = {};
+        let i = 0;
+        for (const it of items) {
+          const metered = it.price?.recurring?.usage_type === "metered" || it.plan?.usage_type === "metered";
+          if (metered && !newMetered) continue; // leave metered item alone if not configured
+          updates[i++] = { id: it.id, price: metered ? newMetered : newBase };
+        }
+        await stripe(env, `subscriptions/${subId}`, "POST", {
+          items: updates,
+          proration_behavior: "create_prorations",
+          metadata: { user_id: user.id, plan: target },
+        });
+        const updated = await stripe(env, `subscriptions/${subId}`, "GET");
+        await syncSubscription(env, updated);
+        return json({ ok: true, plan: target });
+      }
+
       // ---------- REPORT USAGE (Billing Meter event: 1 per deed) ----------
       // Uses the current meter_events API (the legacy usage_records API was
       // removed in Stripe 2025-03-31.basil). Keyed by customer, so the metered
