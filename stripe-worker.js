@@ -17,8 +17,9 @@
  *   APP_URL                      https://dottiedeeds.com
  *   PRICE_SOLO_BASE              price_1TsDWqE1PzY3TG9M0eDlo7H6
  *   PRICE_FIRM_BASE              price_1TsDf6E1PzY3TG9MAkm2BlrX
- *   PRICE_SOLO_METERED           (optional, fill after creating the metered price)
- *   PRICE_FIRM_METERED           (optional)
+ *   PRICE_SOLO_METERED           (meter-backed usage price; fill after creating)
+ *   PRICE_FIRM_METERED           (meter-backed usage price; fill after creating)
+ *   METER_EVENT_NAME             (optional, defaults to "deed_recorded" — must match the meter)
  *   PRICE_SOLO_ANNUAL            (optional)
  *   PRICE_FIRM_ANNUAL            (optional)
  */
@@ -236,15 +237,20 @@ export default {
         return json({ url: ps.url });
       }
 
-      // ---------- REPORT USAGE (1 unit per deed) ----------
+      // ---------- REPORT USAGE (Billing Meter event: 1 per deed) ----------
+      // Uses the current meter_events API (the legacy usage_records API was
+      // removed in Stripe 2025-03-31.basil). Keyed by customer, so the metered
+      // price on that customer's subscription (Solo or Firm tiers) does the math.
       if (path === "/report-usage") {
-        const itemId = profile?.stripe_metered_item_id;
-        if (!itemId) return json({ ok: false, reason: "no metered item" }); // not fatal
+        const customer = profile?.stripe_customer_id;
+        if (!customer) return json({ ok: false, reason: "no customer" }); // not fatal
         const qty = Math.max(1, parseInt(body.quantity || 1, 10));
-        await stripe(env, `subscription_items/${itemId}/usage_records`, "POST", {
-          quantity: qty,
+        const eventName = env.METER_EVENT_NAME || "deed_recorded";
+        await stripe(env, "billing/meter_events", "POST", {
+          event_name: eventName,
+          identifier: `${user.id}-${Date.now()}`,
           timestamp: Math.floor(Date.now() / 1000),
-          action: "increment",
+          payload: { stripe_customer_id: customer, value: String(qty) },
         });
         return json({ ok: true });
       }
