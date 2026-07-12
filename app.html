@@ -25,6 +25,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
+      @keyframes ddspin{to{transform:rotate(360deg)}}
       * { box-sizing: border-box; }
       body { margin: 0; padding: 0; background: #f5f0e8; }
       select, input, textarea { font-family: Georgia, serif; }
@@ -446,7 +447,9 @@ const ICONS = {
   download: <><path d="M12 4v11M8 11l4 4 4-4"/><path d="M4 19h16"/></>,
   link: <><path d="M9.5 14.5l5-5"/><path d="M10.5 6.5l1.5-1.5a3.5 3.5 0 015 5l-1.5 1.5"/><path d="M13.5 17.5l-1.5 1.5a3.5 3.5 0 01-5-5l1.5-1.5"/></>,
   clip: <><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6M9 14h4"/></>,
+  clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></>,
 };
+function Spinner({size=32,color}){return (<div style={{width:size,height:size,border:`${Math.max(2,Math.round(size/12))}px solid ${C.rule}`,borderTopColor:color||C.gold,borderRadius:"50%",animation:"ddspin .7s linear infinite",margin:"0 auto"}}/>);}
 function Icon({t, size=22, color, sw=1.7, style}){
   return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color||C.gold} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={{display:"block",...(style||{})}}>{ICONS[t]||ICONS.doc}</svg>);
 }
@@ -1883,7 +1886,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
     <div style={{fontFamily:"Georgia,serif",background:C.paper,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{textAlign:"center"}}>
         <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",marginBottom:8}}>Dottie Deeds</div>
-        <div style={{fontSize:12,color:C.muted}}>Loading...</div>
+        <div style={{marginBottom:14}}><Spinner size={30}/></div><div style={{fontSize:12,color:C.muted}}>Loading...</div>
       </div>
     </div>
   );
@@ -2026,7 +2029,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
       </div>
       <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"40px 20px"}}>
         <div style={{maxWidth:480,width:"100%",textAlign:"center"}}>
-          <div style={{fontSize:48,marginBottom:16}}>⏳</div>
+          <div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><Icon t="clock" size={46} color={C.amber} sw={1.6}/></div>
           <h2 style={{fontSize:26,fontWeight:300,marginBottom:12}}>Access Pending</h2>
           <p style={{fontSize:14,color:C.muted,lineHeight:1.8,marginBottom:24}}>
             Your account is pending approval. You will receive an email at <strong>{authUser?.email}</strong> once your access has been activated.
@@ -2366,7 +2369,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)handlePNFile(f);}}
                 onClick={()=>document.getElementById("pnFileInput").click()}
                 style={{border:`2px dashed ${pnExtracted?C.gold:"#c8bfa8"}`,borderRadius:4,padding:"32px 40px",textAlign:"center",cursor:"pointer",background:pnExtracted?"#fffbf0":"transparent",transition:"all .2s"}}>
-                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{pnExtracting?"⏳":<Icon t="clip" size={30} color={C.muted} style={{margin:"0 auto"}}/>}</div>
+                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{pnExtracting?<Spinner size={26}/>:<Icon t="clip" size={30} color={C.muted} style={{margin:"0 auto"}}/>}</div>
                 <div style={{fontSize:15,color:C.muted,marginBottom:6}}>
                   {pnExtracting?"Extracting from promissory note...":pnExtracted?"✅ Promissory note extracted — drop another to replace":"Drop the promissory note here, or click to browse"}
                 </div>
@@ -2395,7 +2398,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)handleSLFile(f);}}
                 onClick={()=>document.getElementById("slFileInput").click()}
                 style={{border:`2px dashed ${slExtracted?C.gold:"#c8bfa8"}`,borderRadius:4,padding:"32px 40px",textAlign:"center",cursor:"pointer",background:slExtracted?"#fffbf0":"transparent",transition:"all .2s"}}>
-                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{slExtracting?"⏳":<Icon t="granttrust" size={30} color={C.muted} style={{margin:"0 auto"}}/>}</div>
+                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{slExtracting?<Spinner size={26}/>:<Icon t="granttrust" size={30} color={C.muted} style={{margin:"0 auto"}}/>}</div>
                 <div style={{fontSize:15,color:C.muted,marginBottom:6}}>
                   {slExtracting?"Extracting senior lien info...":slExtracted?"✅ Senior lien extracted — drop another to replace":"Drop the senior deed of trust here, or click to browse"}
                 </div>
