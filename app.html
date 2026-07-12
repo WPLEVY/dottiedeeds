@@ -46,7 +46,8 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 let ddToken = "";
 const STRIPE_WORKER = "https://dottie-stripe.wplevy.workers.dev";
 const ENFORCE_SUBSCRIPTION = false; // flip true to require an active plan to generate
-const PLAN_META = { solo:{label:"Solo",price:"$99/mo",included:10,over:"$10"}, firm:{label:"Firm",price:"$199/mo",included:30,over:"$8"} };
+const PLAN_META = { solo:{label:"Solo",price:"$99/mo",included:10,over:"$10",users:"2 users"}, firm:{label:"Firm",price:"$199/mo",included:30,over:"$8",users:"Up to 6 users"} };
+const PLAN_FEATURES = ["All 14 California deed & transfer generators","AI deed extraction & triple-document analysis","Automatic PCOR (BOE-502-A), all 58 counties","Saved documents & firm master settings"];
 
 const COUNTY_ASSESSORS = {
   "Alameda": { name: "Phong La, County Assessor", addr: "1221 Oak Street, Room 145", city: "Oakland, CA 94612" },
@@ -1479,6 +1480,7 @@ function DottieDeeds() {
   const [checkoutMsg, setCheckoutMsg] = useState("");
   const [billingBusy, setBillingBusy] = useState(false);
   const [periodDeeds, setPeriodDeeds] = useState(null);
+  const [pendingPlan, setPendingPlan] = useState(null);
   const [authFirm, setAuthFirm] = useState("");
   const [authRole, setAuthRole] = useState("");
   const [authMode, setAuthMode] = useState("login"); // login | signup | forgot
@@ -1972,43 +1974,78 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   // ── Auth Screen (Login / Signup / Forgot) ──────────────────────────────────
   if (screen==="billing") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-      <Header subtitle="Billing & Plan" onHome={()=>setScreen("home")} rightContent={<button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"8px 16px",fontSize:10}}>← Back</button>}/>
-      <div style={{maxWidth:720,margin:"0 auto",padding:"36px 20px",flex:1,width:"100%"}}>
-        {checkoutMsg&&<div style={{background:"#f9f6f0",border:`1px solid ${C.rule}`,borderLeft:`3px solid ${C.gold}`,padding:"12px 16px",fontSize:13,marginBottom:20,borderRadius:2}}>{checkoutMsg}</div>}
-        <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:6,padding:"22px 24px",marginBottom:22}}>
-          <div style={{fontSize:11,letterSpacing:2,textTransform:"uppercase",color:C.muted,fontFamily:"monospace",marginBottom:8}}>Current plan</div>
-          {authProfile?.plan ? (
-            <div>
-              <div style={{fontSize:22,fontWeight:"normal"}}>{PLAN_META[authProfile.plan]?.label||authProfile.plan} <span style={{fontSize:14,color:C.muted}}>· {PLAN_META[authProfile.plan]?.price}</span></div>
-              <div style={{fontSize:13,color:hasActiveSub()?C.green:C.amber,marginTop:4}}>Status: {authProfile.subscription_status||"\u2014"}</div>
-              {periodDeeds!=null&&<div style={{fontSize:13,color:C.ink,marginTop:8}}>Deeds this month: <b>{periodDeeds} of {PLAN_META[authProfile.plan].included}</b>{` \u00b7 then ${PLAN_META[authProfile.plan].over}/deed`}</div>}
-              <div style={{marginTop:18,display:"flex",flexDirection:"column",gap:9}}>
-                {authProfile.plan==="solo"&&<button disabled={billingBusy} onClick={()=>changePlan("firm")} style={{...ST.btnP}}>{billingBusy?"…":"Upgrade to Firm — $199/mo · 30 included, then $8/deed"}</button>}
-                {authProfile.plan==="firm"&&<button disabled={billingBusy} onClick={()=>changePlan("solo")} style={{...ST.btnS}}>{billingBusy?"…":"Switch to Solo — $99/mo · 10 included, then $10/deed"}</button>}
-                <div style={{fontSize:11.5,color:C.muted,marginTop:2}}>Plan changes take effect immediately; your next invoice is prorated.</div>
-                <button disabled={billingBusy} onClick={openPortal} style={{...ST.btnS,marginTop:6}}>Payment method & invoices</button>
-                <div style={{fontSize:11.5,color:C.muted}}>Opens Stripe to update your card or download invoices.</div>
+      <Header subtitle="Billing" onHome={()=>setScreen("home")} rightContent={<button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"8px 16px",fontSize:10}}>← Back</button>}/>
+      <div style={{maxWidth:640,margin:"0 auto",padding:"36px 20px 60px",flex:1,width:"100%"}}>
+        {checkoutMsg&&<div style={{background:"#f9f6f0",border:`1px solid ${C.rule}`,borderLeft:`3px solid ${C.gold}`,padding:"12px 16px",fontSize:13,marginBottom:22,borderRadius:2}}>{checkoutMsg}</div>}
+
+        {authProfile?.plan ? (<>
+          <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:8,padding:"24px 26px",marginBottom:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+              <div style={{fontSize:24}}>{PLAN_META[authProfile.plan].label} <span style={{fontSize:15,color:C.muted}}>{PLAN_META[authProfile.plan].price}</span></div>
+              <span style={{fontSize:10,fontFamily:"monospace",letterSpacing:1,textTransform:"uppercase",color:hasActiveSub()?C.green:C.amber,border:`1px solid ${hasActiveSub()?C.green:C.amber}`,borderRadius:20,padding:"3px 10px"}}>{hasActiveSub()?"Active":(authProfile.subscription_status||"—")}</span>
+            </div>
+            {periodDeeds!=null&&(()=>{ const inc=PLAN_META[authProfile.plan].included; const over=periodDeeds>inc; const pct=over?100:Math.round(periodDeeds/inc*100); return (
+              <div style={{marginTop:22}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:12.5,marginBottom:7}}>
+                  <span style={{color:C.muted}}>Deeds this month</span>
+                  <span style={{color:over?C.amber:C.ink}}><b>{periodDeeds}</b> of {inc} included</span>
+                </div>
+                <div style={{height:8,background:"#ececec",borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:`${pct}%`,background:over?C.amber:C.gold,transition:"width .3s"}}/></div>
+                <div style={{fontSize:11.5,color:C.muted,marginTop:7}}>{over?`${periodDeeds-inc} beyond included · billed at ${PLAN_META[authProfile.plan].over}/deed`:`${PLAN_META[authProfile.plan].over} per deed after ${inc}`}</div>
+              </div>
+            );})()}
+            <div style={{marginTop:22,paddingTop:16,borderTop:`1px solid ${C.rule}`}}>
+              <span onClick={()=>!billingBusy&&openPortal()} style={{fontSize:12.5,color:C.gold,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3}}>Manage payment & invoices</span>
+            </div>
+          </div>
+
+          {(()=>{ const other=authProfile.plan==="solo"?"firm":"solo"; const up=other==="firm"; const m=PLAN_META[other]; return (
+            <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:8,padding:"22px 26px"}}>
+              <div style={{fontSize:10,fontFamily:"monospace",letterSpacing:2,textTransform:"uppercase",color:C.muted,marginBottom:12}}>{up?"Upgrade available":"Change plan"}</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:20}}>{m.label} <span style={{fontSize:14,color:C.muted}}>{m.price}</span></div>
+                  <div style={{fontSize:12.5,color:C.gold,fontWeight:"bold",marginTop:4}}>{m.included} deeds included, then {m.over} each</div>
+                  <div style={{fontSize:12,color:C.muted,marginTop:2}}>{m.users}</div>
+                </div>
+                <button disabled={billingBusy} onClick={()=>setPendingPlan(other)} style={{...(up?ST.btnP:ST.btnS),whiteSpace:"nowrap"}}>{up?"Upgrade to Firm":"Switch to Solo"}</button>
               </div>
             </div>
-          ) : (
-            <div>
-              <div style={{fontSize:15,marginBottom:4}}>No active plan{authProfile?.is_approved?" (beta access)":""}.</div>
-              {periodDeeds!=null&&<div style={{fontSize:13,color:C.ink}}>Deeds this month: <b>{periodDeeds}</b></div>}
-            </div>
-          )}
-        </div>
-        {!authProfile?.plan&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-          {["solo","firm"].map(pl=>(
-            <div key={pl} style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:6,padding:"20px 22px"}}>
-              <div style={{fontSize:18}}>{PLAN_META[pl].label}</div>
-              <div style={{fontSize:24,fontWeight:"normal",margin:"6px 0"}}>{PLAN_META[pl].price}</div>
-              <div style={{fontSize:12.5,color:C.gold,fontWeight:"bold",marginBottom:6}}>{PLAN_META[pl].included} deeds included, then {PLAN_META[pl].over} each</div>
-              <div style={{fontSize:12,color:C.muted,marginBottom:16}}>{pl==="solo"?"2 users":"Up to 6 users"}</div>
-              <button disabled={billingBusy} onClick={()=>startCheckout(pl,false)} style={{...ST.btnP,width:"100%"}}>{billingBusy?"\u2026":`Choose ${PLAN_META[pl].label}`}</button>
-            </div>
-          ))}
-        </div>}
+          );})()}
+        </>) : (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            {["solo","firm"].map(pl=>(
+              <div key={pl} style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:8,padding:"24px 24px"}}>
+                <div style={{fontSize:19}}>{PLAN_META[pl].label}</div>
+                <div style={{fontSize:26,margin:"6px 0"}}>{PLAN_META[pl].price}</div>
+                <div style={{fontSize:12.5,color:C.gold,fontWeight:"bold",marginBottom:4}}>{PLAN_META[pl].included} deeds included, then {PLAN_META[pl].over} each</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:18}}>{PLAN_META[pl].users}</div>
+                <button disabled={billingBusy} onClick={()=>startCheckout(pl,false)} style={{...ST.btnP,width:"100%"}}>{billingBusy?"…":`Choose ${PLAN_META[pl].label}`}</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {pendingPlan&&(()=>{ const m=PLAN_META[pendingPlan]; const up=pendingPlan==="firm"; return (
+        <div style={{position:"fixed",inset:0,background:"rgba(20,18,14,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:1000}} onClick={()=>!billingBusy&&setPendingPlan(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.paper,border:`1px solid ${C.rule}`,borderRadius:10,maxWidth:440,width:"100%",padding:"28px 30px",boxShadow:"0 20px 60px rgba(0,0,0,.35)"}}>
+            <div style={{fontSize:10,fontFamily:"monospace",letterSpacing:2,textTransform:"uppercase",color:C.muted,marginBottom:8}}>{up?"Confirm upgrade":"Confirm change"}</div>
+            <div style={{fontSize:24}}>{m.label} <span style={{fontSize:15,color:C.muted}}>{m.price}</span></div>
+            <div style={{marginTop:18,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{fontSize:13.5}}>✓ {m.included} recorded deeds included each month</div>
+              <div style={{fontSize:13.5}}>✓ {m.over} per deed after that</div>
+              <div style={{fontSize:13.5}}>✓ {m.users}</div>
+              {PLAN_FEATURES.map((f,i)=><div key={i} style={{fontSize:13.5}}>✓ {f}</div>)}
+            </div>
+            <div style={{fontSize:12,color:C.ink,marginTop:18,lineHeight:1.55,background:"#f9f6f0",border:`1px solid ${C.rule}`,borderRadius:6,padding:"11px 13px"}}>{up?`Your card on file is charged the prorated difference for the rest of this billing period now, then ${m.price} going forward.`:`You'll receive a prorated credit for unused time on your current plan, applied to your next invoice. Billed ${m.price} going forward.`}</div>
+            <div style={{display:"flex",gap:10,marginTop:22}}>
+              <button disabled={billingBusy} onClick={()=>setPendingPlan(null)} style={{...ST.btnS,flex:1}}>Cancel</button>
+              <button disabled={billingBusy} onClick={async()=>{await changePlan(pendingPlan);setPendingPlan(null);}} style={{...ST.btnP,flex:1}}>{billingBusy?"…":(up?"Confirm upgrade":"Confirm switch")}</button>
+            </div>
+          </div>
+        </div>
+      );})()}
     </div>
   );
 
