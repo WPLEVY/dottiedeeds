@@ -419,6 +419,38 @@ const DOC_TYPES = [
   {id:"sheriff",     icon:"🏛",  label:"Sheriff’s Deed",                          desc:"Court-ordered sale conveyance"},
 ];
 
+const ICONS = {
+  doc: <><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5V7h4"/><path d="M9 12.5h6M9 16h4"/></>,
+  grant: <><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5V7h4"/><path d="M9 12.5h6M9 16h4"/></>,
+  granttrust: <><path d="M4 9.5l8-5 8 5"/><path d="M5.5 10v8M9.5 10v8M14.5 10v8M18.5 10v8"/><path d="M3.5 20.5h17"/></>,
+  dot: <><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></>,
+  quitclaim: <><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5V7h4"/><path d="M8.5 16c1-1.4 2-1.4 3 0s2 1.4 3 0"/></>,
+  interspousal: <><circle cx="9.5" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></>,
+  adjt: <><path d="M6 2.5h8l4 4v11H6z"/><path d="M14 2.5V7h4"/><circle cx="12" cy="12" r="2.3"/><path d="M10 14l-1 6 3-1.6 3 1.6-1-6"/></>,
+  adtr: <><path d="M6 2.5h8l4 4v11H6z"/><path d="M14 2.5V7h4"/><circle cx="12" cy="12" r="2.3"/><path d="M10 14l-1 6 3-1.6 3 1.6-1-6"/></>,
+  sscp: <><circle cx="8.5" cy="8" r="3"/><circle cx="16" cy="9" r="2.4"/><path d="M3.5 20c0-3 2.2-5 5-5s5 2 5 5"/><path d="M14.5 20c.2-2.4 1.4-3.6 3-3.6"/></>,
+  tod: <><path d="M6 2.5h8l4 4v15H6z"/><path d="M14 2.5V7h4"/><path d="M9 15h6M13 12l3 3-3 3"/></>,
+  recon: <><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 017-2.8"/></>,
+  easement: <><path d="M12 21.5s-6.5-5.2-6.5-10.5a6.5 6.5 0 0113 0c0 5.3-6.5 10.5-6.5 10.5z"/><circle cx="12" cy="11" r="2.3"/></>,
+  dotmod: <><path d="M4 20l1.2-4.2L16 5l3 3L8.2 18.8z"/><path d="M14 7l3 3"/></>,
+  trustees: <><path d="M12 4v16M6.5 20.5h11"/><path d="M12 6.5l-5.5 3.5M12 6.5l5.5 3.5"/><path d="M3.5 10a3 3 0 006 0M14.5 10a3 3 0 006 0"/></>,
+  sheriff: <><path d="M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/><path d="M9.3 11.6l1.9 1.9L15 9.7"/></>,
+  save: <><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3"/><rect x="8" y="13" width="8" height="6"/></>,
+  print: <><path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8.5" rx="2"/><path d="M7 14h10v6H7z"/></>,
+  edit: <><path d="M4 20l1.2-4.2L16 5l3 3L8.2 18.8z"/><path d="M14 7l3 3"/></>,
+  settings: <><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></>,
+  tip: <><path d="M9.5 18.5h5M10.5 21.5h3"/><path d="M12 3a6 6 0 00-3.8 10.6c.8.7 1.3 1.5 1.3 2.4h5c0-.9.5-1.7 1.3-2.4A6 6 0 0012 3z"/></>,
+  check: <><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-5.5"/></>,
+  warn: <><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v5M12 18h.01"/></>,
+  upload: <><path d="M12 15V4M8 8l4-4 4 4"/><path d="M4 15v4a1 1 0 001 1h14a1 1 0 001-1v-4"/></>,
+  download: <><path d="M12 4v11M8 11l4 4 4-4"/><path d="M4 19h16"/></>,
+  link: <><path d="M9.5 14.5l5-5"/><path d="M10.5 6.5l1.5-1.5a3.5 3.5 0 015 5l-1.5 1.5"/><path d="M13.5 17.5l-1.5 1.5a3.5 3.5 0 01-5-5l1.5-1.5"/></>,
+  clip: <><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 10h6M9 14h4"/></>,
+};
+function Icon({t, size=22, color, sw=1.7, style}){
+  return (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color||C.gold} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={{display:"block",...(style||{})}}>{ICONS[t]||ICONS.doc}</svg>);
+}
+
 const COUNTY_INFO = {
   "Los Angeles":  {phone:"(562) 462-2177",url:"https://www.lavote.gov/home/recorder",eRecord:true,vendors:["Simplifile","CSC","eRecording Partners"],note:"Many LA cities add city transfer tax. Verify before recording."},
   "Sacramento":   {phone:"(916) 874-6334",url:"https://ccr.saccounty.net",eRecord:true,vendors:["Simplifile","CSC"],note:"City of Sacramento adds city transfer tax within city limits."},
@@ -2187,7 +2219,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
           {oStep===0&&(<div style={{textAlign:"center"}}><div style={{fontSize:52,marginBottom:16}}>✍️</div><h2 style={{fontFamily:"Georgia,serif",fontSize:30,fontWeight:300,marginBottom:14,lineHeight:1.2}}>Welcome to Dottie Deeds</h2><p style={{fontSize:14,color:C.muted,lineHeight:1.85,marginBottom:32}}>Dottie drafts all 14 California deed and transfer document types — with AI extraction from your uploaded prior deed and the correct notary block every time.</p><button onClick={()=>setOStep(1)} style={{...ST.btnP,padding:"14px 44px",fontSize:13}}>Get Started →</button><div style={{marginTop:14}}><button onClick={()=>setScreen("home")} style={{...ST.btnG,textDecoration:"underline",fontSize:12}}>Skip — I’ll configure later</button></div></div>)}
           {oStep===1&&(<div><h2 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:300,marginBottom:20}}>Your firm details</h2><Field label="Firm name" required><input value={oForm.firmName} onChange={e=>oUpd("firmName",e.target.value)} placeholder="e.g. Smith & Jones, APC" style={ST.inp}/></Field><Field label="Street address"><input value={oForm.firmAddress} onChange={e=>oUpd("firmAddress",e.target.value)} placeholder="e.g. 123 Main Street, Suite 100" style={ST.inp}/></Field><div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:12}}><Field label="City"><input value={oForm.firmCity} onChange={e=>oUpd("firmCity",e.target.value)} style={ST.inp}/></Field><Field label="State"><input value={oForm.firmState} onChange={e=>oUpd("firmState",e.target.value)} style={ST.inp}/></Field><Field label="Zip"><input value={oForm.firmZip} onChange={e=>oUpd("firmZip",e.target.value)} style={ST.inp}/></Field></div><div style={{display:"flex",gap:12}}><button onClick={()=>setOStep(0)} style={ST.btnS}>← Back</button><button onClick={()=>setOStep(2)} disabled={!oForm.firmName} style={{...ST.btnP,opacity:oForm.firmName?1:0.5}}>Continue →</button></div></div>)}
           {oStep===2&&(<div><h2 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:300,marginBottom:8}}>Default trustee for Deeds of Trust</h2><p style={{fontSize:14,color:C.muted,marginBottom:20,lineHeight:1.8}}>Pre-loaded on every DOT — override per deal.</p><Field label="Default trustee"><input value={oForm.defaultTrustee} onChange={e=>oUpd("defaultTrustee",e.target.value)} style={ST.inp}/></Field><div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>{["First American Title Insurance Company","Chicago Title Company","Fidelity National Title","Old Republic Title","Stewart Title of California","North American Title Company","Placer Title Company","Cal-Sierra Title Company","Lawyer’s Title Company","Land America","Pacific Coast Title","Ticor Title Company","Western Progressive LLC","Barrett Daffin Frappier Treder & Weiss, LLP","T.D. Service Company","National Default Servicing Corporation","Quality Loan Service Corporation","Clear Recon Corp"].map(t=>(<button key={t} onClick={()=>oUpd("defaultTrustee",t)} style={{background:oForm.defaultTrustee===t?C.ink:"none",color:oForm.defaultTrustee===t?"#d4c49a":C.muted,border:`1px solid ${C.rule}`,padding:"6px 12px",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2}}>{t}</button>))}</div><div style={{display:"flex",gap:12}}><button onClick={()=>setOStep(1)} style={ST.btnS}>← Back</button><button onClick={()=>setOStep(3)} style={ST.btnP}>Continue →</button></div></div>)}
-          {oStep===3&&(<div style={{textAlign:"center"}}><div style={{fontSize:52,marginBottom:16}}>🎉</div><h2 style={{fontFamily:"Georgia,serif",fontSize:30,fontWeight:300,marginBottom:16}}>Dottie is ready.</h2><div style={{...ST.card,textAlign:"left",marginBottom:28}}>{[["Firm",oForm.firmName],["Address",`${oForm.firmAddress}${oForm.firmCity?`, ${oForm.firmCity}, ${oForm.firmState} ${oForm.firmZip}`:""}`],["Trustee",oForm.defaultTrustee]].map(([l,v])=>(<div key={l} style={{display:"flex",gap:16,padding:"7px 0",borderBottom:`1px solid ${C.cream}`,fontSize:13}}><span style={{color:C.muted,minWidth:70,fontSize:10,letterSpacing:1,textTransform:"uppercase",paddingTop:2}}>{l}</span><span>{v||"—"}</span></div>))}</div><button onClick={finish} style={{...ST.btnP,padding:"14px 44px",fontSize:13}}>Start Drafting →</button></div>)}
+          {oStep===3&&(<div style={{textAlign:"center"}}><div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><Icon t="check" size={54} color={C.green} sw={1.6}/></div><h2 style={{fontFamily:"Georgia,serif",fontSize:30,fontWeight:300,marginBottom:16}}>Dottie is ready.</h2><div style={{...ST.card,textAlign:"left",marginBottom:28}}>{[["Firm",oForm.firmName],["Address",`${oForm.firmAddress}${oForm.firmCity?`, ${oForm.firmCity}, ${oForm.firmState} ${oForm.firmZip}`:""}`],["Trustee",oForm.defaultTrustee]].map(([l,v])=>(<div key={l} style={{display:"flex",gap:16,padding:"7px 0",borderBottom:`1px solid ${C.cream}`,fontSize:13}}><span style={{color:C.muted,minWidth:70,fontSize:10,letterSpacing:1,textTransform:"uppercase",paddingTop:2}}>{l}</span><span>{v||"—"}</span></div>))}</div><button onClick={finish} style={{...ST.btnP,padding:"14px 44px",fontSize:13}}>Start Drafting →</button></div>)}
         </div>
       </div>
     </div>
@@ -2274,14 +2306,14 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
 
   if (screen==="home") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-      <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"nowrap"}}><button onClick={()=>{loadMyDocuments();setScreen("mydocs");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>My Docs</button><button onClick={()=>setScreen("guide")} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Guide</button><button onClick={()=>setScreen("master")} style={{background:C.ink,color:"#d4c49a",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}>⚙ Settings</button>{authProfile?.is_admin&&<button onClick={async()=>{const {data:users}=await supa.from("profiles").select("*").order("created_at",{ascending:false});const {data:deeds}=await supa.from("deeds").select("*").order("created_at",{ascending:false});setAdminUsers(users||[]);setAdminDeeds(deeds||[]);setScreen("admin");}} style={{background:"#8a2020",color:"#fff",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}>⚑ Admin</button>}<button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,whiteSpace:"nowrap"}}>Sign out</button></div>}/>
+      <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"nowrap"}}><button onClick={()=>{loadMyDocuments();setScreen("mydocs");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>My Docs</button><button onClick={()=>setScreen("guide")} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Guide</button><button onClick={()=>setScreen("master")} style={{background:C.ink,color:"#d4c49a",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}><Icon t="settings" size={12} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Settings</button>{authProfile?.is_admin&&<button onClick={async()=>{const {data:users}=await supa.from("profiles").select("*").order("created_at",{ascending:false});const {data:deeds}=await supa.from("deeds").select("*").order("created_at",{ascending:false});setAdminUsers(users||[]);setAdminDeeds(deeds||[]);setScreen("admin");}} style={{background:"#8a2020",color:"#fff",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}>⚑ Admin</button>}<button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,whiteSpace:"nowrap"}}>Sign out</button></div>}/>
       {(master.firmName||authProfile?.firm)&&<div style={{background:"#f9f6f0",borderBottom:`1px solid ${C.cream}`,padding:"5px 28px",fontSize:11,color:"#8a7a5a",letterSpacing:1,display:"flex",justifyContent:"space-between"}}><span>{master.firmName||authProfile?.firm}{master.firmCity?` · ${master.firmCity}`:""}</span><span style={{color:C.muted}}>{authProfile?.name||""}</span></div>}
       <div style={{maxWidth:820,margin:"0 auto",padding:"36px 20px",flex:1}}>
         <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:8}}>What would you like to draft today?</h2>
         <p style={{fontSize:14,color:C.muted,marginBottom:28,lineHeight:1.8}}>Select a document type. Dottie guides you through the rest.</p>
-        {!master.firmName&&<div style={{...ST.warn,marginBottom:24}}>💡 <strong>First time?</strong> Set up your <span style={{color:C.gold,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setScreen("master")}>Firm Settings</span> to pre-populate your firm name on every document.</div>}
+        {!master.firmName&&<div style={{...ST.warn,marginBottom:24}}><Icon t="tip" size={14} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/><strong>First time?</strong> Set up your <span style={{color:C.gold,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setScreen("master")}>Firm Settings</span> to pre-populate your firm name on every document.</div>}
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:32}}>
-          {DOC_TYPES.map(d=>(<div key={d.id} onClick={()=>{setDocType(d.id);setScreen("draft");}} style={{background:"#fff",border:`2px solid ${C.rule}`,borderRadius:4,padding:"18px 14px",cursor:"pointer",transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.gold;e.currentTarget.style.background=C.cream;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.rule;e.currentTarget.style.background="#fff";}}><div style={{fontSize:22,marginBottom:8}}>{d.icon}</div><div style={{fontSize:13,fontWeight:"bold",color:C.ink,marginBottom:3}}>{d.label}</div><div style={{fontSize:11,color:C.muted,lineHeight:1.5}}>{d.desc}</div></div>))}
+          {DOC_TYPES.map(d=>(<div key={d.id} onClick={()=>{setDocType(d.id);setScreen("draft");}} style={{background:"#fff",border:`2px solid ${C.rule}`,borderRadius:4,padding:"18px 14px",cursor:"pointer",transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.gold;e.currentTarget.style.background=C.cream;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.rule;e.currentTarget.style.background="#fff";}}><div style={{marginBottom:10}}><Icon t={d.id}/></div><div style={{fontSize:13,fontWeight:"bold",color:C.ink,marginBottom:3}}>{d.label}</div><div style={{fontSize:11,color:C.muted,lineHeight:1.5}}>{d.desc}</div></div>))}
         </div>
         <div style={{borderTop:`1px solid ${C.rule}`,paddingTop:20,fontSize:13,color:C.muted,lineHeight:1.8}}><strong style={{color:C.ink}}>Dottie</strong> drafts all 14 California deed and transfer document types with AI extraction, correct notary blocks, and a paralegal guide for every county. <span style={{color:C.gold,cursor:"pointer"}} onClick={()=>setScreen("guide")}>View paralegal guide →</span></div>
       </div>
@@ -2307,7 +2339,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             ))}
           </div>
           <div style={{width:1,height:24,background:C.rule}}/>
-          <div style={{fontSize:12,color:C.muted,fontStyle:"italic"}}>{dt?.icon} {dt?.label}</div>
+          <div style={{fontSize:12,color:C.muted,fontStyle:"italic"}}><span style={{display:"inline-flex",alignItems:"center",gap:6,verticalAlign:"middle"}}><Icon t={dt?.id} size={13}/>{dt?.label}</span></div>
           <button onClick={()=>setScreen("home")} style={{...ST.btnS,padding:"7px 14px",fontSize:10}}>← Documents</button>
         </div>
       }/>
@@ -2319,7 +2351,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:8}}>Upload the current recorded deed</h2>
             <p style={{fontSize:14,color:C.muted,marginBottom:28,lineHeight:1.8}}>Dottie reads the prior deed and extracts all information automatically. You verify before anything is used.</p>
             <div onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onDrop={onDrop} onClick={()=>document.getElementById("fileInput").click()} style={{border:`2px dashed ${dragOver?C.gold:"#c8bfa8"}`,borderRadius:4,padding:"52px 40px",textAlign:"center",cursor:"pointer",background:dragOver?C.cream:"transparent",transition:"all .2s"}}>
-              <div style={{fontSize:32,marginBottom:12,opacity:.4}}>⬆</div>
+              <div style={{marginBottom:12,opacity:.4,display:"flex",justifyContent:"center"}}><Icon t="upload" size={30} color={C.muted}/></div>
               <div style={{fontSize:15,color:C.muted,marginBottom:6}}>{docType==="sheriff"?"Drop a copy of the certified court order here, or click to browse":(docType==="recon"||docType==="dotmod")?"Drop the prior deed of trust here, or click to browse":"Drop the prior recorded deed here, or click to browse"}</div>
               <div style={{fontSize:11,color:"#a09070",letterSpacing:1}}>PDF format only</div>
               <input id="fileInput" type="file" accept=".pdf" style={{display:"none"}} onChange={e=>e.target.files[0]&&handleFile(e.target.files[0])}/>
@@ -2334,7 +2366,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)handlePNFile(f);}}
                 onClick={()=>document.getElementById("pnFileInput").click()}
                 style={{border:`2px dashed ${pnExtracted?C.gold:"#c8bfa8"}`,borderRadius:4,padding:"32px 40px",textAlign:"center",cursor:"pointer",background:pnExtracted?"#fffbf0":"transparent",transition:"all .2s"}}>
-                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{pnExtracting?"⏳":"📝"}</div>
+                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{pnExtracting?"⏳":<Icon t="clip" size={30} color={C.muted} style={{margin:"0 auto"}}/>}</div>
                 <div style={{fontSize:15,color:C.muted,marginBottom:6}}>
                   {pnExtracting?"Extracting from promissory note...":pnExtracted?"✅ Promissory note extracted — drop another to replace":"Drop the promissory note here, or click to browse"}
                 </div>
@@ -2363,7 +2395,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)handleSLFile(f);}}
                 onClick={()=>document.getElementById("slFileInput").click()}
                 style={{border:`2px dashed ${slExtracted?C.gold:"#c8bfa8"}`,borderRadius:4,padding:"32px 40px",textAlign:"center",cursor:"pointer",background:slExtracted?"#fffbf0":"transparent",transition:"all .2s"}}>
-                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{slExtracting?"⏳":"🏦"}</div>
+                <div style={{fontSize:32,marginBottom:12,opacity:.4}}>{slExtracting?"⏳":<Icon t="granttrust" size={30} color={C.muted} style={{margin:"0 auto"}}/>}</div>
                 <div style={{fontSize:15,color:C.muted,marginBottom:6}}>
                   {slExtracting?"Extracting senior lien info...":slExtracted?"✅ Senior lien extracted — drop another to replace":"Drop the senior deed of trust here, or click to browse"}
                 </div>
@@ -2704,13 +2736,13 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:4}}>Document ready</h2>
             <div style={{fontSize:12,color:C.muted,marginBottom:20,letterSpacing:1}}>{dt?.label} · {form.county} County · {new Date().toLocaleDateString()}</div>
             <div style={{background:"#fff",border:"1px solid #bbb",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",marginBottom:16,maxHeight:480,overflowY:"auto"}}>
-              <div style={{padding:"6px 28px 2px",background:"#f0f8e8",borderBottom:"1px solid #c8e0c0",fontSize:11,color:"#4a6a3a",fontStyle:"italic"}}>✏️ Document is editable — click anywhere to make changes before downloading.</div><div style={{padding:"20px 28px",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000"}} dangerouslySetInnerHTML={{__html: wrapDocHTML(output, dt?.label||"deed", form.apn)}} contentEditable={true} suppressContentEditableWarning={true} onInput={e=>{setOutput(e.currentTarget.innerHTML);}} style={{outline:"none"}}/>
+              <div style={{padding:"6px 28px 2px",background:"#f0f8e8",borderBottom:"1px solid #c8e0c0",fontSize:11,color:"#4a6a3a",fontStyle:"italic"}}><Icon t="edit" size={12} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Document is editable — click anywhere to make changes before downloading.</div><div style={{padding:"20px 28px",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000"}} dangerouslySetInnerHTML={{__html: wrapDocHTML(output, dt?.label||"deed", form.apn)}} contentEditable={true} suppressContentEditableWarning={true} onInput={e=>{setOutput(e.currentTarget.innerHTML);}} style={{outline:"none"}}/>
             </div>
             <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
               <button onClick={copyAndDownload} style={{...ST.btnP,background:copied?"#5a9a5a":C.gold}}>{copied?"✓ Copied & Downloaded":"Copy + Download .txt"}</button>
-              <button onClick={()=>downloadWordDoc(output,dt?.label||"deed",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Download Word .doc</button>
-              <button onClick={()=>generateWordDoc(output,dt?.label||"deed",form.apn)} style={ST.btnS}>🖨 Print / Save as PDF</button>
-              <button onClick={()=>{const t=prompt("Name this document to save it:", (form.grantor||"")+" — "+((DOC_TYPES.find(x=>x.id===docType)||{}).label||""));if(t!==null)saveDocument(t);}} style={ST.btnS}>💾 Save to My Documents</button>{saveMsg&&<span style={{fontSize:11,color:C.green,alignSelf:"center",marginLeft:4}}>{saveMsg}</span>}<button onClick={()=>setScreen("guide")} style={ST.btnS}>Paralegal Guide</button>
+              <button onClick={()=>downloadWordDoc(output,dt?.label||"deed",form.apn)} style={{...ST.btnP,background:"#2c5f8a"}}><Icon t="download" size={13} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Download Word .doc</button>
+              <button onClick={()=>generateWordDoc(output,dt?.label||"deed",form.apn)} style={ST.btnS}><Icon t="print" size={13} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Print / Save as PDF</button>
+              <button onClick={()=>{const t=prompt("Name this document to save it:", (form.grantor||"")+" — "+((DOC_TYPES.find(x=>x.id===docType)||{}).label||""));if(t!==null)saveDocument(t);}} style={ST.btnS}><span style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon t="save" size={13} color="currentColor"/>Save to My Documents</span></button>{saveMsg&&<span style={{fontSize:11,color:C.green,alignSelf:"center",marginLeft:4}}>{saveMsg}</span>}<button onClick={()=>setScreen("guide")} style={ST.btnS}>Paralegal Guide</button>
               <button onClick={()=>setStep(2)} style={ST.btnS}>← Edit</button>
               <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
             </div>
@@ -2718,7 +2750,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
               <div style={{background:"#f0f8f0",border:`1px solid #b0d090`,borderLeft:`3px solid ${C.green}`,padding:"16px 20px",borderRadius:2,marginBottom:16}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
                   <div>
-                    <div style={{fontSize:13,fontWeight:"bold",color:"#2a5010",marginBottom:4}}>📋 PCOR Required for this deed</div>
+                    <div style={{fontSize:13,fontWeight:"bold",color:"#2a5010",marginBottom:4}}><Icon t="clip" size={13} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>PCOR Required for this deed</div>
                     <div style={{fontSize:12,color:"#3a6010",lineHeight:1.7}}>A Preliminary Change of Ownership Report must be filed with the county assessor.<br/>Without it, the recorder charges an additional <strong>$25.00 fee</strong> and requires supplemental information after recording.</div>
                   </div>
                   <button onClick={()=>{
@@ -3226,13 +3258,13 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                     } catch(err) {
                       alert("PCOR error: "+err.message);
                     }
-                  }} style={{...ST.btnP,background:"#2c5f8a"}}>⬇ Download PCOR (BOE-502-A PDF)</button>
+                  }} style={{...ST.btnP,background:"#2c5f8a"}}><Icon t="download" size={13} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Download PCOR (BOE-502-A PDF)</button>
                   <button onClick={()=>{
                     const urls = {"Alameda": "https://www.acgov.org/auditor/prop/changewnership.htm", "Contra Costa": "https://www.ccclerkrec.us", "Los Angeles": "https://assessor.lacounty.gov/forms/", "Marin": "https://www.marincounty.gov/depts/ar", "Orange": "https://www.ocassessor.gov", "Placer": "https://www.placer.ca.gov/recorder", "Sacramento": "https://assessor.saccounty.gov", "San Diego": "https://arcc.sdcounty.ca.gov", "San Francisco": "https://www.sfassessor.org", "Santa Clara": "https://assessor.sccgov.org", "Santa Cruz": "https://www.sccassessor.org", "Ventura": "https://assessor.countyofventura.org"};
                     const county = form.county||"";
                     const url = urls[county] || "https://www.boe.ca.gov/proptaxes/pcor.htm";
                     window.open(url, "_blank");
-                  }} style={{...ST.btnS}}>🔗 Get Official County Form</button>
+                  }} style={{...ST.btnS}}><Icon t="link" size={13} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Get Official County Form</button>
                   <button onClick={()=>setPcorStep(3)} style={ST.btnS}>← Edit</button>
                   <button onClick={()=>{setScreen("home");setStep(0);setOutput("");setPcorOutput("");setPcorStep(1);setForm(blank(master));setExtracted(null);setExtractConf({});setLegalVerified(false);}} style={{...ST.btnG,marginLeft:"auto"}}>New document</button>
                 </div>
