@@ -46,7 +46,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 let ddToken = "";
 const STRIPE_WORKER = "https://dottie-stripe.wplevy.workers.dev";
 const ENFORCE_SUBSCRIPTION = false; // flip true to require an active plan to generate
-const PLAN_META = { solo:{label:"Solo",price:"$99/mo",included:10,over:"$10",users:"2 users"}, firm:{label:"Firm",price:"$199/mo",included:30,over:"$8",users:"Up to 6 users"} };
+const PLAN_META = { solo:{label:"Solo",price:"$99/mo",included:10,over:"$10",users:"1 attorney and 1 staff seat"}, firm:{label:"Firm",price:"$199/mo",included:30,over:"$8",users:"Up to 6 attorney or staff seats"} };
 const PLAN_FEATURES = ["All 14 California deed & transfer generators","AI deed extraction & triple-document analysis","Automatic PCOR (BOE-502-A), all 58 counties","Saved documents & firm master settings"];
 
 const COUNTY_ASSESSORS = {
