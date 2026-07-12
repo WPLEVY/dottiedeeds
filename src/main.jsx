@@ -249,6 +249,8 @@ function DottieDeeds() {
   const updPcor = (k,v) => setPcorForm(p=>({...p,[k]:v}));
   const [dragOver, setDragOver] = useState(false);
   const [masterSaved, setMasterSaved] = useState(false);
+  const [masterVersions, setMasterVersions] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [oStep, setOStep] = useState(0);
   const [oForm, setOForm] = useState({firmName:"",firmAddress:"",firmCity:"",firmState:"California",firmZip:"",defaultTrustee:"First American Title Insurance Company"});
   const [gDoc, setGDoc] = useState("grant");
@@ -398,6 +400,7 @@ function DottieDeeds() {
         county: county,
         completed: completed,
         downloaded: false,
+        master_version: master.masterVersion || 1,
       });
       // Update last_seen
       await supa.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", authUser.id);
@@ -446,12 +449,27 @@ function DottieDeeds() {
       setPeriodDeeds(count||0);
     } catch(e){ setPeriodDeeds(null); }
   };
-  const saveMaster = () => { const nm={...master,masterVersion:(master.masterVersion||1)+1,masterUpdated:new Date().toLocaleDateString()}; setMaster(nm); try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {} if(authUser){ try { supa.from("profiles").update({master:nm, firm:nm.firmName}).eq("id",authUser.id).then(()=>{},()=>{}); } catch(e){} } setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500); };
+  const saveMaster = async () => {
+    const provs=(master.provisions||[]).map(pv=>pv.source?pv:{...pv,source:"firm"});
+    const nm={...master,provisions:provs,masterVersion:(master.masterVersion||1)+1,masterUpdated:new Date().toLocaleDateString()};
+    setMaster(nm);
+    try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {}
+    if(authUser){
+      try { await supa.from("profiles").update({master:nm, firm:nm.firmName}).eq("id",authUser.id); } catch(e){}
+      try { await supa.from("master_versions").insert({ user_id: authUser.id, version_no: nm.masterVersion, snapshot: nm }); } catch(e){}
+    }
+    setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500);
+  };
+  const loadMasterVersions = async () => {
+    if(!authUser){ setMasterVersions([]); return; }
+    try { const { data } = await supa.from("master_versions").select("*").eq("user_id",authUser.id).order("created_at",{ascending:false}); setMasterVersions(data||[]); } catch(e){ setMasterVersions([]); }
+  };
+  const restoreMasterVersion = (snap) => { if(!snap) return; setMaster({...DEFAULT_MASTER,...snap}); setShowHistory(false); setMasterSaved(false); };
   const saveDocument = async (title) => {
     if (!authUser) { setSaveMsg("Sign in to save."); setTimeout(()=>setSaveMsg(""),3000); return; }
     setSaveMsg("Saving…");
     try {
-      const { error } = await supa.from("saved_documents").insert({ user_id: authUser.id, doc_type: docType, title: (title||"").trim()||"(untitled)", form_data: form });
+      const { error } = await supa.from("saved_documents").insert({ user_id: authUser.id, doc_type: docType, title: (title||"").trim()||"(untitled)", form_data: form, master_version: master.masterVersion || 1 });
       if (error) throw error;
       setSaveMsg("✓ Saved to My Documents");
       setTimeout(()=>setSaveMsg(""),2800);
@@ -1152,6 +1170,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
         {(master.provisions||[]).map((pv,idx)=>(
           <div key={idx} style={{...ST.card,marginBottom:12,padding:"14px 16px"}}>
             <div style={{display:"flex",gap:10,marginBottom:8,alignItems:"center",flexWrap:"wrap"}}>
+              <span style={{fontSize:10,letterSpacing:0.5,textTransform:"uppercase",color:(pv.source==="dottie")?C.amber:C.green,border:`1px solid ${(pv.source==="dottie")?C.amber:C.green}`,borderRadius:3,padding:"2px 6px",whiteSpace:"nowrap"}}>{pv.source==="dottie"?"Dottie default":"Firm-authored"}</span>
               <input value={pv.title||""} onChange={e=>setMaster(p=>{const a=[...(p.provisions||[])];a[idx]={...a[idx],title:e.target.value};return{...p,provisions:a};})} placeholder="Provision title (optional)" style={{...ST.inp,flex:1,minWidth:160,marginBottom:0}}/>
               <select value={pv.applyTo||"all"} onChange={e=>setMaster(p=>{const a=[...(p.provisions||[])];a[idx]={...a[idx],applyTo:e.target.value};return{...p,provisions:a};})} style={{...ST.inp,width:210,marginBottom:0}}>
                 <option value="all">All documents</option>
@@ -1163,8 +1182,9 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:12,color:C.muted,marginTop:8}}><input type="checkbox" checked={pv.enabled!==false} onChange={e=>setMaster(p=>{const a=[...(p.provisions||[])];a[idx]={...a[idx],enabled:e.target.checked};return{...p,provisions:a};})} style={{width:14,height:14}}/>Active</label>
           </div>
         ))}
-        <button onClick={()=>setMaster(p=>({...p,provisions:[...(p.provisions||[]),{title:"",body:"",applyTo:"all",enabled:true}]}))} style={{...ST.btnS,marginBottom:10}}>+ Add provision</button>
-        <div style={{fontSize:11,color:C.muted,marginBottom:8}}>Firm template version {master.masterVersion||1}{master.masterUpdated?(" · last saved "+master.masterUpdated):""}</div>
+        <button onClick={()=>setMaster(p=>({...p,provisions:[...(p.provisions||[]),{title:"",body:"",applyTo:"all",enabled:true,source:"firm"}]}))} style={{...ST.btnS,marginBottom:10}}>+ Add provision</button>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8,flexWrap:"wrap"}}><div style={{fontSize:11,color:C.muted}}>Firm template version {master.masterVersion||1}{master.masterUpdated?(" · last saved "+master.masterUpdated):""}</div><button onClick={()=>{ if(!showHistory) loadMasterVersions(); setShowHistory(v=>!v); }} style={{...ST.btnS,padding:"5px 10px",fontSize:10}}>{showHistory?"Hide history":"Version history"}</button></div>
+        {showHistory&&(<div style={{...ST.card,marginBottom:12,padding:"10px 14px",maxHeight:240,overflowY:"auto"}}>{masterVersions.length===0?<div style={{fontSize:12,color:C.muted}}>No saved versions yet. Saving your firm settings creates a version you can restore later.</div>:masterVersions.map(v=>(<div key={v.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,padding:"6px 0",borderBottom:`1px solid ${C.rule}`}}><div style={{fontSize:12,color:C.ink}}>Version {v.version_no}<span style={{color:C.muted}}> · {new Date(v.created_at).toLocaleString()} · {((v.snapshot&&v.snapshot.provisions)||[]).length} provision(s)</span></div><button onClick={()=>restoreMasterVersion(v.snapshot)} style={{...ST.btnS,padding:"4px 10px",fontSize:10}}>Restore</button></div>))}</div>)}
         <div style={{display:"flex",gap:12,marginTop:8}}><button onClick={saveMaster} style={{...ST.btnP,background:masterSaved?"#5a9a5a":C.gold}}>{masterSaved?"✓ Saved":"Save Firm Settings"}</button><button onClick={()=>setMaster(DEFAULT_MASTER)} style={ST.btnS}>Reset</button></div>
       </div>
     </div>
