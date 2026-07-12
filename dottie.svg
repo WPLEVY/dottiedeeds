@@ -1,91 +1,72 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="140" height="200" viewBox="0 0 160 230" xmlns="http://www.w3.org/2000/svg">
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcbc3e"/><stop offset="1" stop-color="#b8960c"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5636"/><stop offset="1" stop-color="#6b4025"/></linearGradient>
+    <clipPath id="badge"><circle cx="200" cy="200" r="150"/></clipPath>
+  </defs>
 
-  <!-- Long hair behind body -->
-  <path d="M 52 78 Q 34 112 32 168 Q 30 192 34 220 L 54 220 Q 50 192 52 164 Q 54 132 64 102 Z" fill="#7a4a28"/>
-  <path d="M 108 78 Q 126 112 128 168 Q 130 192 126 220 L 106 220 Q 110 192 108 164 Q 106 132 96 102 Z" fill="#7a4a28"/>
+  <circle cx="200" cy="200" r="168" fill="url(#ring)"/>
+  <circle cx="200" cy="200" r="150" fill="#f5f0e8"/>
+  <circle cx="200" cy="200" r="150" fill="none" stroke="#1a1710" stroke-width="2" opacity="0.12"/>
+  <g fill="#f5f0e8"><circle cx="200" cy="41" r="5"/><circle cx="359" cy="200" r="5"/><circle cx="200" cy="359" r="5"/><circle cx="41" cy="200" r="5"/><circle cx="313" cy="87" r="3.5"/><circle cx="313" cy="313" r="3.5"/><circle cx="87" cy="313" r="3.5"/><circle cx="87" cy="87" r="3.5"/></g>
 
-  <!-- Body / Blazer -->
-  <path d="M 46 136 Q 42 160 40 220 L 120 220 Q 118 160 114 136 Q 98 128 80 130 Q 62 128 46 136 Z" fill="#1a2a4a"/>
-  <path d="M 80 130 L 64 136 L 73 162 L 80 156 Z" fill="#243558"/>
-  <path d="M 80 130 L 96 136 L 87 162 L 80 156 Z" fill="#243558"/>
-  <rect x="73" y="130" width="14" height="30" rx="2" fill="#f5f0e8"/>
+  <g clip-path="url(#badge)">
+    <!-- ONE solid horseshoe of hair: outer silhouette + inner opening only at bottom-center -->
+    <path d="M 132 320
+             Q 108 244 118 178
+             Q 130 104 200 100
+             Q 270 104 282 178
+             Q 292 244 268 320
+             L 214 320
+             Q 226 252 228 198
+             Q 231 150 200 142
+             Q 169 150 172 198
+             Q 174 252 186 320 Z" fill="url(#hair)"/>
 
-  <!-- Neck - wider -->
-  <rect x="69" y="110" width="22" height="24" rx="6" fill="#fce4cc"/>
+    <!-- shoulders + chest base (skin) under the clothing, so the neck flows into the body -->
+    <path d="M 128 400 Q 132 320 200 300 Q 268 320 272 400 Z" fill="#f5cfae"/>
+    <!-- neck: connects jaw down into the shoulders -->
+    <path d="M 180 236 L 180 286 Q 200 300 220 286 L 220 236 Z" fill="#f5cfae"/>
+    <path d="M 180 252 Q 200 270 220 252 L 220 240 L 180 240 Z" fill="#e2ab80" opacity="0.4"/>
+    <!-- collarbone/chest soft shading -->
+    <path d="M 150 320 Q 200 300 250 320 Q 200 314 150 320 Z" fill="#e2ab80" opacity="0.25"/>
 
-  <!-- Head -->
-  <ellipse cx="80" cy="88" rx="31" ry="33" fill="#fce4cc"/>
+    <!-- blazer meeting the neck -->
+    <path d="M 84 400 Q 90 298 152 282 L 248 282 Q 310 298 316 400 Z" fill="#26334d"/>
+    <path d="M 152 282 L 200 400 L 248 282 Q 224 306 200 306 Q 176 306 152 282 Z" fill="#f3ead6"/>
+    <path d="M 152 282 L 140 372 L 180 306 Z" fill="#1e2940"/>
+    <path d="M 248 282 L 260 372 L 220 306 Z" fill="#1e2940"/>
+    <circle cx="200" cy="338" r="6.5" fill="#b8960c"/><circle cx="200" cy="338" r="2.5" fill="#e6cd6a"/>
 
-  <!-- Hair - connected directly to head, no gaps -->
-  <!-- Top of hair sits on head -->
-  <path d="M 49 86 Q 49 56 80 52 Q 111 56 111 86 Q 106 64 80 61 Q 54 64 49 86 Z" fill="#7a4a28"/>
-  <!-- Hair covers sides of head seamlessly -->
-  <path d="M 49 86 Q 48 100 50 118 Q 52 128 55 134" stroke="#7a4a28" stroke-width="8" fill="none" stroke-linecap="round"/>
-  <path d="M 111 86 Q 112 100 110 118 Q 108 128 105 134" stroke="#7a4a28" stroke-width="8" fill="none" stroke-linecap="round"/>
-  <!-- Fill any gap on sides -->
-  <ellipse cx="51" cy="86" rx="6" ry="18" fill="#7a4a28"/>
-  <ellipse cx="109" cy="86" rx="6" ry="18" fill="#7a4a28"/>
-  <!-- Hair highlight -->
-  <path d="M 66 54 Q 73 52 80 52 Q 87 52 94 54" stroke="#a07040" stroke-width="2" fill="none" opacity="0.6"/>
+    <!-- face on top of hair -->
+    <path d="M 152 172 Q 152 124 200 120 Q 248 124 248 172 Q 248 212 230 234 Q 216 250 200 250 Q 184 250 170 234 Q 152 212 152 172 Z" fill="#f5cfae"/>
+    <path d="M 152 172 Q 152 146 161 134 Q 156 158 161 182 Q 154 180 152 172 Z" fill="#e6b58f" opacity="0.30"/>
+    <ellipse cx="172" cy="196" rx="10" ry="6.5" fill="#eaa78c" opacity="0.5"/>
+    <ellipse cx="228" cy="196" rx="10" ry="6.5" fill="#eaa78c" opacity="0.5"/>
 
-  <!-- Ears (in front of hair) -->
-  <ellipse cx="51" cy="90" rx="5" ry="7" fill="#fce4cc"/>
-  <ellipse cx="109" cy="90" rx="5" ry="7" fill="#fce4cc"/>
-  <circle cx="51" cy="97" r="3.5" fill="#c8a84a"/>
-  <circle cx="109" cy="97" r="3.5" fill="#c8a84a"/>
+    <!-- brows -->
+    <path d="M 165 157 Q 178 151 191 156" stroke="#6b3f22" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 209 156 Q 222 151 235 157" stroke="#6b3f22" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- eyes -->
+    <ellipse cx="179" cy="171" rx="7.5" ry="8.5" fill="#fff"/><ellipse cx="221" cy="171" rx="7.5" ry="8.5" fill="#fff"/>
+    <circle cx="181" cy="172" r="4.4" fill="#5a4326"/><circle cx="223" cy="172" r="4.4" fill="#5a4326"/>
+    <circle cx="182.6" cy="170.4" r="1.5" fill="#fff"/><circle cx="224.6" cy="170.4" r="1.5" fill="#fff"/>
+    <!-- glasses -->
+    <g fill="none" stroke="#b8960c" stroke-width="3.2">
+      <rect x="162" y="158" width="32" height="25" rx="10"/><rect x="206" y="158" width="32" height="25" rx="10"/>
+      <path d="M 194 168 Q 200 164 206 168"/><path d="M 162 166 L 151 165"/><path d="M 238 166 L 249 165"/>
+    </g>
+    <!-- nose + smile -->
+    <path d="M 201 177 Q 197 193 201 199 Q 205 199 206 196" stroke="#d69a70" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M 182 211 Q 200 227 219 211" stroke="#b05740" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M 186 213 Q 200 224 215 213 Q 200 217 186 213 Z" fill="#cf7a5e"/>
+    <path d="M 189 214 Q 200 217 212 214 Q 200 215 189 214 Z" fill="#fff" opacity="0.8"/>
 
-  <!-- Eyebrows -->
-  <path d="M 58 74 Q 64 70 71 72" stroke="#5a3010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-  <path d="M 89 72 Q 96 70 102 74" stroke="#5a3010" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <!-- front fringe on the hairline (sits on top, no gaps) -->
+    <path d="M 152 176 Q 146 118 200 110 Q 254 118 248 176 Q 246 150 236 140 Q 214 150 200 148 Q 186 150 164 140 Q 154 150 152 176 Z" fill="url(#hair)"/>
+    <path d="M 200 110 Q 168 114 158 146 Q 178 126 200 126 Q 190 116 200 110 Z" fill="#9a6440" opacity="0.55"/>
 
-  <!-- Eyes -->
-  <ellipse cx="64" cy="85" rx="8" ry="6" fill="#fff"/>
-  <ellipse cx="96" cy="85" rx="8" ry="6" fill="#fff"/>
-  <circle cx="64" cy="85" r="5" fill="#5a8ab0"/>
-  <circle cx="96" cy="85" r="5" fill="#5a8ab0"/>
-  <circle cx="64" cy="85" r="3" fill="#1a1a2a"/>
-  <circle cx="96" cy="85" r="3" fill="#1a1a2a"/>
-  <circle cx="65.5" cy="83" r="1.5" fill="#fff"/>
-  <circle cx="97.5" cy="83" r="1.5" fill="#fff"/>
-  <path d="M 56 85 Q 64 79 72 85" stroke="#2a1808" stroke-width="1.5" fill="none"/>
-  <path d="M 88 85 Q 96 79 104 85" stroke="#2a1808" stroke-width="1.5" fill="none"/>
-
-  <!-- Glasses -->
-  <rect x="54" y="80" width="20" height="12" rx="3" fill="none" stroke="#c8a84a" stroke-width="2.2"/>
-  <rect x="86" y="80" width="20" height="12" rx="3" fill="none" stroke="#c8a84a" stroke-width="2.2"/>
-  <line x1="74" y1="86" x2="86" y2="86" stroke="#c8a84a" stroke-width="2"/>
-  <line x1="54" y1="86" x2="49" y2="88" stroke="#c8a84a" stroke-width="2"/>
-  <line x1="106" y1="86" x2="111" y2="88" stroke="#c8a84a" stroke-width="2"/>
-
-  <!-- Nose -->
-  <path d="M 78 99 Q 80 103 82 99" stroke="#dba888" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-
-  <!-- Mouth -->
-  <path d="M 70 111 Q 75 107 80 108 Q 85 107 90 111 Q 84 117 80 117 Q 76 117 70 111 Z" fill="#c87878"/>
-  <path d="M 70 111 Q 80 119 90 111" stroke="#a85858" stroke-width="1" fill="none"/>
-
-  <!-- Blush -->
-  <ellipse cx="57" cy="103" rx="9" ry="5" fill="#f5a090" opacity="0.2"/>
-  <ellipse cx="103" cy="103" rx="9" ry="5" fill="#f5a090" opacity="0.2"/>
-
-  <!-- Arms -->
-  <path d="M 20 142 Q 16 170 18 220 L 44 220 Q 42 178 44 142 Z" fill="#1a2a4a"/>
-  <path d="M 140 142 Q 144 170 142 220 L 116 220 Q 118 178 116 142 Z" fill="#1a2a4a"/>
-  <ellipse cx="31" cy="216" rx="12" ry="7" fill="#fce4cc"/>
-  <ellipse cx="129" cy="216" rx="12" ry="7" fill="#fce4cc"/>
-
-  <!-- Document -->
-  <rect x="45" y="160" width="50" height="52" rx="3" fill="#fffef8" stroke="#d0c8b8" stroke-width="1.5"/>
-  <rect x="45" y="160" width="50" height="10" rx="2" fill="#1a2a4a"/>
-  <text x="70" y="168" font-family="Georgia, serif" font-size="4.5" fill="#c8a84a" text-anchor="middle" font-weight="bold">GRANT DEED</text>
-  <line x1="51" y1="178" x2="89" y2="178" stroke="#c8c0b0" stroke-width="1.2"/>
-  <line x1="51" y1="184" x2="89" y2="184" stroke="#c8c0b0" stroke-width="1.2"/>
-  <line x1="51" y1="190" x2="89" y2="190" stroke="#c8c0b0" stroke-width="1.2"/>
-  <line x1="51" y1="196" x2="78" y2="196" stroke="#c8c0b0" stroke-width="1.2"/>
-  <circle cx="85" cy="194" r="6" fill="#c8a84a"/>
-  <circle cx="85" cy="194" r="4.5" fill="#d4b84a"/>
-  <text x="85" y="196.5" font-family="serif" font-size="5" fill="#1a2a4a" text-anchor="middle">✓</text>
-  <path d="M 51 204 Q 59 200 65 204 Q 69 208 75 204" stroke="#2a3a7a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-
+    <!-- earrings drawn last so they show at the jawline -->
+    <circle cx="153" cy="206" r="4.5" fill="#b8960c"/><circle cx="247" cy="206" r="4.5" fill="#b8960c"/>
+  </g>
 </svg>
