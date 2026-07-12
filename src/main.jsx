@@ -252,6 +252,7 @@ function DottieDeeds() {
   const [masterVersions, setMasterVersions] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [masterNote, setMasterNote] = useState("");
+  const [dataMsg, setDataMsg] = useState("");
   const [oStep, setOStep] = useState(0);
   const [oForm, setOForm] = useState({firmName:"",firmAddress:"",firmCity:"",firmState:"California",firmZip:"",defaultTrustee:""});
   const [gDoc, setGDoc] = useState("grant");
@@ -497,6 +498,26 @@ function DottieDeeds() {
   };
   const openDocument = (d) => { setDocType(d.doc_type); setForm({...blank(master),...(d.form_data||{})}); setStep(0); setOutput(""); setScreen("draft"); };
   const deleteDocument = async (id) => { try { await supa.from("saved_documents").delete().eq("id",id); setMyDocs(prev=>prev.filter(x=>x.id!==id)); } catch(e){} };
+  const deleteAllMatters = async () => {
+    if(!authUser) return;
+    if(!window.confirm("Delete ALL your saved matters? This permanently removes every saved document and the client information in them. This cannot be undone.")) return;
+    try { await supa.from("saved_documents").delete().eq("user_id",authUser.id); setMyDocs([]); setDataMsg("All saved matters deleted."); }
+    catch(e){ setDataMsg("Could not delete. Try again."); }
+    setTimeout(()=>setDataMsg(""),3000);
+  };
+  const deleteMyAccount = async () => {
+    if(!authUser) return;
+    if(!window.confirm("Delete your account and ALL your data permanently? This removes your login, firm settings, version history, saved matters, and all client information. This cannot be undone.")) return;
+    const typed = window.prompt('This is permanent. Type DELETE to confirm.');
+    if(typed!=="DELETE"){ setDataMsg("Cancelled."); setTimeout(()=>setDataMsg(""),2500); return; }
+    try {
+      const { error } = await supa.rpc("delete_my_account");
+      if(error) throw error;
+      try { localStorage.clear(); } catch {}
+      await supa.auth.signOut();
+      setScreen("auth");
+    } catch(e){ setDataMsg("Could not delete account. Please contact support."); setTimeout(()=>setDataMsg(""),4000); }
+  };
   const finish = async () => { const nm={...DEFAULT_MASTER,...oForm}; setMaster(nm); setForm(blank(nm)); try{localStorage.setItem("dd_master",JSON.stringify(nm));}catch{} if(authUser){try{await supa.from("profiles").update({firm:oForm.firmName}).eq("id",authUser.id);}catch(e){}} setScreen("home"); };
 
   const handleFile = useCallback(async (file) => {
@@ -1201,6 +1222,13 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
         {showHistory&&(<div style={{...ST.card,marginBottom:12,padding:"10px 14px",maxHeight:240,overflowY:"auto"}}>{masterVersions.length===0?<div style={{fontSize:12,color:C.muted}}>No saved versions yet. Saving your firm settings creates a version you can restore later.</div>:masterVersions.map((v,i)=>(<div key={v.id} style={{padding:"8px 0",borderBottom:`1px solid ${C.rule}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}><div style={{fontSize:12,color:C.ink}}>Version {v.version_no}<span style={{color:C.muted}}> · {new Date(v.created_at).toLocaleString()} · {((v.snapshot&&v.snapshot.provisions)||[]).length} provision(s)</span></div><button onClick={()=>restoreMasterVersion(v.snapshot)} style={{...ST.btnS,padding:"4px 10px",fontSize:10}}>Restore</button></div><div style={{fontSize:11,color:C.muted,marginTop:3}}>{diffMasters(masterVersions[i+1]&&masterVersions[i+1].snapshot, v.snapshot)}</div>{v.note&&<div style={{fontSize:11,color:C.ink,marginTop:2,fontStyle:"italic"}}>Note: {v.note}</div>}</div>))}</div>)}
         <input value={masterNote} onChange={e=>setMasterNote(e.target.value)} placeholder="What changed (optional). Shown in version history." style={{...ST.inp,marginTop:4,marginBottom:8}}/>
         <div style={{display:"flex",gap:12,marginTop:8,alignItems:"center"}}><button onClick={saveMaster} style={{...ST.btnP,background:masterSaved?"#5a9a5a":C.gold}}>{masterSaved?"✓ Saved":"Save Firm Settings"}</button><button onClick={()=>setMaster(DEFAULT_MASTER)} style={ST.btnS}>Reset</button>{isMasterDirty()&&!masterSaved&&<span style={{fontSize:11,color:C.amber,alignSelf:"center"}}>● Unsaved changes</span>}</div>
+        <div style={{...ST.sec,marginTop:32}}>Data & Privacy</div>
+        <div style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.6}}>Your firm settings, version history, and any matters you save are stored in your account. Saved matters include the client and property information you enter. Use these controls to permanently remove your data.</div>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
+          <button onClick={deleteAllMatters} style={{...ST.btnS,color:"#a44"}}>Delete all saved matters</button>
+          <button onClick={deleteMyAccount} style={{background:"#8a2020",color:"#fff",border:"none",padding:"10px 16px",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2}}>Delete my account and all data</button>
+          {dataMsg&&<span style={{fontSize:12,color:C.muted,alignSelf:"center"}}>{dataMsg}</span>}
+        </div>
       </div>
     </div>
   );
