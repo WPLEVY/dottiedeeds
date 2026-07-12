@@ -159,6 +159,24 @@ export default {
     const path = url.pathname.replace(/\/+$/, "");
 
     try {
+      // ---------- CONFIG CHECK (diagnostic; safe to remove later) ----------
+      if (path === "/config-check" && request.method === "GET") {
+        return json({
+          APP_URL: env.APP_URL || null,
+          computed_success_url: `${env.APP_URL}/app.html?checkout=success`,
+          SUPABASE_URL: env.SUPABASE_URL || null,
+          PRICE_SOLO_BASE: env.PRICE_SOLO_BASE || null,
+          PRICE_FIRM_BASE: env.PRICE_FIRM_BASE || null,
+          PRICE_SOLO_METERED: env.PRICE_SOLO_METERED || null,
+          PRICE_FIRM_METERED: env.PRICE_FIRM_METERED || null,
+          METER_EVENT_NAME: env.METER_EVENT_NAME || "deed_recorded (default)",
+          has_STRIPE_SECRET_KEY: !!env.STRIPE_SECRET_KEY,
+          stripe_key_prefix: env.STRIPE_SECRET_KEY ? env.STRIPE_SECRET_KEY.slice(0, 8) : null,
+          has_STRIPE_WEBHOOK_SECRET: !!env.STRIPE_WEBHOOK_SECRET,
+          has_SUPABASE_SERVICE_ROLE_KEY: !!env.SUPABASE_SERVICE_ROLE_KEY,
+        });
+      }
+
       // ---------- WEBHOOK ----------
       if (path === "/webhook" && request.method === "POST") {
         const raw = await request.text();
