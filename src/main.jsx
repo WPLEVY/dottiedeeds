@@ -356,7 +356,7 @@ function DottieDeeds() {
     initAuth();
     const { data: { subscription } } = supa.auth.onAuthStateChange(async (event, session) => {
       ddToken = session ? (session.access_token || "") : "";
-      if (event === "SIGNED_OUT") { setAuthUser(null); setAuthProfile(null); setScreen("auth"); }
+      if (event === "SIGNED_OUT") { setAuthUser(null); setAuthProfile(null); setFirmId(null); setFirmInviteCode(""); setMaster({...DEFAULT_MASTER}); try{localStorage.removeItem("dd_master");localStorage.removeItem("dd_sid");}catch(e){} setScreen("auth"); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -922,18 +922,25 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                     const approved = profile && profile.is_approved === true;
                     console.log("IS_APPROVED:", profile?.is_approved, "approved:", approved);
                     if (!approved) { setScreen("pending"); }
-                    else {
-                      const m = localStorage.getItem("dd_master");
-                      const hasFirm = (m && JSON.parse(m||"{}").firmName) || profile.firm;
-                      if (profile.firm) {
-                        const existing = m ? JSON.parse(m) : {};
-                        if (!existing.firmName) {
-                          const nm = {...DEFAULT_MASTER, ...existing, firmName: profile.firm};
-                          try { localStorage.setItem("dd_master", JSON.stringify(nm)); } catch(e) {}
+                    else if (profile.firm_id) {
+                      try {
+                        const { data: firm } = await supa.from("firms").select("*").eq("id", profile.firm_id).single();
+                        if (firm) {
+                          setFirmId(firm.id); setFirmInviteCode(firm.invite_code||"");
+                          const nm = {...DEFAULT_MASTER, ...(firm.master||{})};
                           setMaster(nm);
+                          try { localStorage.setItem("dd_master", JSON.stringify(nm)); } catch(e) {}
+                          setScreen("home");
+                        } else {
+                          try { localStorage.removeItem("dd_master"); } catch(e) {}
+                          setFirmId(null); setFirmInviteCode(""); setMaster({...DEFAULT_MASTER});
+                          setScreen("onboard");
                         }
-                      }
-                      setScreen(hasFirm ? "home" : "onboard");
+                      } catch(e) { setScreen("onboard"); }
+                    } else {
+                      try { localStorage.removeItem("dd_master"); } catch(e) {}
+                      setFirmId(null); setFirmInviteCode(""); setMaster({...DEFAULT_MASTER});
+                      setScreen("onboard");
                     }
                   } else if (authMode==="signup") {
                     const {data,error} = await supa.auth.signUp({
@@ -1172,7 +1179,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             </div>
           </div>
           <div style={{textAlign:"center",marginTop:24,fontSize:12,color:C.muted}}>
-            Already registered? <span style={{color:C.gold,cursor:"pointer",textDecoration:"underline"}} onClick={()=>{ try{localStorage.setItem("dd_registered","returning");}catch{} setScreen("home"); }}>Go to app →</span>
+            Already registered? <span style={{color:C.gold,cursor:"pointer",textDecoration:"underline"}} onClick={()=>{ setAuthMode("login"); setScreen("auth"); }}>Sign in →</span>
           </div>
         </div>
       </div>
