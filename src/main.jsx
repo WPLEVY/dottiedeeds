@@ -195,6 +195,9 @@ function DottieDeeds() {
   const [myDocsLoading, setMyDocsLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [authProfile, setAuthProfile] = useState(null);
+  const [firmId, setFirmId] = useState(null);
+  const [firmInviteCode, setFirmInviteCode] = useState("");
+  const [oJoinCode, setOJoinCode] = useState("");
   const [authError, setAuthError] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -322,21 +325,21 @@ function DottieDeeds() {
           setAuthProfile(profile);
           console.log("INIT PROFILE:", JSON.stringify(profile));
           if (profile && profile.is_approved === true) {
-          if (!localStorage.getItem("dd_sid")) registerSession(session.user.id);
-            const m = localStorage.getItem("dd_master");
-            if (profile.master && typeof profile.master === "object") {
-              const nm = {...DEFAULT_MASTER, ...JSON.parse(m||"{}"), ...profile.master};
-              setMaster(nm);
-              try { localStorage.setItem("dd_master", JSON.stringify(nm)); } catch(e) {}
-              setScreen(nm.firmName ? "home" : "onboard");
+            if (!localStorage.getItem("dd_sid")) registerSession(session.user.id);
+            if (profile.firm_id) {
+              try {
+                const { data: firm } = await supa.from("firms").select("*").eq("id", profile.firm_id).single();
+                if (firm) {
+                  setFirmId(firm.id);
+                  setFirmInviteCode(firm.invite_code || "");
+                  const nm = {...DEFAULT_MASTER, ...(firm.master || {})};
+                  setMaster(nm);
+                  try { localStorage.setItem("dd_master", JSON.stringify(nm)); } catch(e) {}
+                  setScreen("home");
+                } else { setScreen("onboard"); }
+              } catch(e) { setScreen("onboard"); }
             } else {
-              const hasFirm = (m && JSON.parse(m).firmName) || profile.firm;
-              if (profile.firm && !(m && JSON.parse(m).firmName)) {
-                const nm = {...JSON.parse(m||"{}"), firmName: profile.firm};
-                try { localStorage.setItem("dd_master", JSON.stringify(nm)); } catch(e) {}
-                setMaster(prev => ({...prev, firmName: profile.firm}));
-              }
-              setScreen(hasFirm ? "home" : "onboard");
+              setScreen("onboard");
             }
           } else if (profile) {
             setScreen("pending");
@@ -399,6 +402,7 @@ function DottieDeeds() {
       await supa.from("deeds").insert({
         user_id: authUser.id,
         doc_type: docType,
+        firm_id: firmId,
         county: county,
         completed: completed,
         downloaded: false,
@@ -456,9 +460,11 @@ function DottieDeeds() {
     const nm={...master,provisions:provs,masterVersion:(master.masterVersion||1)+1,masterUpdated:new Date().toLocaleDateString()};
     setMaster(nm);
     try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {}
-    if(authUser){
+    if(authUser && firmId){
+      try { await supa.from("firms").update({ master: nm, name: nm.firmName||"" }).eq("id", firmId); } catch(e){}
+      try { await supa.from("master_versions").insert({ user_id: authUser.id, firm_id: firmId, version_no: nm.masterVersion, snapshot: nm, note: (masterNote||"").trim()||null }); } catch(e){}
+    } else if(authUser){
       try { await supa.from("profiles").update({master:nm, firm:nm.firmName}).eq("id",authUser.id); } catch(e){}
-      try { await supa.from("master_versions").insert({ user_id: authUser.id, version_no: nm.masterVersion, snapshot: nm, note: (masterNote||"").trim()||null }); } catch(e){}
     }
     setMasterNote("");
     setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500);
@@ -476,14 +482,14 @@ function DottieDeeds() {
   };
   const loadMasterVersions = async () => {
     if(!authUser){ setMasterVersions([]); return; }
-    try { const { data } = await supa.from("master_versions").select("*").eq("user_id",authUser.id).order("created_at",{ascending:false}); setMasterVersions(data||[]); } catch(e){ setMasterVersions([]); }
+    try { const { data } = await supa.from("master_versions").select("*").eq("firm_id",firmId).order("created_at",{ascending:false}); setMasterVersions(data||[]); } catch(e){ setMasterVersions([]); }
   };
   const restoreMasterVersion = (snap) => { if(!snap) return; setMaster({...DEFAULT_MASTER,...snap}); setShowHistory(false); setMasterSaved(false); };
   const saveDocument = async (title) => {
     if (!authUser) { setSaveMsg("Sign in to save."); setTimeout(()=>setSaveMsg(""),3000); return; }
     setSaveMsg("Saving…");
     try {
-      const { error } = await supa.from("saved_documents").insert({ user_id: authUser.id, doc_type: docType, title: (title||"").trim()||"(untitled)", form_data: form, master_version: master.masterVersion || 1 });
+      const { error } = await supa.from("saved_documents").insert({ user_id: authUser.id, firm_id: firmId, doc_type: docType, title: (title||"").trim()||"(untitled)", form_data: form, master_version: master.masterVersion || 1 });
       if (error) throw error;
       setSaveMsg("✓ Saved to My Documents");
       setTimeout(()=>setSaveMsg(""),2800);
@@ -492,7 +498,7 @@ function DottieDeeds() {
   const loadMyDocuments = async () => {
     if (!authUser) { setMyDocs([]); return; }
     setMyDocsLoading(true);
-    try { const { data } = await supa.from("saved_documents").select("*").eq("user_id",authUser.id).order("updated_at",{ascending:false}); setMyDocs(data||[]); }
+    try { const { data } = await supa.from("saved_documents").select("*").eq("firm_id",firmId).order("updated_at",{ascending:false}); setMyDocs(data||[]); }
     catch(e) { setMyDocs([]); }
     setMyDocsLoading(false);
   };
@@ -511,6 +517,7 @@ function DottieDeeds() {
     const typed = window.prompt('This is permanent. Type DELETE to confirm.');
     if(typed!=="DELETE"){ setDataMsg("Cancelled."); setTimeout(()=>setDataMsg(""),2500); return; }
     try {
+      try { await fetch(STRIPE_WORKER+"/cancel-subscription",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken})}); } catch(e){}
       const { error } = await supa.rpc("delete_my_account");
       if(error) throw error;
       try { localStorage.clear(); } catch {}
@@ -518,7 +525,33 @@ function DottieDeeds() {
       setScreen("auth");
     } catch(e){ setDataMsg("Could not delete account. Please contact support."); setTimeout(()=>setDataMsg(""),4000); }
   };
-  const finish = async () => { const nm={...DEFAULT_MASTER,...oForm}; setMaster(nm); setForm(blank(nm)); try{localStorage.setItem("dd_master",JSON.stringify(nm));}catch{} if(authUser){try{await supa.from("profiles").update({firm:oForm.firmName}).eq("id",authUser.id);}catch(e){}} setScreen("home"); };
+  const finish = async () => {
+    const nm={...DEFAULT_MASTER,...oForm}; setMaster(nm); setForm(blank(nm));
+    try{localStorage.setItem("dd_master",JSON.stringify(nm));}catch{}
+    if(authUser){
+      try {
+        const { data, error } = await supa.rpc("create_firm", { p_name: oForm.firmName||"My Firm", p_master: nm });
+        if(!error && data){ setFirmId(data.firm_id); setFirmInviteCode(data.invite_code||""); }
+      } catch(e){}
+    }
+    setScreen("home");
+  };
+  const joinFirm = async () => {
+    const code=(oJoinCode||"").trim(); if(!code || !authUser) return;
+    try {
+      const { data, error } = await supa.rpc("join_firm_by_code", { p_code: code });
+      if(error || !data){ window.alert("Invalid invite code. Check it and try again."); return; }
+      setFirmId(data.firm_id); setFirmInviteCode(data.invite_code||"");
+      const nm={...DEFAULT_MASTER, ...(data.master||{})};
+      setMaster(nm); setForm(blank(nm));
+      try{localStorage.setItem("dd_master",JSON.stringify(nm));}catch{}
+      setScreen("home");
+    } catch(e){ window.alert("Could not join firm. Try again."); }
+  };
+  const skipOnboard = async () => {
+    if(authUser){ try { const { data } = await supa.rpc("create_firm", { p_name: master.firmName||"My Firm", p_master: master }); if(data){ setFirmId(data.firm_id); setFirmInviteCode(data.invite_code||""); } } catch(e){} }
+    setScreen("home");
+  };
 
   const handleFile = useCallback(async (file) => {
     if (!file||file.type!=="application/pdf") { setExtractError("Please upload a PDF file."); return; }
@@ -1154,7 +1187,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
       }/>
       <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"40px 20px"}}>
         <div style={{maxWidth:500,width:"100%"}}>
-          {oStep===0&&(<div style={{textAlign:"center"}}><div style={{fontSize:52,marginBottom:16}}>✍️</div><h2 style={{fontFamily:"Georgia,serif",fontSize:30,fontWeight:300,marginBottom:14,lineHeight:1.2}}>Welcome to Dottie Deeds</h2><p style={{fontSize:14,color:C.muted,lineHeight:1.85,marginBottom:32}}>Dottie drafts all 14 California deed and transfer document types — with AI extraction from your uploaded prior deed and the correct notary block every time.</p><button onClick={()=>setOStep(1)} style={{...ST.btnP,padding:"14px 44px",fontSize:13}}>Get Started →</button><div style={{marginTop:14}}><button onClick={()=>setScreen("home")} style={{...ST.btnG,textDecoration:"underline",fontSize:12}}>Skip — I’ll configure later</button></div></div>)}
+          {oStep===0&&(<div style={{textAlign:"center"}}><div style={{fontSize:52,marginBottom:16}}>✍️</div><h2 style={{fontFamily:"Georgia,serif",fontSize:30,fontWeight:300,marginBottom:14,lineHeight:1.2}}>Welcome to Dottie Deeds</h2><p style={{fontSize:14,color:C.muted,lineHeight:1.85,marginBottom:32}}>Dottie drafts all 14 California deed and transfer document types — with AI extraction from your uploaded prior deed and the correct notary block every time.</p><button onClick={()=>setOStep(1)} style={{...ST.btnP,padding:"14px 44px",fontSize:13}}>Get Started →</button><div style={{marginTop:18,paddingTop:18,borderTop:`1px solid ${C.rule}`}}><div style={{fontSize:12,color:C.muted,marginBottom:8}}>Joining a firm that already uses Dottie? Enter their invite code:</div><div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}><input value={oJoinCode} onChange={e=>setOJoinCode(e.target.value.toUpperCase())} placeholder="Invite code" style={{...ST.inp,maxWidth:170,marginBottom:0}}/><button onClick={joinFirm} disabled={!oJoinCode.trim()} style={{...ST.btnS,opacity:oJoinCode.trim()?1:0.5}}>Join firm</button></div></div><div style={{marginTop:14}}><button onClick={skipOnboard} style={{...ST.btnG,textDecoration:"underline",fontSize:12}}>Skip for now</button></div></div>)}
           {oStep===1&&(<div><h2 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:300,marginBottom:20}}>Your firm details</h2><Field label="Firm name" required><input value={oForm.firmName} onChange={e=>oUpd("firmName",e.target.value)} placeholder="e.g. Smith & Jones, APC" style={ST.inp}/></Field><Field label="Street address"><input value={oForm.firmAddress} onChange={e=>oUpd("firmAddress",e.target.value)} placeholder="e.g. 123 Main Street, Suite 100" style={ST.inp}/></Field><div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:12}}><Field label="City"><input value={oForm.firmCity} onChange={e=>oUpd("firmCity",e.target.value)} style={ST.inp}/></Field><Field label="State"><input value={oForm.firmState} onChange={e=>oUpd("firmState",e.target.value)} style={ST.inp}/></Field><Field label="Zip"><input value={oForm.firmZip} onChange={e=>oUpd("firmZip",e.target.value)} style={ST.inp}/></Field></div><div style={{display:"flex",gap:12}}><button onClick={()=>setOStep(0)} style={ST.btnS}>← Back</button><button onClick={()=>setOStep(2)} disabled={!oForm.firmName} style={{...ST.btnP,opacity:oForm.firmName?1:0.5}}>Continue →</button></div></div>)}
           {oStep===2&&(<div><h2 style={{fontFamily:"Georgia,serif",fontSize:28,fontWeight:300,marginBottom:8}}>Default trustee for Deeds of Trust</h2><p style={{fontSize:14,color:C.muted,marginBottom:20,lineHeight:1.8}}>Optional. If your firm uses a standard trustee, enter it and it will pre-fill on every Deed of Trust. Leave it blank to fill in per deal.</p><Field label="Default trustee"><input value={oForm.defaultTrustee} onChange={e=>oUpd("defaultTrustee",e.target.value)} placeholder="Leave blank to enter per deal" style={ST.inp}/></Field><div style={{display:"flex",gap:12}}><button onClick={()=>setOStep(1)} style={ST.btnS}>← Back</button><button onClick={()=>setOStep(3)} style={ST.btnP}>Continue →</button></div></div>)}
           {oStep===3&&(<div style={{textAlign:"center"}}><div style={{marginBottom:16,display:"flex",justifyContent:"center"}}><Icon t="check" size={54} color={C.green} sw={1.6}/></div><h2 style={{fontFamily:"Georgia,serif",fontSize:30,fontWeight:300,marginBottom:16}}>Dottie is ready.</h2><div style={{...ST.card,textAlign:"left",marginBottom:28}}>{[["Firm",oForm.firmName],["Address",`${oForm.firmAddress}${oForm.firmCity?`, ${oForm.firmCity}, ${oForm.firmState} ${oForm.firmZip}`:""}`],["Trustee",oForm.defaultTrustee]].map(([l,v])=>(<div key={l} style={{display:"flex",gap:16,padding:"7px 0",borderBottom:`1px solid ${C.cream}`,fontSize:13}}><span style={{color:C.muted,minWidth:70,fontSize:10,letterSpacing:1,textTransform:"uppercase",paddingTop:2}}>{l}</span><span>{v||"—"}</span></div>))}</div><button onClick={finish} style={{...ST.btnP,padding:"14px 44px",fontSize:13}}>Start Drafting →</button></div>)}
@@ -1187,7 +1220,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <Header subtitle="Firm Settings" onHome={leaveMaster} rightContent={<button onClick={leaveMaster} style={{...ST.btnS,padding:"8px 16px",fontSize:10}}>← Back</button>}/>
       <div style={{maxWidth:680,margin:"0 auto",padding:"32px 20px 48px",flex:1}}>
-        <div style={ST.sec}>Firm Information</div>
+        <div style={ST.sec}>Firm Information</div>{firmInviteCode&&<div style={{...ST.card,padding:"10px 14px",marginBottom:14}}><div style={{fontSize:11,color:C.muted,marginBottom:4}}>Invite teammates to this firm with this code. They enter it when they sign up, and share your firm settings and saved matters.</div><div style={{fontSize:18,letterSpacing:3,fontFamily:"monospace",color:C.ink}}>{firmInviteCode}</div></div>}
         <Field label="Firm name"><input value={master.firmName} onChange={e=>setMaster(p=>({...p,firmName:e.target.value}))} placeholder="e.g. Smith & Jones, APC" style={ST.inp}/></Field>
         <Field label="Street address"><input value={master.firmAddress} onChange={e=>setMaster(p=>({...p,firmAddress:e.target.value}))} placeholder="e.g. 123 Main Street, Suite 100" style={ST.inp}/></Field>
         <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:12}}><Field label="City"><input value={master.firmCity} onChange={e=>setMaster(p=>({...p,firmCity:e.target.value}))} style={ST.inp}/></Field><Field label="State"><input value={master.firmState} onChange={e=>setMaster(p=>({...p,firmState:e.target.value}))} style={ST.inp}/></Field><Field label="Zip"><input value={master.firmZip} onChange={e=>setMaster(p=>({...p,firmZip:e.target.value}))} style={ST.inp}/></Field></div>
