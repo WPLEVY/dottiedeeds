@@ -108,11 +108,13 @@ async function ensureCustomer(env, user, profile) {
 // ---- map subscription -> profile patch ----
 function planFromItems(env, items) {
   let plan = null, meteredItemId = null;
+  const soloIds = [env.PRICE_SOLO_BASE, env.PRICE_SOLO_ANNUAL, env.PRICE_SOLO_METERED].filter(Boolean);
+  const firmIds = [env.PRICE_FIRM_BASE, env.PRICE_FIRM_ANNUAL, env.PRICE_FIRM_METERED].filter(Boolean);
   for (const it of items) {
-    const pid = it.price?.id;
-    if (pid === env.PRICE_SOLO_BASE || pid === env.PRICE_SOLO_ANNUAL) plan = "solo";
-    if (pid === env.PRICE_FIRM_BASE || pid === env.PRICE_FIRM_ANNUAL) plan = "firm";
-    const metered = it.price?.recurring?.usage_type === "metered";
+    const pid = typeof it.price === "string" ? it.price : (it.price?.id || it.plan?.id);
+    if (pid && soloIds.includes(pid)) plan = "solo";
+    if (pid && firmIds.includes(pid)) plan = "firm";
+    const metered = it.price?.recurring?.usage_type === "metered" || it.plan?.usage_type === "metered";
     if (metered) meteredItemId = it.id;
   }
   return { plan, meteredItemId };
@@ -120,16 +122,17 @@ function planFromItems(env, items) {
 async function syncSubscription(env, sub) {
   const userId = sub.metadata?.user_id || (await sbFindByCustomer(env, sub.customer));
   if (!userId) return;
-  const { plan, meteredItemId } = planFromItems(env, sub.items?.data || []);
+  const items = sub.items?.data || [];
+  const { plan: itemPlan, meteredItemId } = planFromItems(env, items);
+  const plan = sub.metadata?.plan || itemPlan;
+  const periodEnd = sub.current_period_end || items[0]?.current_period_end || null;
   await sbUpdateProfile(env, userId, {
     stripe_customer_id: sub.customer,
     stripe_subscription_id: sub.id,
     stripe_metered_item_id: meteredItemId,
     plan,
     subscription_status: sub.status, // active, trialing, past_due, canceled, ...
-    current_period_end: sub.current_period_end
-      ? new Date(sub.current_period_end * 1000).toISOString()
-      : null,
+    current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
   });
 }
 
@@ -237,7 +240,7 @@ export default {
           customer,
           client_reference_id: user.id,
           line_items,
-          subscription_data: { metadata: { user_id: user.id } },
+          subscription_data: { metadata: { user_id: user.id, plan } },
           allow_promotion_codes: true,
           success_url: `${env.APP_URL}/app.html?checkout=success`,
           cancel_url: `${env.APP_URL}/app.html?checkout=cancel`,
