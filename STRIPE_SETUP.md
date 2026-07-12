@@ -37,18 +37,25 @@ Plain vars:
 With metered left empty, checkout still works — it just bills the flat base only.
 Flat billing is fully functional the moment the Worker is up.
 
-## 3. Stripe — create the two metered (usage) prices (4 min)
-This is what makes "N included, then $X/deed" work. For EACH plan product
-(Solo, Firm) add a **second price**:
+## 3. Stripe — attach ONE meter to the two usage prices (4 min)
+Usage prices now must be backed by a **Billing Meter**. Create a single meter and
+point both usage prices at it.
 
-Product -> Add another price -> Recurring -> **Usage-based** -> **Graduated tiering**:
-- Solo "deed usage": First tier `up to 10` units = **$0.00**; next tier `∞` = **$10.00/unit**
-- Firm "deed usage": First tier `up to 30` units = **$0.00**; next tier `∞` = **$8.00/unit**
-Billing period: monthly. Copy each new price ID (price_...) into the Worker vars
-`PRICE_SOLO_METERED` / `PRICE_FIRM_METERED`, then redeploy the Worker.
+On the **Solo** usage price -> **Create meter**:
+- Event name: `deed_recorded`  (must match the Worker's METER_EVENT_NAME)
+- Aggregation: **Sum**
+- Display name: e.g. "Deeds recorded"
 
-The app already reports exactly 1 usage unit per generated deed, so Stripe does the
-"first N free, then per-deed" math for you.
+On the **Firm** usage price -> **Choose a meter** -> select the SAME `deed_recorded`
+meter (do not create a second one).
+
+Tiers stay as you set them (Solo: first 10 = $0, then $10; Firm: first 30 = $0,
+then $8). Copy each usage price ID into the Worker vars `PRICE_SOLO_METERED` /
+`PRICE_FIRM_METERED`, then redeploy. The app reports one meter event (value 1) per
+generated deed, keyed by customer, so Stripe applies the right plan's tiers.
+
+If you named the event something other than `deed_recorded`, set the Worker var
+`METER_EVENT_NAME` to that exact string.
 
 ## 4. Stripe — create the webhook (2 min)
 Developers -> Webhooks -> Add endpoint:
