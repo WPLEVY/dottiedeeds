@@ -1981,13 +1981,13 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             <div>
               <div style={{fontSize:22,fontWeight:"normal"}}>{PLAN_META[authProfile.plan]?.label||authProfile.plan} <span style={{fontSize:14,color:C.muted}}>· {PLAN_META[authProfile.plan]?.price}</span></div>
               <div style={{fontSize:13,color:hasActiveSub()?C.green:C.amber,marginTop:4}}>Status: {authProfile.subscription_status||"\u2014"}</div>
-              {periodDeeds!=null&&<div style={{fontSize:13,color:C.ink,marginTop:8}}>Deeds this month: <b>{periodDeeds}</b>{authProfile.plan&&` \u00b7 ${PLAN_META[authProfile.plan].included} included, then ${PLAN_META[authProfile.plan].over}/deed`}</div>}
+              {periodDeeds!=null&&<div style={{fontSize:13,color:C.ink,marginTop:8}}>Deeds this month: <b>{periodDeeds} of {PLAN_META[authProfile.plan].included}</b>{` \u00b7 then ${PLAN_META[authProfile.plan].over}/deed`}</div>}
               <div style={{marginTop:18,display:"flex",flexDirection:"column",gap:9}}>
                 {authProfile.plan==="solo"&&<button disabled={billingBusy} onClick={()=>changePlan("firm")} style={{...ST.btnP}}>{billingBusy?"…":"Upgrade to Firm — $199/mo · 30 included, then $8/deed"}</button>}
                 {authProfile.plan==="firm"&&<button disabled={billingBusy} onClick={()=>changePlan("solo")} style={{...ST.btnS}}>{billingBusy?"…":"Switch to Solo — $99/mo · 10 included, then $10/deed"}</button>}
                 <div style={{fontSize:11.5,color:C.muted,marginTop:2}}>Plan changes take effect immediately; your next invoice is prorated.</div>
-                <button disabled={billingBusy} onClick={openPortal} style={{...ST.btnS,marginTop:6}}>Payment method, invoices & cancellation</button>
-                <div style={{fontSize:11.5,color:C.muted}}>Opens Stripe to update your card, download invoices, or cancel your plan.</div>
+                <button disabled={billingBusy} onClick={openPortal} style={{...ST.btnS,marginTop:6}}>Payment method & invoices</button>
+                <div style={{fontSize:11.5,color:C.muted}}>Opens Stripe to update your card or download invoices.</div>
               </div>
             </div>
           ) : (
