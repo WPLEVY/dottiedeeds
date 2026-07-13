@@ -200,6 +200,7 @@ function DottieDeeds() {
   const [oJoinCode, setOJoinCode] = useState("");
   const [firmIsAdmin, setFirmIsAdmin] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
@@ -907,6 +908,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
               <label style={ST.lbl}>Password <span style={{color:C.gold}}>*</span></label>
               <input value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder={authMode==="signup"?"At least 8 characters":""} type="password" style={ST.inp}/>
             </div>}
+            {authNotice&&<div style={{background:"#eaf5ea",border:"1px solid #bcd9bc",color:"#2e6b2e",padding:"12px 14px",borderRadius:4,marginBottom:16,fontSize:13,lineHeight:1.6}}>{authNotice}</div>}
             {authError&&<div style={{...ST.err,marginBottom:16}}>{authError}</div>}
             <button
               disabled={authLoading||!authEmail||(authMode!=="forgot"&&!authPassword)||(authMode==="signup"&&(!authName||!authFirm))}
@@ -966,7 +968,10 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                         })
                       });
                     } catch(e) {}
-                    setScreen("pending");
+                    try { await supa.auth.signOut(); } catch(e) {}
+                    setAuthMode("login"); setAuthEmail(""); setAuthPassword(""); setAuthName(""); setAuthFirm("");
+                    setAuthError(""); setAuthNotice("Request received. We'll email you when your access is approved. You can sign in once you're approved.");
+                    setScreen("auth");
                   } else {
                     const {error} = await supa.auth.resetPasswordForEmail(authEmail,{redirectTo:"https://dottiedeeds.com/app.html"});
                     if (error) throw error;
@@ -999,7 +1004,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Dottie</div>
             <div style={{fontFamily:"monospace",fontSize:9,color:C.ink,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Deeds</div>
           </div>
-          <button onClick={()=>{window.location.href="/";}} style={{...ST.btnS,padding:"6px 14px",fontSize:10}}>Home</button>
+          <div style={{display:"flex",gap:8}}><button onClick={async()=>{try{await supa.auth.signOut();}catch(e){} setAuthNotice(""); setScreen("auth");}} style={{...ST.btnS,padding:"6px 14px",fontSize:10}}>Sign out</button><button onClick={()=>{window.location.href="/";}} style={{...ST.btnS,padding:"6px 14px",fontSize:10}}>Home</button></div>
         </div>
         <div style={{height:2,background:`linear-gradient(90deg,${C.gold},${C.goldlt},${C.gold})`}}/>
       </div>
