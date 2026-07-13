@@ -214,6 +214,7 @@ function DottieDeeds() {
   const [authLoading, setAuthLoading] = useState(false);
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminDeeds, setAdminDeeds] = useState([]);
+  const [adminMsg, setAdminMsg] = useState(null);
   const [intakeForm, setIntakeForm] = useState({name:"",firm:"",email:"",role:"Attorney"});
   const [intakeSubmitting, setIntakeSubmitting] = useState(false);
   const [intakeError, setIntakeError] = useState("");
@@ -1033,6 +1034,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
         </div>
       }/>
       <div style={{maxWidth:900,margin:"0 auto",padding:"28px 20px",flex:1}}>
+        {adminMsg&&<div style={{background:adminMsg.ok?"#eaf5ea":"#f7e8e8",border:`1px solid ${adminMsg.ok?"#bcd9bc":"#e0b4b4"}`,color:adminMsg.ok?"#2e6b2e":"#8a2020",padding:"10px 14px",borderRadius:4,marginBottom:16,fontSize:13,lineHeight:1.6,display:"flex",justifyContent:"space-between",gap:12}}><span>{adminMsg.text}</span><span onClick={()=>setAdminMsg(null)} style={{cursor:"pointer",opacity:0.6}}>✕</span></div>}
         <div style={ST.sec}>Users</div>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
@@ -1059,8 +1061,10 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                   <td style={{padding:"10px"}}>
                     <div style={{display:"flex",gap:6}}>
                       {!u.is_approved&&<button onClick={async()=>{
-                        await supa.from("profiles").update({is_approved:true}).eq("id",u.id);
-                        setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,is_approved:true}:p)); try{ await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name})}); }catch(e){}
+                        const {error:upErr}=await supa.from("profiles").update({is_approved:true}).eq("id",u.id);
+                        if(upErr){ setAdminMsg({ok:false,text:"Could not approve "+(u.name||u.email)+": "+(upErr.message||upErr)}); return; }
+                        setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,is_approved:true}:p));
+                        try{ const _r=await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name})}); const _j=await _r.json().catch(()=>({})); if(_j&&_j.ok){ setAdminMsg({ok:true,text:"Approved "+(u.name||u.email)+". Approval email sent to "+u.email+"."}); } else { setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email did not send: "+((_j&&(_j.error||_j.reason))||("HTTP "+_r.status))+". Reach them another way."}); } }catch(e){ setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email request failed: "+(e.message||e)+". Reach them another way."}); }
                       }} style={{...ST.btnP,padding:"4px 10px",fontSize:10,background:C.green}}>Approve</button>}
                       {u.is_approved&&<button onClick={async()=>{
                         await supa.from("profiles").update({is_approved:false}).eq("id",u.id);
