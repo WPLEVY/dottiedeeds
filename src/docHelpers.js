@@ -80,7 +80,15 @@ export const recHdr = (m) => {
     '<hr style="border:none;border-top:1px solid #000;margin:0 0 14pt 0;">';
 };
 
-export const venueHTML = () => '<table style="border-collapse:collapse;margin:8pt 0;font-size:11pt;line-height:1.4;"><tbody>' +'<tr><td style="white-space:nowrap;padding:0;">State of California</td><td style="padding:0 0 0 10pt;">)</td><td style="padding:0;"></td></tr>' +'<tr><td style="padding:0;"></td><td style="padding:0 0 0 10pt;">)</td><td style="padding:0 0 0 6pt;">ss.</td></tr>' +'<tr><td style="white-space:nowrap;padding:0;">County of _______________</td><td style="padding:0 0 0 10pt;">)</td><td style="padding:0;"></td></tr>' +'</tbody></table>';
+export const venueHTML = (county, upper) => {
+  const st = upper ? 'STATE OF CALIFORNIA' : 'State of California';
+  const cty = (upper ? 'COUNTY OF ' : 'County of ') + (county ? (upper ? String(county).toUpperCase() : county) : '_______________');
+  return '<table style="border-collapse:collapse;margin:8pt 0;font-size:11pt;line-height:1.4;"><tbody>' +
+    '<tr><td style="white-space:nowrap;padding:0;">' + st + '</td><td style="padding:0 0 0 10pt;">)</td><td style="padding:0;"></td></tr>' +
+    '<tr><td style="padding:0;"></td><td style="padding:0 0 0 10pt;">)</td><td style="padding:0 0 0 6pt;">ss.</td></tr>' +
+    '<tr><td style="white-space:nowrap;padding:0;">' + cty + '</td><td style="padding:0 0 0 10pt;">)</td><td style="padding:0;"></td></tr>' +
+    '</tbody></table>';
+};
 
 export const juratBoxHTML = (name, yr) => {
   const n = name||"_________________________";

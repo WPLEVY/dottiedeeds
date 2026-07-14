@@ -28,7 +28,7 @@ export const genGrant = (f,m) => {
     '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF') + '</div>' +
     '<div class="body-text">Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
     '<div class="body-text">Dated: _______________________________</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + grantorLine(f) + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + grantorLine(f) + '</div></div>' +
     notaryHTML(f.grantorCapacity, f);
 };
 
@@ -67,7 +67,7 @@ export const genTrust = (f,m) => {
     (f.prop19&&f.prop19!=="P4"&&f.prop19!==""?'<div class="body-text"><strong>CLAIM FOR REASSESSMENT EXCLUSION — Proposition 19</strong><br>Basis: ' + (prop19Labels[f.prop19]||"") + '</div>':'') +
     (f.certify19100?'<div class="body-text">Pursuant to Probate Code §18100.5, the Trustee certifies that the trust has not been revoked, modified, or amended in any manner that would cause the representations herein to be incorrect.</div>':'') +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of<br>' + (f.capTrustName||f.trustName||"[TRUST NAME]") + ((f.capTrustDate||f.trustDate)?", dated "+(f.capTrustDate||f.trustDate):"") + (f.isAmended?", as amended":"") + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of<br>' + (f.capTrustName||f.trustName||"[TRUST NAME]") + ((f.capTrustDate||f.trustDate)?", dated "+(f.capTrustDate||f.trustDate):"") + (f.isAmended?", as amended":"") + '</div></div>' +
     notaryHTML(f.grantorCapacity||"Trustee", f);
 };
 
@@ -106,7 +106,7 @@ export const genDOT = (f,m) => {
       '<div class="body-text"><strong>' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '</strong><br><strong>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</strong></div>' +
       '<div class="body-text" style="font-style:italic;">[Remainder of page left intentionally blank; Signature Page follows]</div>' +
       '<div class="body-text">Executed on __________ day of _________________, ' + yr + ', in _____________________, California.</div>' +
-      '<div class="sig-block"><div class="sig-name">' + grantorLine({...f, grantor:trustorDisplay, grantorCapacity:f.trustorCapacity||"LLC Manager / Member"}) + '</div></div>' +
+      '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + grantorLine({...f, grantor:trustorDisplay, grantorCapacity:f.trustorCapacity||"LLC Manager / Member"}) + '</div></div>' +
       notaryHTML(f.trustorCapacity||"LLC Manager / Member", f) +
       '<div class="body-text" style="margin-top:16pt;font-style:italic;">Second Deed of Trust for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', California':'') + '<br>APN: ' + (f.apn||"_______________") + '</div>'
     : '<div class="body-text">THIS FIRST DEED OF TRUST, made this ______ day of _________________, ' + yr + ', between ' + (f.trustorName||"[TRUSTOR NAME]") + ', whose address is ' + (f.trustorAddress||"[TRUSTOR ADDRESS]") + ', herein called "Trustors", ' + (f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]") + ', a California corporation, as "Trustee," and ' + (f.beneficiaryLenderName||"[BENEFICIARY / LENDER NAME]") + ', herein called "Beneficiaries",</div>' +
@@ -125,7 +125,7 @@ export const genDOT = (f,m) => {
       (f.requestNOD?'<div class="body-text">Beneficiaries request that a copy of any Notice of Default and Notice of Sale hereunder be mailed to them at their address given herein.</div>':'') +
       '<div class="body-text">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '<br>' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '</div>' +
       '<div class="body-text">Executed this ______ day of _________________, ' + yr + ', at _____________________, California.</div>' +
-      '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + grantorLine({...f, grantor:f.trustorName, grantorCapacity:f.trustorCapacity}) + '</div></div>' +
+      '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + grantorLine({...f, grantor:f.trustorName, grantorCapacity:f.trustorCapacity}) + '</div></div>' +
       notaryHTML(f.trustorCapacity||"Individual", f) +
       '<div class="body-text" style="margin-top:16pt;">First Deed of Trust for property commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '<br>APNs: ' + (f.apn||"_______________") + '</div>';
 
@@ -162,7 +162,7 @@ export const genQuitclaim = (f,m) => {
     '<div class="body-text">Assessor&#39;s Parcel Number: ' + (f.apn||"_______________") + '</div>' +
     '<div class="body-text">Commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>' +
     notaryHTML(f.grantorCapacity, f);
 };
 
@@ -192,8 +192,8 @@ export const genInterspousal = (f,m) => {
     '<div class="body-text">Assessor&#39;s Parcel Number: ' + (f.apn||"_______________") + '</div>' +
     '<div class="body-text">Commonly known as:<br>' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?'<br>'+f.cityOfProperty+', CA':'') + '</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[TRANSFERRING SPOUSE NAME]") + '</div></div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.spouseName||"[RECEIVING SPOUSE NAME]") + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[TRANSFERRING SPOUSE NAME]") + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.spouseName||"[RECEIVING SPOUSE NAME]") + '</div></div>' +
     notaryHTML("Individual", f);
 };
 
@@ -211,7 +211,7 @@ export const genADJT = (f,m) => {
     '<div class="body-text">Commonly known as ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + (f.apn?'<br>Assessor&#39;s Parcel Number: '+f.apn:'') + '</div>' +
     '<div style="display:table;width:100%;margin:20pt 0;">' +
       '<div style="display:table-cell;width:40%;vertical-align:bottom;">Date: _______________________________</div>' +
-      '<div style="display:table-cell;width:60%;vertical-align:bottom;border-bottom:1px solid #000;padding-bottom:2pt;text-align:center;">' + (f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]") + '<br>Affiant</div>' +
+      '<div style="display:table-cell;width:60%;vertical-align:bottom;text-align:center;">________________________________________<br>' + (f.survivingJointTenant||"[SURVIVING JOINT TENANT NAME]") + '<br>Affiant</div>' +
     '</div>' +
     juratBoxHTML(f.survivingJointTenant, yr) +
     '<div class="body-text" style="margin-top:16pt;font-weight:bold;">ATTACH CERTIFIED COPY OF DEATH CERTIFICATE</div>';
@@ -235,11 +235,11 @@ export const genADTR = (f,m) => {
     '<hr class="rec-rule"><div class="rec-space">Space above this line for Recorder\'s use only</div><hr class="rec-rule">' +
     '<table style="width:100%;border-collapse:collapse;margin:12pt 0;"><tr>' +
       '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
-        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">And When Recorded Mail To:</div>' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
         '<div style="font-size:11pt;">' + successor + ', Trustee<br>' + propAddr + '<br>' + city + '</div>' +
       '</td>' +
       '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
-        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To: &nbsp; The Undersigned Declare(s):</div>' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Declare(s):</div>' +
         '<div style="font-size:11pt;">' + successor + '<br>' + propAddr + '<br>' + city + '<br><br>Documentary Transfer Tax: $0<br>Building Homes and Jobs Act Fee: $-0-<br>GC §27388.1(a)(2)(B)</div>' +
       '</td>' +
     '</tr></table>' +
@@ -252,7 +252,7 @@ export const genADTR = (f,m) => {
     '<div class="body-text">As a result of the death of ' + deceased + ', I, ' + successor + ', am the current acting Trustee of the ' + trust + ' and by this instrument, I accept that office. The ' + trust + ' has not been revoked and was in full force and effect upon the death of ' + deceased + '. The Trust remains in full force and effect.</div>' +
     '<div class="body-text">I declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + successor + ', Trustee of the<br>' + trust + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + successor + ', Trustee of the<br>' + trust + '</div></div>' +
     juratBoxHTML(successor, yr) ;
 };
 
@@ -276,9 +276,7 @@ export const genSSCP = (f,m) => {
       '</td>' +
     '</tr></table>' +
     '<hr class="rule">' +
-    '<div class="body-text">STATE OF CALIFORNIA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</div>' +
-    '<div class="body-text" style="margin-left:36pt;">) ss.</div>' +
-    '<div class="body-text">COUNTY OF ' + (f.county||"_______________").toUpperCase() + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</div>' +
+        venueHTML(f.county, true) +
     '<div class="body-text">' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ', of legal age, being first duly sworn, deposes and says:</div>' +
     '<div class="body-text">That ' + (f.decedentName||"[DECEDENT NAME — AS ON DEATH CERTIFICATE]") + ', the decedent mentioned in the attached Certificate of Death, is the same person as ' + (f.decedentName||"[DECEDENT NAME]") + ' named as one of the parties in that certain Grant Deed dated ' + (f.originalDeedDate||"[DEED DATE]") + ', executed by ' + (f.originalDeedGrantor||"[ORIGINAL GRANTOR]") + ', to ' + (f.decedentName||"[DECEDENT NAME]") + ' and ' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ', husband and wife as community property, recorded as Document Number ' + (f.originalDeedRecording||"[RECORDING NUMBER]") + ' on ' + (f.originalDeedRecordingDate||"[RECORDING DATE]") + ', of Official Records of the ' + (f.county||"[COUNTY]") + ' County Recorder, covering the real property situated in the County of ' + (f.county||"[COUNTY]") + ', State of California, more fully described as follows:</div>' +
     '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + (f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF') + '</div>' +
@@ -291,7 +289,7 @@ export const genSSCP = (f,m) => {
     '<div class="body-text">That this Affidavit is made for the protection and benefit of the surviving spouse, his/her successors, assigns and personal representatives and all other parties hereafter dealing with or who may acquire an interest in the above described property.</div>' +
     '<div class="body-text">I declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ', Declarant</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[SURVIVING SPOUSE NAME]") + ', Declarant</div></div>' +
     juratBoxHTML(f.grantor, yr);
 };
 
@@ -354,7 +352,7 @@ export const genRecon = (f,m) => {
       '<div class="body-text">AND WHEREAS, the obligation secured by the Deed of Trust has been fully satisfied;</div>' +
       '<div class="body-text">NOW, THEREFORE, the undersigned hereby accepts said appointment as Trustee and does hereby RECONVEY WITHOUT WARRANTY, TO THE PERSONS LEGALLY ENTITLED THERETO, all the estate now held under said Deed of Trust.</div>' +
       '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-      '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.reconNewTrustee||"[NEW TRUSTEE]") + ', as Trustee</div></div>' +
+      '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.reconNewTrustee||"[NEW TRUSTEE]") + ', as Trustee</div></div>' +
       notaryHTML("Trustee", f);
   }
   return recHdr(m) +
@@ -383,7 +381,7 @@ export const genRecon = (f,m) => {
     '<div class="body-text">Assessor&#39;s Parcel Number: ' + (f.apn||"_______________") + '<br>Commonly known as: ' + (f.propertyAddress||"[PROPERTY ADDRESS]") + (f.cityOfProperty?', '+f.cityOfProperty+', CA':'') + '</div>' +
     '<div class="body-text"><strong>THE OBLIGATION SECURED BY SAID DEED OF TRUST HAS BEEN FULLY PAID AND SATISFIED.</strong></div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.reconTrustee||"[TRUSTEE NAME]") + ', as Trustee</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.reconTrustee||"[TRUSTEE NAME]") + ', as Trustee</div></div>' +
     notaryHTML("Corporate Officer", f);
 };
 
@@ -419,7 +417,7 @@ export const genEasement = (f,m) => {
     (f.easementTerms?'<div class="body-text"><strong>TERMS AND CONDITIONS:</strong><br>' + f.easementTerms + '</div>':'') +
     '<div class="body-text">This easement is ' + (f.easementExclusive?"exclusive":"non-exclusive") + ' and shall run with the land.</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>' +
     notaryHTML(f.grantorCapacity||"Individual", f);
 };
 
@@ -456,9 +454,9 @@ export const genDOTMod = (f,m) => {
     (f.dotModNewRate?'<div class="body-text"><strong>4. MODIFIED INTEREST RATE:</strong> ' + f.dotModNewRate + '% per annum</div>':'') +
     '<div class="body-text"><strong>' + (f.dotModNewAmount||f.dotModNewMaturity||f.dotModNewRate?'5':'2') + '. RATIFICATION:</strong> Except as modified herein, all terms of the Original Deed of Trust remain in full force and effect.</div>' +
     '<div class="body-text"><strong>TRUSTOR:</strong></div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.trustorName||"[TRUSTOR NAME]") + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.trustorName||"[TRUSTOR NAME]") + '</div></div>' +
     '<div class="body-text" style="margin-top:20pt;"><strong>BENEFICIARY:</strong></div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + '</div></div>' +
     notaryHTML(f.trustorCapacity||"Individual", f);
 };
 
@@ -481,7 +479,7 @@ export const genTrusteeDeed = (f,m) => {
       '3. Amount bid by grantee: $' + (f.trusteeSalePrice||"[SALE PRICE]") + '</div>' +
     '<div class="body-text">Documentary Transfer Tax: ' + (f.exemptFromTax?'EXEMPT — '+(f.exemptReason||"R&T §11922"):'$'+(f.dtt||"___________")) + '<br>Building Homes and Jobs Act Fee: $-0-</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.reconTrustee||"[TRUSTEE NAME]") + ', as Trustee</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.reconTrustee||"[TRUSTEE NAME]") + ', as Trustee</div></div>' +
     notaryHTML("Corporate Officer", f);
 };
 
@@ -508,7 +506,7 @@ export const genSheriff = (f,m) => {
     '<div class="body-text">' + redemption + '</div>' +
     '<div class="body-text">This deed is made without covenant or warranty, express or implied, and conveys only such right, title, and interest as the judgment debtor, ' + (f.judgmentDebtor||"[JUDGMENT DEBTOR]") + ', held at the time of levy.</div>' +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line"></div><br><div class="sig-name">' + (f.sheriffName||"[SHERIFF&#39;S NAME]") + '<br>Sheriff, ' + (f.county||"[COUNTY]") + ' County, California</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.sheriffName||"[SHERIFF&#39;S NAME]") + '<br>Sheriff, ' + (f.county||"[COUNTY]") + ' County, California</div></div>' +
     notaryHTML("Sheriff / Public Official", f);
 };
 
@@ -531,6 +529,7 @@ export const genPCOR = (docType, f, m, pf={}) => {
   const p1d = pf.p1d||(docType==="adjt" ? "YES" : "NO");
   const p1l1 = pf.p1l1||((isTrustTransfer&&["T1","T5"].includes(f.trustTransferReason)) ? "YES" : "NO");
   const p1l2 = pf.p1l2||((isTrustTransfer&&["T2"].includes(f.trustTransferReason)) ? "YES" : "NO");
+  const p1l = (p1l1==="YES"||p1l2==="YES") ? "YES" : "NO";
   const p1n = pf.p1n||((isTrustTransfer) ? "YES" : "NO");
   const p1c = pf.p1c||"NO";
   const p1m = pf.p1m||"NO";
@@ -692,9 +691,9 @@ export const genPCOR = (docType, f, m, pf={}) => {
   <div style="padding:2px 4px;">${cb("NO")} ${cb("YES")}</div>
   <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">K. The recorded document substitutes a trustee of a trust, mortgage, or other similar document.</div>
 
-  <div style="padding:2px 4px;">${cb(p1l1)} ${cb(p1l1==="YES"?"NO":"YES")}</div>
+  <div style="padding:2px 4px;">${cb(p1l)} ${cb(p1l==="YES"?"NO":"YES")}</div>
   <div class="cb-label" style="padding:2px 0;border-bottom:1px solid #eee;">L. This is a transfer of property:<br>
-  <span class="indent">1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor, and/or ${cb(p1l1)} the transferor’s spouse ${cb("NO")} registered domestic partner.</span><br>
+  <span class="indent">1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of ${cb(p1l1)} the transferor, and/or ${cb("NO")} the transferor’s spouse ${cb("NO")} registered domestic partner.</span><br>
   <span class="indent">2. to/from an irrevocable trust for the benefit of the ${cb(p1l2)} creator/grantor/trustor and/or ${cb("NO")} grantor’s/trustor’s spouse ${cb("NO")} grantor’s/trustor’s registered domestic partner.</span></div>
 
   <div style="padding:2px 4px;">${cb(p1m)} ${cb(p1m==="YES"?"NO":"YES")}</div>
