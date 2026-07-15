@@ -210,7 +210,9 @@ function DottieDeeds() {
   const [authNotice, setAuthNotice] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
-  const [authName, setAuthName] = useState("");
+  const [authFirstName, setAuthFirstName] = useState("");
+  const [authLastName, setAuthLastName] = useState("");
+  const authName = [authFirstName.trim(), authLastName.trim()].filter(Boolean).join(" ");
   const [checkoutMsg, setCheckoutMsg] = useState("");
   const [billingBusy, setBillingBusy] = useState(false);
   const [periodDeeds, setPeriodDeeds] = useState(null);
@@ -458,6 +460,20 @@ function DottieDeeds() {
       setCheckoutMsg(d.error||"Could not open the billing portal.");
     } catch(e){ setCheckoutMsg("Could not reach the billing portal."); }
     setBillingBusy(false);
+  };
+  const approveUser = async (u, withComp) => {
+    const patch = {is_approved:true};
+    if (withComp && !u.comp_until) patch.comp_until = new Date(Date.now()+60*86400000).toISOString();
+    const {error} = await supa.from("profiles").update(patch).eq("id",u.id);
+    if (error) { setAdminMsg({ok:false,text:"Could not approve "+(u.name||u.email)+": "+(error.message||error)}); return; }
+    setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,...patch}:p));
+    const label = withComp ? " with 60 days free" : "";
+    try {
+      const r = await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name})});
+      const j = await r.json().catch(()=>({}));
+      if (j && j.ok) setAdminMsg({ok:true,text:"Approved "+(u.name||u.email)+label+". Approval email sent to "+u.email+"."});
+      else setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+label+", but the email did not send: "+((j&&(j.error||j.reason))||("HTTP "+r.status))+". Reach them another way."});
+    } catch(e) { setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+label+", but the email request failed: "+(e.message||e)+"."}); }
   };
   const refreshProfile = async () => { if(!authUser) return; try { const {data} = await supa.from("profiles").select("*").eq("id",authUser.id).single(); if(data) setAuthProfile(data); } catch(e){} };
   const changePlan = async (plan) => {
@@ -933,7 +949,10 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             {authMode==="signup"&&<>
               <div style={{marginBottom:16}}>
                 <label style={ST.lbl}>Your name <span style={{color:C.gold}}>*</span></label>
-                <input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="e.g. Jane Smith" style={ST.inp}/>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <input value={authFirstName} onChange={e=>setAuthFirstName(e.target.value)} placeholder="First name" autoComplete="given-name" style={ST.inp}/>
+                  <input value={authLastName} onChange={e=>setAuthLastName(e.target.value)} placeholder="Last name" autoComplete="family-name" style={ST.inp}/>
+                </div>
               </div>
               <div style={{marginBottom:16}}>
                 <label style={ST.lbl}>Firm name <span style={{color:C.gold}}>*</span></label>
@@ -958,7 +977,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             {authNotice&&<div style={{background:"#eaf5ea",border:"1px solid #bcd9bc",color:"#2e6b2e",padding:"12px 14px",borderRadius:4,marginBottom:16,fontSize:13,lineHeight:1.6}}>{authNotice}</div>}
             {authError&&<div style={{...ST.err,marginBottom:16}}>{authError}</div>}
             <button
-              disabled={authLoading||!authEmail||(authMode!=="forgot"&&!authPassword)||(authMode==="signup"&&(!authName||!authFirm))}
+              disabled={authLoading||!authEmail||(authMode!=="forgot"&&!authPassword)||(authMode==="signup"&&(!authFirstName.trim()||!authLastName.trim()||!authFirm))}
               onClick={async()=>{
                 setAuthLoading(true); setAuthError("");
                 try {
@@ -1016,7 +1035,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                       });
                     } catch(e) {}
                     try { await supa.auth.signOut(); } catch(e) {}
-                    setAuthMode("login"); setAuthEmail(""); setAuthPassword(""); setAuthName(""); setAuthFirm("");
+                    setAuthMode("login"); setAuthEmail(""); setAuthPassword(""); setAuthFirstName(""); setAuthLastName(""); setAuthFirm("");
                     setAuthError(""); setAuthNotice("Request received. We'll email you when your access is approved. You can sign in once you're approved.");
                     setScreen("auth");
                   } else {
@@ -1106,6 +1125,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                   <td style={{padding:"10px",textAlign:"center"}}>{adminDeeds.filter(d=>d.user_id===u.id).length}</td>
                   <td style={{padding:"10px"}}>
                     <div style={{display:"flex",gap:6}}>
+                      {!u.is_approved&&<button onClick={()=>approveUser(u,false)} style={{...ST.btnS,padding:"4px 10px",fontSize:10}}>Approve</button>}
                       {!u.is_approved&&<button onClick={async()=>{
                         const _patch = {is_approved:true};
                         if (!u.comp_until) _patch.comp_until = new Date(Date.now()+60*86400000).toISOString();
@@ -1113,7 +1133,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                         if(upErr){ setAdminMsg({ok:false,text:"Could not approve "+(u.name||u.email)+": "+(upErr.message||upErr)}); return; }
                         setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,..._patch}:p));
                         try{ const _r=await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name})}); const _j=await _r.json().catch(()=>({})); if(_j&&_j.ok){ setAdminMsg({ok:true,text:"Approved "+(u.name||u.email)+". Approval email sent to "+u.email+"."}); } else { setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email did not send: "+((_j&&(_j.error||_j.reason))||("HTTP "+_r.status))+". Reach them another way."}); } }catch(e){ setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email request failed: "+(e.message||e)+". Reach them another way."}); }
-                      }} style={{...ST.btnP,padding:"4px 10px",fontSize:10,background:C.green}}>Approve</button>}
+                      }} style={{...ST.btnP,padding:"4px 10px",fontSize:10,background:C.green}}>Approve + 60d free</button>}
                       {u.is_approved&&<button onClick={async()=>{
                         const {error:rvErr}=await supa.from("profiles").update({is_approved:false}).eq("id",u.id);
                         if(rvErr){ setAdminMsg({ok:false,text:"Could not revoke "+(u.name||u.email)+": "+(rvErr.message||rvErr)}); return; }
