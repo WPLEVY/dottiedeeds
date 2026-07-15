@@ -469,7 +469,7 @@ function DottieDeeds() {
     setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,...patch}:p));
     const label = withComp ? " with 60 days free" : "";
     try {
-      const r = await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name})});
+      const r = await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name,free_days:withComp?60:0})});
       const j = await r.json().catch(()=>({}));
       if (j && j.ok) setAdminMsg({ok:true,text:"Approved "+(u.name||u.email)+label+". Approval email sent to "+u.email+"."});
       else setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+label+", but the email did not send: "+((j&&(j.error||j.reason))||("HTTP "+r.status))+". Reach them another way."});
@@ -541,7 +541,7 @@ function DottieDeeds() {
     catch(e) { setMyDocs([]); }
     setMyDocsLoading(false);
   };
-  const openDocument = (d) => { setDocType(d.doc_type); setForm({...blank(master),...(d.form_data||{})}); setStep(0); setOutput(""); setScreen("draft"); };
+  const openDocument = (d) => { setDocType(d.doc_type); setForm({...blank(master),...(d.form_data||{})}); setStep(1); setOutput(""); setScreen("draft"); };
   const deleteDocument = async (id) => { try { await supa.from("saved_documents").delete().eq("id",id); setMyDocs(prev=>prev.filter(x=>x.id!==id)); } catch(e){} };
   const deleteAllMatters = async () => {
     if(!authUser) return;
@@ -1132,7 +1132,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                         const {error:upErr}=await supa.from("profiles").update(_patch).eq("id",u.id);
                         if(upErr){ setAdminMsg({ok:false,text:"Could not approve "+(u.name||u.email)+": "+(upErr.message||upErr)}); return; }
                         setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,..._patch}:p));
-                        try{ const _r=await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name})}); const _j=await _r.json().catch(()=>({})); if(_j&&_j.ok){ setAdminMsg({ok:true,text:"Approved "+(u.name||u.email)+". Approval email sent to "+u.email+"."}); } else { setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email did not send: "+((_j&&(_j.error||_j.reason))||("HTTP "+_r.status))+". Reach them another way."}); } }catch(e){ setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email request failed: "+(e.message||e)+". Reach them another way."}); }
+                        try{ const _r=await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name,free_days:60})}); const _j=await _r.json().catch(()=>({})); if(_j&&_j.ok){ setAdminMsg({ok:true,text:"Approved "+(u.name||u.email)+". Approval email sent to "+u.email+"."}); } else { setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email did not send: "+((_j&&(_j.error||_j.reason))||("HTTP "+_r.status))+". Reach them another way."}); } }catch(e){ setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email request failed: "+(e.message||e)+". Reach them another way."}); }
                       }} style={{...ST.btnP,padding:"4px 10px",fontSize:10,background:C.green}}>Approve + 60d free</button>}
                       {u.is_approved&&<button onClick={async()=>{
                         const {error:rvErr}=await supa.from("profiles").update({is_approved:false}).eq("id",u.id);
