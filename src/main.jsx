@@ -217,7 +217,13 @@ function DottieDeeds() {
   const [pendingPlan, setPendingPlan] = useState(null);
   const [authFirm, setAuthFirm] = useState("");
   const [authRole, setAuthRole] = useState("");
-  const [authMode, setAuthMode] = useState("login"); // login | signup | forgot
+  const [authMode, setAuthMode] = useState(() => {
+    try {
+      const q = new URL(window.location.href).searchParams;
+      if (q.get("signup") !== null || q.get("invite")) return "signup";
+    } catch (e) {}
+    return "login";
+  }); // login | signup | forgot
   const [authLoading, setAuthLoading] = useState(false);
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminDeeds, setAdminDeeds] = useState([]);
@@ -909,12 +915,12 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
           <div style={{textAlign:"center",marginBottom:28}}>
             <img src="/dottie.svg" alt="Dottie" width="92" height="92" style={{display:"block",margin:"0 auto 16px"}}/>
             <div style={{fontSize:11,letterSpacing:4,textTransform:"uppercase",color:C.gold,fontFamily:"monospace",marginBottom:10}}>
-              {authMode==="login"?"Welcome Back":authMode==="signup"?"Request Beta Access":"Reset Password"}
+              {authMode==="login"?"Welcome Back":authMode==="signup"?"Create your account":"Reset Password"}
             </div>
             <h2 style={{fontSize:26,fontWeight:300,marginBottom:8,lineHeight:1.3}}>
-              {authMode==="login"?"Sign in to Dottie Deeds":authMode==="signup"?"Join the beta":"Forgot your password?"}
+              {authMode==="login"?"Sign in to Dottie Deeds":authMode==="signup"?"Get started with Dottie Deeds":"Forgot your password?"}
             </h2>
-            {authMode==="signup"&&<p style={{fontSize:13,color:C.muted,lineHeight:1.7}}>Beta access is by invitation. Your request will be reviewed before activation.</p>}
+            {authMode==="signup"&&<p style={{fontSize:13,color:C.muted,lineHeight:1.7}}>New accounts are reviewed before activation. We’ll email you when yours is ready.</p>}
           </div>
           <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:4,padding:"28px 32px",boxShadow:"0 4px 20px rgba(0,0,0,0.06)"}}>
             {authMode==="signup"&&<>
@@ -1017,7 +1023,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
               style={{...ST.btnP,width:"100%",padding:"13px",fontSize:11,opacity:(authLoading||!authEmail||(authMode!=="forgot"&&!authPassword))?0.5:1}}
             >{authLoading?"Please wait...":{login:"Sign In →",signup:"Request Access →",forgot:"Send Reset Email →"}[authMode]}</button>
             <div style={{textAlign:"center",marginTop:16,fontSize:12,color:C.muted,lineHeight:2}}>
-              {authMode==="login"&&<><span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("signup");setAuthError("");}}>Request beta access</span> · <span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("forgot");setAuthError("");}}>Forgot password?</span></>}
+              {authMode==="login"&&<><span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("signup");setAuthError("");}}>Create an account</span> · <span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("forgot");setAuthError("");}}>Forgot password?</span></>}
               {authMode==="signup"&&<span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("login");setAuthError("");}}>Already have an account? Sign in</span>}
               {authMode==="forgot"&&<span style={{cursor:"pointer",color:C.gold}} onClick={()=>{setAuthMode("login");setAuthError("");}}>Back to sign in</span>}
               <div style={{marginTop:14,fontSize:11,color:C.muted}}>By using Dottie you agree to our <a href="/terms.html" style={{color:C.gold}}>Terms</a> and <a href="/privacy.html" style={{color:C.gold}}>Privacy Policy</a>.</div>
