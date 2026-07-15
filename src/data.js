@@ -289,8 +289,6 @@ export const COUNTIES = ["Alameda","Alpine","Amador","Butte","Calaveras","Colusa
 
 export const DOC_TYPES = [
   {id:"grant",       icon:"📄", label:"Grant Deed",                             desc:"Individual, LLC, sale, gift"},
-  {id:"courtorder",  icon:"⚖️",  label:"Court Order (recording cover)",          desc:"Cover page for a certified court order"},
-  {id:"corrective",  icon:"📝", label:"Corrective Deed",                        desc:"Fix an error in a recorded deed"},
   {id:"granttrust",  icon:"🏛",  label:"Grant Deed — Trust Transfer",            desc:"Into or out of a living trust"},
   {id:"dot",         icon:"🔐", label:"Deed of Trust",                           desc:"1st or 2nd lien position"},
   {id:"quitclaim",   icon:"✍️",  label:"Quitclaim Deed",                          desc:"Release of interest, no warranties"},
@@ -304,6 +302,8 @@ export const DOC_TYPES = [
   {id:"dotmod",      icon:"📝", label:"Deed of Trust — Modification",            desc:"Modify terms of existing DOT"},
   {id:"trustees",    icon:"⚖️",  label:"Trustee’s Deed Upon Sale",               desc:"Foreclosure sale conveyance"},
   {id:"sheriff",     icon:"🏛",  label:"Sheriff’s Deed",                          desc:"Court-ordered sale conveyance"},
+  {id:"corrective",  icon:"📝", label:"Corrective Deed",                        desc:"Fix an error in a recorded deed"},
+  {id:"courtorder",  icon:"⚖️",  label:"Court Order (recording cover)",          desc:"Cover page for a certified court order"},
 ];
 
 export const COUNTY_INFO = {
