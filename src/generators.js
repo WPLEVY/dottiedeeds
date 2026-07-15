@@ -258,7 +258,7 @@ export const genADTR = (f,m) => {
 
 // Affidavit - Change of Trustee. The non-death sibling of genADTR: records a change of
 // trustee on incapacity, on a restatement designating a successor, or on resignation.
-// Modeled on recorded CunninghamLegal instruments (Ventura 2023000070864 and others).
+// Modeled on recorded California affidavits of change of trustee.
 // Note: the triggering document (physician certification, restatement, notice of
 // resignation) is recited, not attached. Medical records do not belong in the public record.
 export const genACT = (f,m) => {
@@ -280,7 +280,7 @@ export const genACT = (f,m) => {
   const city = f.cityOfProperty?f.cityOfProperty+", CA":"";
   const legal = f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF';
   const startsThe = /^the\s/i.test(trust);
-  const ofTrust  = startsThe ? trust : "the " + trust;                                  // "of The Hein..." / "of the Hein..."
+  const ofTrust  = startsThe ? trust : "the " + trust;                                  // "of The Smith Trust" / "of the Smith Trust"
   const TheTrust = startsThe ? trust.charAt(0).toUpperCase()+trust.slice(1) : "The " + trust; // sentence start
   const reason = f.actReason||"incapacity";
 

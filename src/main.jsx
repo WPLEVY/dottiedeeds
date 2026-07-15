@@ -1604,22 +1604,22 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 <option value="restatement">Incapacity, and a restatement designates the successor</option>
                 <option value="resignation">Resignation and appointment of a new trustee</option>
               </select></Field>
-              <Field label="Trust name" required><input value={form.trustName} onChange={e=>upd("trustName",e.target.value)} placeholder="e.g. The Hein Family Trust" style={ST.inp}/></Field>
-              <Field label="Trust date" required><input value={form.trustDate} onChange={e=>upd("trustDate",e.target.value)} placeholder="e.g. August 7, 1991" style={ST.inp}/></Field>
-              <Field label="New trustee(s)" required hint={"For co-trustees, join the names with \u201cand\u201d. Each gets a signature line."}><input value={form.successorTrusteeName} onChange={e=>upd("successorTrusteeName",e.target.value)} placeholder="e.g. Jamie Elliott and Melissa Jansen" style={ST.inp}/></Field>
-              <Field label="Prior trustee(s)" required hint="The trustee being replaced, exactly as named on the recorded deed"><input value={form.actPriorTrusteeName} onChange={e=>upd("actPriorTrusteeName",e.target.value)} placeholder="e.g. Walter A. Hein" style={ST.inp}/></Field>
+              <Field label="Trust name" required><input value={form.trustName} onChange={e=>upd("trustName",e.target.value)} placeholder="e.g. The Public Family Trust" style={ST.inp}/></Field>
+              <Field label="Trust date" required><input value={form.trustDate} onChange={e=>upd("trustDate",e.target.value)} placeholder="e.g. March 5, 2015" style={ST.inp}/></Field>
+              <Field label="New trustee(s)" required hint={"For co-trustees, join the names with \u201cand\u201d. Each gets a signature line."}><input value={form.successorTrusteeName} onChange={e=>upd("successorTrusteeName",e.target.value)} placeholder="e.g. Mary R. Public and Susan T. Public" style={ST.inp}/></Field>
+              <Field label="Prior trustee(s)" required hint="The trustee being replaced, exactly as named on the recorded deed"><input value={form.actPriorTrusteeName} onChange={e=>upd("actPriorTrusteeName",e.target.value)} placeholder="e.g. John Q. Public" style={ST.inp}/></Field>
               {form.actReason==="restatement"&&<Field label="Restatement executed on" required><input value={form.actRestatementDate} onChange={e=>upd("actRestatementDate",e.target.value)} placeholder="e.g. June 1, 2026" style={ST.inp}/></Field>}
               {form.actReason==="resignation"&&<>
-                <Field label="Notice of Resignation executed on" required><input value={form.actResignationDate} onChange={e=>upd("actResignationDate",e.target.value)} placeholder="e.g. May 11, 2026" style={ST.inp}/></Field>
-                <Field label="Who appointed the new trustee(s)?" hint="Usually the settlor, acting under the terms of the trust"><input value={form.actAppointerName} onChange={e=>upd("actAppointerName",e.target.value)} placeholder="e.g. Margaret Elizabeth Elliott" style={ST.inp}/></Field>
+                <Field label="Notice of Resignation executed on" required><input value={form.actResignationDate} onChange={e=>upd("actResignationDate",e.target.value)} placeholder="e.g. June 1, 2026" style={ST.inp}/></Field>
+                <Field label="Who appointed the new trustee(s)?" hint="Usually the settlor, acting under the terms of the trust"><input value={form.actAppointerName} onChange={e=>upd("actAppointerName",e.target.value)} placeholder="e.g. Mary R. Public" style={ST.inp}/></Field>
               </>}
               <div style={{...ST.sec,marginTop:18}}>The recorded deed that put the property in the trust</div>
               <Field label="Deed type"><select value={form.originalDeedType} onChange={e=>upd("originalDeedType",e.target.value)} style={ST.inp}><option value="">Grant Deed (default)</option><option>Grant Deed</option><option>Quitclaim Deed</option><option>Trust Transfer Deed</option></select></Field>
-              <Field label="Deed date"><input value={form.originalDeedDate} onChange={e=>upd("originalDeedDate",e.target.value)} placeholder="e.g. August 7, 1991" style={ST.inp}/></Field>
-              <Field label="Executed by (grantors on that deed)"><input value={form.originalDeedGrantor} onChange={e=>upd("originalDeedGrantor",e.target.value)} placeholder="e.g. Walter A. Hein and Valerie W. Hein, husband and wife" style={ST.inp}/></Field>
-              <Field label="Granted to (as named on that deed)" hint="Leave blank to use the prior trustee(s) as trustee of the trust"><input value={form.actOriginalGrantees} onChange={e=>upd("actOriginalGrantees",e.target.value)} placeholder="e.g. Walter A. Hein and Valerie Hein, Trustees of the Hein Family Trust" style={ST.inp}/></Field>
-              <Field label="Recording document number"><input value={form.originalDeedRecording} onChange={e=>upd("originalDeedRecording",e.target.value)} placeholder="e.g. 91-1350" style={ST.inp}/></Field>
-              <Field label="Recording date"><input value={form.originalDeedRecordingDate} onChange={e=>upd("originalDeedRecordingDate",e.target.value)} placeholder="e.g. September 11, 1991" style={ST.inp}/></Field>
+              <Field label="Deed date"><input value={form.originalDeedDate} onChange={e=>upd("originalDeedDate",e.target.value)} placeholder="e.g. March 5, 2015" style={ST.inp}/></Field>
+              <Field label="Executed by (grantors on that deed)"><input value={form.originalDeedGrantor} onChange={e=>upd("originalDeedGrantor",e.target.value)} placeholder="e.g. John Q. Public and Mary R. Public, husband and wife" style={ST.inp}/></Field>
+              <Field label="Granted to (as named on that deed)" hint="Leave blank to use the prior trustee(s) as trustee of the trust"><input value={form.actOriginalGrantees} onChange={e=>upd("actOriginalGrantees",e.target.value)} placeholder="e.g. John Q. Public and Mary R. Public, Trustees of The Public Family Trust" style={ST.inp}/></Field>
+              <Field label="Recording document number"><input value={form.originalDeedRecording} onChange={e=>upd("originalDeedRecording",e.target.value)} placeholder="e.g. 2015-0123456" style={ST.inp}/></Field>
+              <Field label="Recording date"><input value={form.originalDeedRecordingDate} onChange={e=>upd("originalDeedRecordingDate",e.target.value)} placeholder="e.g. March 10, 2015" style={ST.inp}/></Field>
             </>}
             {docType==="adtr"&&<>
               <div style={ST.warn}>A certified copy of the death certificate must accompany this affidavit.</div>
@@ -1662,16 +1662,16 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
 
             {docType==="courtorder"&&<>
               <div style={ST.warn}>This produces the recording cover page only. Record it on top of a certified copy of the order. Dottie does not draft the order itself.</div>
-              <Field label="Document title of the court order" required><textarea value={form.orderTitle} onChange={e=>upd("orderTitle",e.target.value)} placeholder="e.g. ORDER: 1) CONFIRMING TRUST ASSETS; AND, 2) MODIFICATION OF TRUST DUE TO CHANGED CIRCUMSTANCES AND WITH CONSENT OF BENEFICIARIES" style={{...ST.inp,minHeight:70,resize:"vertical"}}/></Field>
-              <Field label="Court case number"><input value={form.courtCaseNumber} onChange={e=>upd("courtCaseNumber",e.target.value)} placeholder="e.g. 23STPB11217" style={ST.inp}/></Field>
-              <Field label="Additional APNs (one per line, or comma separated)"><textarea value={form.additionalApns} onChange={e=>upd("additionalApns",e.target.value)} placeholder={"5787-001-039\n5356-016-049"} style={{...ST.inp,minHeight:60,resize:"vertical"}}/></Field>
+              <Field label="Document title of the court order" required><textarea value={form.orderTitle} onChange={e=>upd("orderTitle",e.target.value)} placeholder="e.g. ORDER CONFIRMING TRUST ASSETS" style={{...ST.inp,minHeight:70,resize:"vertical"}}/></Field>
+              <Field label="Court case number"><input value={form.courtCaseNumber} onChange={e=>upd("courtCaseNumber",e.target.value)} placeholder="e.g. 24STPB01234" style={ST.inp}/></Field>
+              <Field label="Additional APNs (one per line, or comma separated)"><textarea value={form.additionalApns} onChange={e=>upd("additionalApns",e.target.value)} placeholder={"1234-005-678\n1234-005-679"} style={{...ST.inp,minHeight:60,resize:"vertical"}}/></Field>
             </>}
             {docType==="corrective"&&<>
               <div style={ST.warn}>A corrective deed re-records a prior instrument to fix an error in it. State the correction precisely.</div>
               <Field label="Type of deed being corrected"><select value={form.correctiveOriginalType} onChange={e=>upd("correctiveOriginalType",e.target.value)} style={ST.inp}><option value="">Grant Deed (default)</option><option value="Grant Deed">Grant Deed</option><option value="Quitclaim Deed">Quitclaim Deed</option><option value="Interspousal Transfer Deed">Interspousal Transfer Deed</option><option value="Trust Transfer Deed">Trust Transfer Deed</option></select></Field>
-              <Field label="Original instrument number" required><input value={form.correctiveOriginalDocNumber} onChange={e=>upd("correctiveOriginalDocNumber",e.target.value)} placeholder="e.g. 20240239594" style={ST.inp}/></Field>
-              <Field label="Original recording date" required><input value={form.correctiveOriginalRecordingDate} onChange={e=>upd("correctiveOriginalRecordingDate",e.target.value)} placeholder="e.g. April 11, 2024" style={ST.inp}/></Field>
-              <Field label="What is being corrected, and why" required><textarea value={form.correctiveReason} onChange={e=>upd("correctiveReason",e.target.value)} placeholder="e.g. The legal description omitted Parcel 2 of the condominium plan." style={{...ST.inp,minHeight:70,resize:"vertical"}}/></Field>
+              <Field label="Original instrument number" required><input value={form.correctiveOriginalDocNumber} onChange={e=>upd("correctiveOriginalDocNumber",e.target.value)} placeholder="e.g. 20240123456" style={ST.inp}/></Field>
+              <Field label="Original recording date" required><input value={form.correctiveOriginalRecordingDate} onChange={e=>upd("correctiveOriginalRecordingDate",e.target.value)} placeholder="e.g. March 3, 2024" style={ST.inp}/></Field>
+              <Field label="What is being corrected, and why" required><textarea value={form.correctiveReason} onChange={e=>upd("correctiveReason",e.target.value)} placeholder="e.g. The legal description omitted the second parcel." style={{...ST.inp,minHeight:70,resize:"vertical"}}/></Field>
               <Field label="Grantor"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. Jane Smith, a married woman" style={ST.inp}/></Field>
               <Field label="Grantee"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. Jane Smith, Trustee of the Smith Family Trust" style={ST.inp}/></Field>
             </>}
