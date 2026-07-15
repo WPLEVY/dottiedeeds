@@ -240,7 +240,7 @@ export const genADTR = (f,m) => {
       '</td>' +
       '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
         '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Declare(s):</div>' +
-        '<div style="font-size:11pt;">' + successor + '<br>' + propAddr + '<br>' + city + '<br><br>Documentary Transfer Tax: $0<br>' + bhjaLine(f) + '</div>' +
+        '<div style="font-size:11pt;">Documentary Transfer Tax: $0<br>' + bhjaLine(f) + '</div>' +
       '</td>' +
     '</tr></table>' +
     '<hr class="rule"><div class="doc-title">AFFIDAVIT OF DEATH OF TRUSTEE</div><hr class="rule">' +

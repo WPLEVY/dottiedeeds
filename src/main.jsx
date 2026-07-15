@@ -1415,7 +1415,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 <Field label="How is the grantor signing?">
                   <select value={form.grantorCapacity} onChange={e=>upd("grantorCapacity",e.target.value)} style={ST.inp}>
                     <option value="">— Select capacity —</option>{(docType==="granttrust"
-                      ? ["Trustee","Successor Trustee","Attorney-in-Fact","Corporate Officer","LLC Manager / Member","General Partner","Personal Representative"]
+                      ? ["Individual","Trustee","Successor Trustee","Attorney-in-Fact","Corporate Officer","LLC Manager / Member","General Partner","Personal Representative"]
                       : CAPACITY
                     ).map(c=><option key={c} value={c}>{c}</option>)}
                   </select>
