@@ -6,7 +6,7 @@ import { supa } from './supabase.js';
 import { COUNTY_ASSESSORS, RT_EXEMPTIONS, NOTARY, VESTING, CAPACITY, CAPACITY_FIELDS, COUNTIES, DOC_TYPES, COUNTY_INFO, DEF_COUNTY, CHECKLISTS, DEFAULT_MASTER, PCOR_DOCS } from './data.js';
 import { FEE_EXEMPTIONS } from './docHelpers.js';
 import { getPCORReason } from './docHelpers.js';
-import { genGrant, genTrust, genDOT, genQuitclaim, genInterspousal, genADJT, genADTR, genSSCP, genTOD, genRecon, genEasement, genDOTMod, genTrusteeDeed, genSheriff, genPCOR, genCourtOrder, genCorrective } from './generators.js';
+import { genGrant, genTrust, genDOT, genQuitclaim, genInterspousal, genADJT, genADTR, genSSCP, genTOD, genRecon, genEasement, genDOTMod, genTrusteeDeed, genSheriff, genPCOR, genCourtOrder, genCorrective, genACT } from './generators.js';
 
         const { useState, useCallback, useEffect } = React;
 
@@ -131,6 +131,7 @@ const _genDocRaw = (docType, f, m) => {
     case "interspousal": return genInterspousal(f,m);
     case "adjt":         return genADJT(f,m);
     case "adtr":         return genADTR(f,m);
+    case "act":          return genACT(f,m);
     case "sscp":         return genSSCP(f,m);
     case "tod":          return genTOD(f,m);
     case "recon":        return genRecon(f,m);
@@ -282,6 +283,7 @@ function DottieDeeds() {
     grantor:"", grantorCapacity:"", apn:"", county:"", countyOfResidence:"",
     feeExemption:"", orderTitle:"", additionalApns:"", courtCaseNumber:"",
     correctiveOriginalType:"", correctiveOriginalDocNumber:"", correctiveOriginalRecordingDate:"", correctiveReason:"",
+    actReason:"", actPriorTrusteeName:"", actRestatementDate:"", actResignationDate:"", actAppointerName:"", actOriginalGrantees:"",
     propertyAddress:"", granteeAddress:"", grantorPronoun:"", rtCodeKey:"",
     trustorAddress:"", loanAmountWords:"", seniorLienRecordingDate:"",
     seniorLienType:"", spouseCurrentVesting:"", isAmended:false,
@@ -1594,6 +1596,31 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
               <Field label="Recording instrument number"><input value={form.originalDeedRecording} onChange={e=>upd("originalDeedRecording",e.target.value)} placeholder="e.g. DOC-2015-0049442-00" style={ST.inp}/></Field>
             </>}
 
+            {docType==="act"&&<>
+              <div style={ST.warn}>Records a change of trustee without a death. The triggering document (physician certification, restatement, or notice of resignation) is recited here, not attached. Do not record medical records.</div>
+              <Field label="Reason for the change" required><select value={form.actReason} onChange={e=>upd("actReason",e.target.value)} style={ST.inp}>
+                <option value="">Incapacity of the prior trustee (default)</option>
+                <option value="incapacity">Incapacity of the prior trustee</option>
+                <option value="restatement">Incapacity, and a restatement designates the successor</option>
+                <option value="resignation">Resignation and appointment of a new trustee</option>
+              </select></Field>
+              <Field label="Trust name" required><input value={form.trustName} onChange={e=>upd("trustName",e.target.value)} placeholder="e.g. The Hein Family Trust" style={ST.inp}/></Field>
+              <Field label="Trust date" required><input value={form.trustDate} onChange={e=>upd("trustDate",e.target.value)} placeholder="e.g. August 7, 1991" style={ST.inp}/></Field>
+              <Field label="New trustee(s)" required hint={"For co-trustees, join the names with \u201cand\u201d. Each gets a signature line."}><input value={form.successorTrusteeName} onChange={e=>upd("successorTrusteeName",e.target.value)} placeholder="e.g. Jamie Elliott and Melissa Jansen" style={ST.inp}/></Field>
+              <Field label="Prior trustee(s)" required hint="The trustee being replaced, exactly as named on the recorded deed"><input value={form.actPriorTrusteeName} onChange={e=>upd("actPriorTrusteeName",e.target.value)} placeholder="e.g. Walter A. Hein" style={ST.inp}/></Field>
+              {form.actReason==="restatement"&&<Field label="Restatement executed on" required><input value={form.actRestatementDate} onChange={e=>upd("actRestatementDate",e.target.value)} placeholder="e.g. June 1, 2026" style={ST.inp}/></Field>}
+              {form.actReason==="resignation"&&<>
+                <Field label="Notice of Resignation executed on" required><input value={form.actResignationDate} onChange={e=>upd("actResignationDate",e.target.value)} placeholder="e.g. May 11, 2026" style={ST.inp}/></Field>
+                <Field label="Who appointed the new trustee(s)?" hint="Usually the settlor, acting under the terms of the trust"><input value={form.actAppointerName} onChange={e=>upd("actAppointerName",e.target.value)} placeholder="e.g. Margaret Elizabeth Elliott" style={ST.inp}/></Field>
+              </>}
+              <div style={{...ST.sec,marginTop:18}}>The recorded deed that put the property in the trust</div>
+              <Field label="Deed type"><select value={form.originalDeedType} onChange={e=>upd("originalDeedType",e.target.value)} style={ST.inp}><option value="">Grant Deed (default)</option><option>Grant Deed</option><option>Quitclaim Deed</option><option>Trust Transfer Deed</option></select></Field>
+              <Field label="Deed date"><input value={form.originalDeedDate} onChange={e=>upd("originalDeedDate",e.target.value)} placeholder="e.g. August 7, 1991" style={ST.inp}/></Field>
+              <Field label="Executed by (grantors on that deed)"><input value={form.originalDeedGrantor} onChange={e=>upd("originalDeedGrantor",e.target.value)} placeholder="e.g. Walter A. Hein and Valerie W. Hein, husband and wife" style={ST.inp}/></Field>
+              <Field label="Granted to (as named on that deed)" hint="Leave blank to use the prior trustee(s) as trustee of the trust"><input value={form.actOriginalGrantees} onChange={e=>upd("actOriginalGrantees",e.target.value)} placeholder="e.g. Walter A. Hein and Valerie Hein, Trustees of the Hein Family Trust" style={ST.inp}/></Field>
+              <Field label="Recording document number"><input value={form.originalDeedRecording} onChange={e=>upd("originalDeedRecording",e.target.value)} placeholder="e.g. 91-1350" style={ST.inp}/></Field>
+              <Field label="Recording date"><input value={form.originalDeedRecordingDate} onChange={e=>upd("originalDeedRecordingDate",e.target.value)} placeholder="e.g. September 11, 1991" style={ST.inp}/></Field>
+            </>}
             {docType==="adtr"&&<>
               <div style={ST.warn}>A certified copy of the death certificate must accompany this affidavit.</div>
               <Field label="Trust name"><input value={form.trustName} onChange={e=>upd("trustName",e.target.value)} placeholder="e.g. The Smith Family Revocable Trust dated March 5, 2015" style={ST.inp}/></Field>

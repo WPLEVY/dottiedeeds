@@ -12,6 +12,7 @@ const deedGenerators = {
   genInterspousal: ['11911'],
   genADJT:         ['Joint Tenant'],
   genADTR:         ['Documentary Transfer Tax'],
+  genACT:          ['CHANGE OF TRUSTEE'],
   genSSCP:         ['Probate Code'],
   genTOD:          ['480.3'],
   genRecon:        ['reconvey'],

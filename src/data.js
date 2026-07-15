@@ -295,6 +295,7 @@ export const DOC_TYPES = [
   {id:"interspousal",icon:"💍", label:"Interspousal Quitclaim Deed",             desc:"Between spouses"},
   {id:"adjt",        icon:"📋", label:"Affidavit — Death of Joint Tenant",       desc:"Surviving joint tenant"},
   {id:"adtr",        icon:"📋", label:"Affidavit — Death of Trustee",            desc:"Successor trustee"},
+  {id:"act",         icon:"🔁", label:"Affidavit — Change of Trustee",           desc:"Incapacity, resignation, restatement"},
   {id:"sscp",        icon:"👫", label:"Affidavit — Surviving Spouse (CP)",       desc:"Probate Code §13540"},
   {id:"tod",         icon:"🔮", label:"TOD / Beneficiary Deed",                  desc:"Transfer on death — Prob. §5642"},
   {id:"recon",       icon:"🔓", label:"Full Reconveyance",                       desc:"Release lien after payoff"},

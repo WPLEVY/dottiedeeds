@@ -256,6 +256,90 @@ export const genADTR = (f,m) => {
     juratBoxHTML(successor, yr) ;
 };
 
+// Affidavit - Change of Trustee. The non-death sibling of genADTR: records a change of
+// trustee on incapacity, on a restatement designating a successor, or on resignation.
+// Modeled on recorded CunninghamLegal instruments (Ventura 2023000070864 and others).
+// Note: the triggering document (physician certification, restatement, notice of
+// resignation) is recited, not attached. Medical records do not belong in the public record.
+export const genACT = (f,m) => {
+  const yr = new Date().getFullYear();
+  const firmName = (m&&m.firmName)||"[FIRM NAME]";
+  const firmAddr = (m&&m.firmAddress)||"[FIRM ADDRESS]";
+  const firmCity = (m&&m.firmCity)?(m.firmCity+", "+(m.firmState||"CA")+" "+(m.firmZip||"")):"[CITY, STATE ZIP]";
+  const trust = (f.trustName||"[TRUST NAME]") + (f.trustDate ? " dated " + f.trustDate : "");
+  const affiants = f.successorTrusteeName||"[NEW TRUSTEE NAME]";
+  const names = String(affiants).split(/\s+and\s+/i).map(x=>x.trim()).filter(Boolean);
+  const multi = names.length > 1;
+  const role = multi ? "Co-Trustees" : "Trustee";
+  const Ilow = multi ? "we" : "I";
+  const areIs = multi ? "are" : "am";
+  const prior = f.actPriorTrusteeName||"[PRIOR TRUSTEE NAME]";
+  const priorNames = String(prior).split(/\s+and\s+/i).map(x=>x.trim()).filter(Boolean);
+  const priorMulti = priorNames.length > 1;
+  const propAddr = f.propertyAddress||"[PROPERTY ADDRESS]";
+  const city = f.cityOfProperty?f.cityOfProperty+", CA":"";
+  const legal = f.legalDescription||'SEE EXHIBIT "A" ATTACHED HERETO AND MADE A PART HEREOF';
+  const startsThe = /^the\s/i.test(trust);
+  const ofTrust  = startsThe ? trust : "the " + trust;                                  // "of The Hein..." / "of the Hein..."
+  const TheTrust = startsThe ? trust.charAt(0).toUpperCase()+trust.slice(1) : "The " + trust; // sentence start
+  const reason = f.actReason||"incapacity";
+
+  let operative;
+  if (reason === "resignation") {
+    operative = (f.actAppointerName ? f.actAppointerName + ', pursuant to the terms of the Trust, appointed ' + affiants + ' to serve as ' + role + ' of ' + ofTrust + '. ' : '') +
+      'As a result of the Notice of Resignation and Appointment of Trustee executed on ' + (f.actResignationDate||"[RESIGNATION DATE]") +
+      ', ' + Ilow + ', ' + affiants + ', ' + areIs + ' the current acting ' + role + ' of ' + ofTrust + ', and by this instrument, ' + Ilow + ' accept that office.';
+  } else if (reason === "restatement") {
+    operative = 'As a result of the incapacity of ' + prior + ' and pursuant to the Restatement of ' + ofTrust +
+      ', executed on ' + (f.actRestatementDate||"[RESTATEMENT DATE]") + ', which designates ' + affiants +
+      ' as the current acting ' + role + ' of ' + ofTrust + ', and by this instrument, ' + Ilow + ' accept that office.';
+  } else {
+    operative = 'As a result of the incapacity of ' + prior + ', ' + Ilow + ', ' + affiants + ', ' + areIs +
+      ' the current acting ' + role + ' of ' + ofTrust + ', and by this instrument, ' + Ilow + ' accept that office.';
+  }
+
+  const sigs = names.map(n =>
+    '<div class="sig-block"><div class="sig-line">________________________________________</div>' +
+    '<div class="sig-name">' + n + ', Trustee of<br>' + TheTrust + '</div></div>').join('');
+
+  return '<div class="rec-hdr">Recording Requested By:</div>' +
+    '<div class="rec-hdr">' + firmName + '<br>' + firmAddr + '<br>' + firmCity + '</div>' +
+    '<div class="rec-hdr" style="margin-top:8pt">And When Recorded Mail To:</div>' +
+    '<div class="rec-hdr">' + affiants + ', ' + role + '<br>' + propAddr + (city?'<br>'+city:'') + '</div>' +
+    '<hr class="rec-rule"><div class="rec-space">Space above this line for Recorder\'s use only</div><hr class="rec-rule">' +
+    '<div class="doc-title">AFFIDAVIT \u2013 CHANGE OF TRUSTEE</div>' +
+    '<table style="width:100%;border-collapse:collapse;margin:12pt 0;"><tr>' +
+      '<td style="width:50%;vertical-align:top;padding-right:12pt;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">Mail Tax Statements To:</div>' +
+        '<div style="font-size:11pt;">' + affiants + ', ' + role + '<br>' + propAddr + (city?'<br>'+city:'') + '</div>' +
+      '</td>' +
+      '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
+        '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Declare(s):</div>' +
+        '<div style="font-size:11pt;">Documentary Transfer Tax: $-0-<br>' + bhjaLine(f) + '</div>' +
+      '</td>' +
+    '</tr></table>' +
+    '<hr class="rule">' +
+    venueHTML(f.county, true) +
+    '<div class="body-text">' + affiants + ', ' + role + ' of ' + ofTrust + ', of legal age, being first duly sworn, ' + (multi?'depose':'deposes') + ' and ' + (multi?'say':'says') + ':</div>' +
+    '<div class="body-text">That ' + prior + ' ' + (priorMulti?'are the same persons as':'is the same person as') + ' ' + prior +
+      ' named as ' + (priorMulti?'the parties':'one of the parties') + ', to wit, ' + (priorMulti?'Trustees':'Trustee') + ' of ' + ofTrust +
+      ', in that certain ' + (f.originalDeedType||"Grant Deed") + ' dated ' + (f.originalDeedDate||"[DEED DATE]") +
+      ', executed by ' + (f.originalDeedGrantor||"[GRANTOR]") + ', to ' + (f.actOriginalGrantees||(prior + ', ' + (priorMulti?'Trustees':'Trustee') + ' of ' + ofTrust)) +
+      ', recorded as Document Number ' + (f.originalDeedRecording||"[DOCUMENT NUMBER]") + ' on ' + (f.originalDeedRecordingDate||"[RECORDING DATE]") +
+      ', of Official Records in the Office of the ' + (f.county||"[COUNTY]") + ' County Recorder, covering the real property situated in the County of ' +
+      (f.county||"[COUNTY]") + ', State of California, more fully described as follows:</div>' +
+    '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + legal + '</div>' +
+    '<div class="body-text indent">Assessor\'s Parcel Number: ' + (f.apn||"_______________") + '</div>' +
+    '<div class="body-text indent">Commonly known as:<br>' + propAddr + (city?'<br>'+city:'') + '</div>' +
+    '<div class="body-text">' + operative + ' ' + TheTrust + ' has not been revoked and remains in full force and effect.</div>' +
+    '<div class="body-text">' + (multi?'We':'I') + ' declare under penalty of perjury, under the laws of the State of California that the foregoing statements are true and correct.</div>' +
+    '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
+    sigs +
+    juratBoxHTML(affiants, yr) +
+    '<div class="footer-note" style="margin-top:18pt;">Affidavit-Change of Trustee for property commonly known as:<br>' + propAddr + (city?'<br>'+city:'') +
+      '<br>Assessor\'s Parcel Number: ' + (f.apn||"_______________") + '</div>';
+};
+
 export const genSSCP = (f,m) => {
   const yr = new Date().getFullYear();
   const sb2Line = f.sscp_isPrimaryResidence
