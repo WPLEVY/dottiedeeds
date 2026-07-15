@@ -4,8 +4,9 @@ import * as PDFLib from 'pdf-lib';
 import { MODEL, PROXY, SUPA_URL, SUPA_KEY, STRIPE_WORKER, ENFORCE_SUBSCRIPTION, PLAN_META, PLAN_FEATURES, C, ST } from './config.js';
 import { supa } from './supabase.js';
 import { COUNTY_ASSESSORS, RT_EXEMPTIONS, NOTARY, VESTING, CAPACITY, CAPACITY_FIELDS, COUNTIES, DOC_TYPES, COUNTY_INFO, DEF_COUNTY, CHECKLISTS, DEFAULT_MASTER, PCOR_DOCS } from './data.js';
+import { FEE_EXEMPTIONS } from './docHelpers.js';
 import { getPCORReason } from './docHelpers.js';
-import { genGrant, genTrust, genDOT, genQuitclaim, genInterspousal, genADJT, genADTR, genSSCP, genTOD, genRecon, genEasement, genDOTMod, genTrusteeDeed, genSheriff, genPCOR } from './generators.js';
+import { genGrant, genTrust, genDOT, genQuitclaim, genInterspousal, genADJT, genADTR, genSSCP, genTOD, genRecon, genEasement, genDOTMod, genTrusteeDeed, genSheriff, genPCOR, genCourtOrder, genCorrective } from './generators.js';
 
         const { useState, useCallback, useEffect } = React;
 
@@ -137,6 +138,8 @@ const _genDocRaw = (docType, f, m) => {
     case "dotmod":       return genDOTMod(f,m);
     case "trustees":     return genTrusteeDeed(f,m);
     case "sheriff":      return genSheriff(f,m);
+    case "courtorder":   return genCourtOrder(f,m);
+    case "corrective":   return genCorrective(f,m);
     default:             return "";
   }
 };
@@ -271,6 +274,8 @@ function DottieDeeds() {
 
   const blank = (m=DEFAULT_MASTER) => ({
     grantor:"", grantorCapacity:"", apn:"", county:"", countyOfResidence:"",
+    feeExemption:"", orderTitle:"", additionalApns:"", courtCaseNumber:"",
+    correctiveOriginalType:"", correctiveOriginalDocNumber:"", correctiveOriginalRecordingDate:"", correctiveReason:"",
     propertyAddress:"", granteeAddress:"", grantorPronoun:"", rtCodeKey:"",
     trustorAddress:"", loanAmountWords:"", seniorLienRecordingDate:"",
     seniorLienType:"", spouseCurrentVesting:"", isAmended:false,
@@ -1687,6 +1692,26 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
               <div style={{background:"#fff8f0",border:`1px solid #e8c060`,borderLeft:`3px solid ${C.gold}`,padding:"12px 16px",fontSize:12,color:"#5a4010",lineHeight:1.8,marginBottom:18}}><strong>Two witnesses required.</strong> Both must be present at the same time when the owner signs. Witnesses do not need their signatures notarized.</div>
             </>}
 
+            {docType==="courtorder"&&<>
+              <div style={ST.warn}>This produces the recording cover page only. Record it on top of a certified copy of the order. Dottie does not draft the order itself.</div>
+              <Field label="Document title of the court order" required><textarea value={form.orderTitle} onChange={e=>upd("orderTitle",e.target.value)} placeholder="e.g. ORDER: 1) CONFIRMING TRUST ASSETS; AND, 2) MODIFICATION OF TRUST DUE TO CHANGED CIRCUMSTANCES AND WITH CONSENT OF BENEFICIARIES" style={{...ST.inp,minHeight:70,resize:"vertical"}}/></Field>
+              <Field label="Court case number"><input value={form.courtCaseNumber} onChange={e=>upd("courtCaseNumber",e.target.value)} placeholder="e.g. 23STPB11217" style={ST.inp}/></Field>
+              <Field label="Additional APNs (one per line, or comma separated)"><textarea value={form.additionalApns} onChange={e=>upd("additionalApns",e.target.value)} placeholder={"5787-001-039\n5356-016-049"} style={{...ST.inp,minHeight:60,resize:"vertical"}}/></Field>
+            </>}
+            {docType==="corrective"&&<>
+              <div style={ST.warn}>A corrective deed re-records a prior instrument to fix an error in it. State the correction precisely.</div>
+              <Field label="Type of deed being corrected"><select value={form.correctiveOriginalType} onChange={e=>upd("correctiveOriginalType",e.target.value)} style={ST.inp}><option value="">Grant Deed (default)</option><option value="Grant Deed">Grant Deed</option><option value="Quitclaim Deed">Quitclaim Deed</option><option value="Interspousal Transfer Deed">Interspousal Transfer Deed</option><option value="Trust Transfer Deed">Trust Transfer Deed</option></select></Field>
+              <Field label="Original instrument number" required><input value={form.correctiveOriginalDocNumber} onChange={e=>upd("correctiveOriginalDocNumber",e.target.value)} placeholder="e.g. 20240239594" style={ST.inp}/></Field>
+              <Field label="Original recording date" required><input value={form.correctiveOriginalRecordingDate} onChange={e=>upd("correctiveOriginalRecordingDate",e.target.value)} placeholder="e.g. April 11, 2024" style={ST.inp}/></Field>
+              <Field label="What is being corrected, and why" required><textarea value={form.correctiveReason} onChange={e=>upd("correctiveReason",e.target.value)} placeholder="e.g. The legal description omitted Parcel 2 of the condominium plan." style={{...ST.inp,minHeight:70,resize:"vertical"}}/></Field>
+              <Field label="Grantor"><input value={form.grantor} onChange={e=>upd("grantor",e.target.value)} placeholder="e.g. Jane Smith, a married woman" style={ST.inp}/></Field>
+              <Field label="Grantee"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. Jane Smith, Trustee of the Smith Family Trust" style={ST.inp}/></Field>
+            </>}
+            <Field label="Recording fee exemption (SB 2 / AB 1466)"><select value={form.feeExemption} onChange={e=>upd("feeExemption",e.target.value)} style={ST.inp}>
+              <option value="">{docType==="courtorder"?"Executed or recorded by the state or a court (default)":"Residential dwelling to an owner-occupier (default)"}</option>
+              {FEE_EXEMPTIONS.map(x=><option key={x.id} value={x.id}>{x.text.replace(/^Exempt from (the )?fee per /,"").slice(0,90)}</option>)}
+              <option value="none">No exemption. The $75 fee applies.</option>
+            </select></Field>
             {docType==="recon"&&<>
               <Field label="Reconveyance type"><div style={{display:"flex",gap:10}}>{[["standard","Standard Full Reconveyance"],["sub_and_recon","Substitution of Trustee + Reconveyance"]].map(([val,lbl])=>(<div key={val} onClick={()=>upd("reconType",val)} style={{flex:1,padding:"11px 14px",border:`2px solid ${form.reconType===val?C.gold:C.rule}`,borderRadius:2,cursor:"pointer",background:form.reconType===val?C.cream:"#fff",fontSize:12,color:form.reconType===val?C.ink:C.muted,transition:"all .15s"}}>{lbl}</div>))}</div></Field>
               

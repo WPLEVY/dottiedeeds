@@ -289,6 +289,8 @@ export const COUNTIES = ["Alameda","Alpine","Amador","Butte","Calaveras","Colusa
 
 export const DOC_TYPES = [
   {id:"grant",       icon:"📄", label:"Grant Deed",                             desc:"Individual, LLC, sale, gift"},
+  {id:"courtorder",  icon:"⚖️",  label:"Court Order (recording cover)",          desc:"Cover page for a certified court order"},
+  {id:"corrective",  icon:"📝", label:"Corrective Deed",                        desc:"Fix an error in a recorded deed"},
   {id:"granttrust",  icon:"🏛",  label:"Grant Deed — Trust Transfer",            desc:"Into or out of a living trust"},
   {id:"dot",         icon:"🔐", label:"Deed of Trust",                           desc:"1st or 2nd lien position"},
   {id:"quitclaim",   icon:"✍️",  label:"Quitclaim Deed",                          desc:"Release of interest, no warranties"},
@@ -322,7 +324,7 @@ export const DEF_COUNTY = {phone:"See county recorder website",url:"",eRecord:fa
 
 export const CHECKLISTS = {
   grant:        {steps:["Confirm grantor name matches prior deed exactly","Verify APN on county assessor website","Check legal description character by character against prior deed","Grantor signs in front of notary — no pre-signing","Notary completes all blanks — seal must be fully legible","Complete PCOR — missing PCOR adds $20 penalty"],rejections:["PCOR missing","Notary acknowledgment incomplete","Legal description mismatch","Grantor name discrepancy","Top margin under 2.5 inches","Notary seal illegible"]},
-  granttrust:   {steps:["Confirm trustee has signing authority — review trust instrument","Verify trust name and date match trust instrument exactly","Trustee signs in trustee capacity","Notary uses trustee acknowledgment block","PCOR — check Item L1 (revocable) or L2 (irrevocable)","File BOE-19-B or BOE-19-D if Prop 19 exclusion claimed"],rejections:["Trust name doesn&#39;t match trust instrument","Trustee capacity missing","Individual acknowledgment used","PCOR L1 or L2 not checked"]},
+  granttrust:   {steps:["Confirm trustee has signing authority — review trust instrument","Verify trust name and date match trust instrument exactly","Trustee signs in trustee capacity","Notary uses trustee acknowledgment block","PCOR — check Item L1 (revocable) or L2 (irrevocable)","File BOE-19-B or BOE-19-D if Prop 19 exclusion claimed"],rejections:["Trust name doesn’t match trust instrument","Trustee capacity missing","Individual acknowledgment used","PCOR L1 or L2 not checked"]},
   dot:          {steps:["Trustor(s) sign — not the lender","Both spouses sign if community property","Do NOT include a PCOR","For second DOT — verify senior lien recording reference","Attach Exhibit A before notarization"],rejections:["Not all vested parties signed","PCOR incorrectly included","Exhibit A not attached before notarization"]},
   quitclaim:    {steps:["Confirm purpose with supervising attorney","Grantor signs before notary","PCOR required","Confirm DTT exemption code"],rejections:["PCOR missing","Wrong DTT exemption code","Notary acknowledgment incomplete"]},
   interspousal: {steps:["Confirm parties are legally married","Only transferring spouse signs","PCOR strongly recommended — county charges $25 additional fee and requires supplemental information if not submitted. Check Item A and enter date of death","For refinance — confirm lender timing"],rejections:["PCOR Item A not checked","Both spouses signed"]},

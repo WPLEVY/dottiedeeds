@@ -76,7 +76,7 @@ export const recHdr = (m) => {
     '<div style="font-weight:bold;font-size:11pt;margin-bottom:4pt;">AND WHEN RECORDED MAIL TO:</div>' +
     '<div style="font-size:11pt;margin-bottom:14pt;">' + fn + (fa?'<br>'+fa:'') + (fc?'<br>'+fc:'') + '</div>' +
     '<hr style="border:none;border-top:1px solid #000;margin:6pt 0 2pt 0;">' +
-    '<div style="text-align:center;font-size:9pt;color:#444;margin-bottom:2pt;">Space above this line for Recorder&#39;s use only</div>' +
+    '<div style="text-align:center;font-size:9pt;color:#444;margin-bottom:2pt;">Space above this line for Recorder’s use only</div>' +
     '<hr style="border:none;border-top:1px solid #000;margin:0 0 14pt 0;">';
 };
 
@@ -133,4 +133,34 @@ export const getPCORReason = (docType, f) => {
   if (docType==="easement") return {box:"other", desc:"Conveyance of easement only"};
   if (f.exemptFromTax) return {box:"J", desc:"Transfer not subject to documentary transfer tax — "+( f.exemptReason||"see deed")};
   return {box:"other", desc:"Other transfer — see deed"};
+};
+
+// --- Recording fee exemptions (GC 27388.1 / SB 2 and GC 27388.2 / AB 1466).
+// Reasons and citations taken from a recorded, county-accepted filing.
+export const FEE_EXEMPTIONS = [
+  {id:"dtt",   cite:"GC 27388.1(a)(2); GC 27388.2(b)",       text:"Exempt from fee per GC 27388.1(a)(2) and GC 27388.2(b); recorded concurrently \u201cin connection with\u201d a transfer subject to the imposition of documentary transfer tax (DTT)."},
+  {id:"owner", cite:"GC 27388.1(a)(2); GC 27388.2(b)",       text:"Exempt from fee per GC 27388.1(a)(2) and GC 27388.2(b); recorded concurrently \u201cin connection with\u201d a transfer of real property that is a residential dwelling to an owner-occupier."},
+  {id:"cap",   cite:"GC 27388.1(a)(1)",                      text:"Exempt from fee per GC 27388.1(a)(1); fee cap of $225.00 reached."},
+  {id:"notrp", cite:"GC 27388.1(b)(2)(D); GC 27388.2(a)",    text:"Exempt from the fee per GC 27388.1(b)(2)(D) and GC 27388.2(a); not related to real property."},
+  {id:"gov",   cite:"GC 27388.1(a)(2); GC 27388.2(b)",       text:"Exempt from the fee per GC 27388.1(a)(2) and GC 27388.2(b); this instrument is executed or recorded by a state, or county, or municipality, or other political subdivision of the state."}
+];
+
+// One-line fee declaration used inside the deed header blocks.
+export const bhjaLine = (f) => {
+  const sel = (f && f.feeExemption) || "owner";
+  if (sel === "none") return "Building Homes and Jobs Act Fee: $75.00<br>GC 27388.1 (no exemption claimed; $225.00 cap applies)";
+  const e = FEE_EXEMPTIONS.find(x => x.id === sel);
+  return "Building Homes and Jobs Act Fee: $-0-<br>" + (e ? e.cite : "GC 27388.1(a)(2); GC 27388.2(b)");
+};
+
+// Full AB 1466 / SB 2 declaration block with the exemption checked, for recording cover pages.
+export const feeExemptionHTML = (selected) => {
+  const box = (on) => on
+    ? '<span style="display:inline-block;width:11px;height:11px;border:1px solid #000;text-align:center;line-height:11px;font-size:8pt;margin-right:6px;vertical-align:top;">X</span>'
+    : '<span style="display:inline-block;width:11px;height:11px;border:1px solid #000;margin-right:6px;vertical-align:top;"></span>';
+  return '<div class="body-text" style="font-size:9.5pt;line-height:1.5;">Pursuant to Assembly Bill 1466 \u2013 Restrictive Covenant (GC Code Section 27388.2), effective January 1, 2022, a fee of two dollars ($2) for recording the first page of every instrument, paper, or notice required or permitted by law to be recorded per each single transaction per parcel of real property, except those expressly exempted from payment of recording fees, as authorized by each county\u2019s board of supervisors and in accordance with applicable constitutional requirements.</div>' +
+    '<div class="body-text" style="font-size:9.5pt;line-height:1.5;">Pursuant to Senate Bill 2 \u2013 Building Homes and Jobs Act (GC Code Section 27388.1), effective January 1, 2018, a fee of seventy-five dollars ($75.00) shall be paid at the time of recording of every real estate instrument, paper, or notice required or permitted by law to be recorded, except those expressly exempted from payment of recording fees, per each single transaction per parcel of real property. The fee imposed by this section shall not exceed two hundred twenty-five dollars ($225.00).</div>' +
+    '<div class="body-text" style="font-size:9.5pt;margin:10pt 0 4pt;">Reason for Exemption:</div>' +
+    FEE_EXEMPTIONS.map(e => '<div style="font-size:9.5pt;line-height:1.45;margin:5pt 0;">' + box(selected === e.id) + '<span>' + e.text + '</span></div>').join("") +
+    (selected === "none" ? '<div class="body-text" style="font-size:9.5pt;margin-top:8pt;">No exemption claimed. The Building Homes and Jobs Act fee of $75.00 applies, subject to the $225.00 cap.</div>' : "");
 };
