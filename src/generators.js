@@ -170,10 +170,9 @@ export const genInterspousal = (f,m) => {
   // R&T 11927 reaches only transfers dividing community property under a dissolution
   // judgment or a written agreement made in contemplation of one, and 11927(b) requires
   // a recital signed by a spouse. Other interspousal transfers rest on 11911.
-  const interspousalDTT = f.exemptReason ? f.exemptReason
-    : (f.interspousalReason === "I3"
-        ? 'This conveyance is in dissolution of marriage by one spouse to the other, R&amp;T \u00a711927. The undersigned spouse declares that this instrument is entitled to that exemption (R&amp;T \u00a711927(b)).'
-        : 'This conveyance is solely between spouses and the grantor received no consideration, R&amp;T \u00a711911.');
+  const interspousalDTT = f.interspousalReason === "I3"
+    ? 'This conveyance is in dissolution of marriage by one spouse to the other, R&amp;T \u00a711927. The undersigned spouse declares that this instrument is entitled to that exemption (R&amp;T \u00a711927(b)).'
+    : 'This conveyance is solely between spouses and the grantor received no consideration, R&amp;T \u00a711911.';
   const yr = new Date().getFullYear();
   const isTransmutation = ["I4","I5"].includes(f.interspousalReason);
   const reasons = {I1:"Adding spouse to title",I2:"Removing spouse from title (refinance)",I3:"Divorce / marital settlement",I4:"Transmutation — separate to community property",I5:"Transmutation — community to separate property",I6:"Estate planning purposes"};
