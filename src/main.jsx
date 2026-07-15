@@ -217,6 +217,7 @@ function DottieDeeds() {
   const [pendingPlan, setPendingPlan] = useState(null);
   const [authFirm, setAuthFirm] = useState("");
   const [authRole, setAuthRole] = useState("");
+  const [authRoleOther, setAuthRoleOther] = useState("");
   const [authMode, setAuthMode] = useState(() => {
     try {
       const q = new URL(window.location.href).searchParams;
@@ -937,15 +938,16 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 <select value={authRole} onChange={e=>setAuthRole(e.target.value)} style={ST.inp}>
                   <option value="">— Select role —</option><option>Attorney</option><option>Paralegal</option><option>Legal Assistant</option><option>Office Manager</option><option>Other</option>
                 </select>
+                {authRole==="Other"&&<input value={authRoleOther} onChange={e=>setAuthRoleOther(e.target.value)} placeholder="Tell us your role" style={{...ST.inp,marginTop:8}}/>}
               </div>
             </>}
             <div style={{marginBottom:16}}>
               <label style={ST.lbl}>Email address <span style={{color:C.gold}}>*</span></label>
-              <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="e.g. jane@smithjones.com" type="email" style={ST.inp}/>
+              <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="e.g. jane@smithjones.com" type="email" autoComplete={authMode==="signup"?"off":"username"} style={ST.inp}/>
             </div>
             {authMode!=="forgot"&&<div style={{marginBottom:20}}>
               <label style={ST.lbl}>Password <span style={{color:C.gold}}>*</span></label>
-              <input value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder={authMode==="signup"?"At least 8 characters":""} type="password" style={ST.inp}/>
+              <input value={authPassword} onChange={e=>setAuthPassword(e.target.value)} autoComplete={authMode==="signup"?"new-password":"current-password"} placeholder={authMode==="signup"?"At least 8 characters":""} type="password" style={ST.inp}/>
             </div>}
             {authNotice&&<div style={{background:"#eaf5ea",border:"1px solid #bcd9bc",color:"#2e6b2e",padding:"12px 14px",borderRadius:4,marginBottom:16,fontSize:13,lineHeight:1.6}}>{authNotice}</div>}
             {authError&&<div style={{...ST.err,marginBottom:16}}>{authError}</div>}
@@ -987,7 +989,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                   } else if (authMode==="signup") {
                     const {data,error} = await supa.auth.signUp({
                       email:authEmail, password:authPassword,
-                      options:{data:{name:authName,firm:authFirm,role:authRole,invite:invite||undefined}}
+                      options:{data:{name:authName,firm:authFirm,role:(authRole==="Other"&&authRoleOther.trim())?authRoleOther.trim():authRole,invite:invite||undefined}}
                     });
                     if (error) throw error;
                     try{ const _t=data?.session?.access_token; if(_t){ await fetch(STRIPE_WORKER+"/notify-signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:_t,name:authName})}); } }catch(e){}
@@ -1001,7 +1003,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                           name: authName,
                           firm: authFirm,
                           email: authEmail,
-                          role: authRole,
+                          role: (authRole==="Other"&&authRoleOther.trim())?authRoleOther.trim():authRole,
                           message: "New beta user signed up. Log in to approve: https://dottiedeeds.com/app.html",
                           source: "Dottie Deeds Beta Signup"
                         })
