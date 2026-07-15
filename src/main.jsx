@@ -1814,7 +1814,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
 
                 <div style={ST.sec}>Principal Residence</div>
                 <div style={{...ST.card,marginBottom:16}}>
-                  <div style={{fontSize:13,marginBottom:12}}>Is this property intended as the buyer&#39;s principal residence?</div>
+                  <div style={{fontSize:13,marginBottom:12}}>Is this property intended as the buyer’s principal residence?</div>
                   <div style={{display:"flex",gap:24,marginBottom:12}}>
                     {["YES","NO"].map(v=>(
                       <label key={v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:pcorForm.isPrimaryResidence===v?"bold":"normal"}}>
@@ -1860,11 +1860,11 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                   {key:"p1f", label:"F. This transaction is to replace a principal residence by a person who is severely disabled."},
                   {key:"p1g", label:"G. This transaction is to replace a principal residence substantially damaged or destroyed by a wildfire or natural disaster."},
                   {key:"p1h", label:"H. This transaction is only a correction of the name(s) of the person(s) holding title to the property."},
-                  {key:"p1i", label:"I. The recorded document creates, terminates, or reconveys a lender&#39;s interest in the property."},
+                  {key:"p1i", label:"I. The recorded document creates, terminates, or reconveys a lender’s interest in the property."},
                   {key:"p1j", label:"J. This transaction is recorded only as a requirement for financing purposes or to create, terminate, or reconvey a security interest."},
                   {key:"p1k", label:"K. The recorded document substitutes a trustee of a trust, mortgage, or other similar document."},
-                  {key:"p1l1", label:"L1. Transfer to/from a revocable trust that may be revoked by the transferor for the benefit of the transferor and/or transferor’s spouse."},
-                  {key:"p1l2", label:"L2. Transfer to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor&#39;s spouse."},
+                  {key:"p1l1", label:"L1. Transfer to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor, and/or the transferor’s spouse or registered domestic partner."},
+                  {key:"p1l2", label:"L2. Transfer to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor’s/trustor’s spouse or registered domestic partner."},
                   {key:"p1m", label:"M. This property is subject to a lease with a remaining lease term of 35 years or more including written options."},
                   {key:"p1n", label:"N. Transfer between parties in which proportional interests of the transferor(s) and transferee(s) in each and every parcel remain exactly the same after the transfer."},
                   {key:"p1o", label:"O. This is a transfer subject to subsidized low-income housing requirements with governmentally imposed restrictions."},
@@ -1897,7 +1897,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                             <option value="grandparent">Between grandparent(s) and grandchild(ren)</option>
                           </select>
                         </Field>
-                        <div style={{display:"flex",gap:24,margin:"8px 0",fontSize:12,alignItems:"center"}}><span>Transferor&#39;s principal residence?</span>{["YES","NO"].map(v=>(<label key={v} style={{display:"flex",gap:4,cursor:"pointer",fontWeight:pcorForm.p1cPrimary===v?"bold":"normal"}}><input type="checkbox" checked={pcorForm.p1cPrimary===v} onChange={()=>updPcor("p1cPrimary",v)}/>{v}</label>))}</div>
+                        <div style={{display:"flex",gap:24,margin:"8px 0",fontSize:12,alignItems:"center"}}><span>Transferor’s principal residence?</span>{["YES","NO"].map(v=>(<label key={v} style={{display:"flex",gap:4,cursor:"pointer",fontWeight:pcorForm.p1cPrimary===v?"bold":"normal"}}><input type="checkbox" checked={pcorForm.p1cPrimary===v} onChange={()=>updPcor("p1cPrimary",v)}/>{v}</label>))}</div>
                         <div style={{display:"flex",gap:24,fontSize:12,alignItems:"center"}}><span>Family farm?</span>{["YES","NO"].map(v=>(<label key={v} style={{display:"flex",gap:4,cursor:"pointer",fontWeight:pcorForm.p1cFarm===v?"bold":"normal"}}><input type="checkbox" checked={pcorForm.p1cFarm===v} onChange={()=>updPcor("p1cFarm",v)}/>{v}</label>))}</div>
                       </div>
                     )}
