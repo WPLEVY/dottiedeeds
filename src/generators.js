@@ -39,7 +39,7 @@ export const genTrust = (f,m) => {
   const granteeLine = isInto
     ? (f.trusteeName||"[TRUSTEE NAME(S)]") + ", as Trustee of the " + (f.trustName||"[TRUST NAME]") + (f.trustDate?", dated "+f.trustDate:"") + (f.isAmended?", as amended":"")
     : (f.beneficiaryName||"[BENEFICIARY NAME]");
-  const prop19Labels = {P1:"Parent to Child — Primary Residence (R&T §63.1)",P2:"Child to Parent (R&T §63.1)",P3:"Grandparent to Grandchild — Both Parents Deceased (R&T §63.1)"};
+  const prop19Labels = {P1:"Parent to Child — Family Home, Primary Residence (R&T §63.2, Prop 19; file BOE-19-P)",P2:"Child to Parent — Family Home, Primary Residence (R&T §63.2, Prop 19; file BOE-19-P)",P3:"Grandparent to Grandchild — Both Parents Deceased (R&T §63.2, Prop 19; file BOE-19-G)"};
   const trusteeForTax = isInto?(f.trusteeName||"[TRUSTEE]"):(f.beneficiaryName||"[GRANTEE]");
   return recHdr(m) +
     '<div style="text-align:center;font-size:14pt;font-weight:bold;margin:18pt 0 4pt;">GRANT DEED</div>' +
@@ -90,7 +90,7 @@ export const genDOT = (f,m) => {
 
   const body = isSecond
     ? '<div class="body-text"><strong>APN:</strong> ' + (f.apn||"_______________") + ' &nbsp;&nbsp;&nbsp; <strong>County:</strong> ' + (f.county||"_______________") + (f.cityOfProperty?' &nbsp;&nbsp;&nbsp; <strong>City:</strong> '+f.cityOfProperty:'') + '</div>' +
-      '<div class="body-text">THIS SECOND DEED OF TRUST (\"Deed of Trust\"), made as of ______ day of _________________, ' + yr + ', between ' + trustorDisplay + ', a California limited liability company (\"Trustor\"), whose mailing address is ' + (f.trustorAddress||"[TRUSTOR ADDRESS]") + ', and ' + (f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]") + ', herein called \"Trustee,\" and ' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + ', herein called \"Beneficiary\", whose mailing address is ' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '.</div>' +
+      '<div class="body-text">THIS SECOND DEED OF TRUST (\"Deed of Trust\"), made as of ______ day of _________________, ' + yr + ', between ' + trustorDisplay + (f.trustorVesting ? ', ' + f.trustorVesting : '') + ' (\"Trustor\"), whose mailing address is ' + (f.trustorAddress||"[TRUSTOR ADDRESS]") + ', and ' + (f.dotTrustee||(m&&m.defaultTrustee)||"[TRUSTEE]") + ', herein called \"Trustee,\" and ' + (f.beneficiaryLenderName||"[BENEFICIARY NAME]") + ', herein called \"Beneficiary\", whose mailing address is ' + (f.beneficiaryLenderAddress||"[BENEFICIARY ADDRESS]") + '.</div>' +
       '<div class="body-text">WITNESSETH: That Trustor irrevocably grants, transfers and conveys to Trustee, in trust, with power of sale, for the benefit of Beneficiary, the land situated in the County of ' + (f.county||"[COUNTY]") + ', City of ' + (f.cityOfProperty||"[CITY]") + ', State of California,</div>' +
       '<div class="body-text">and is described as follows:</div>' +
       '<div class="body-text indent" style="font-family:Courier New,monospace;font-size:10pt;">' + legalDesc + '</div>' +
@@ -178,7 +178,7 @@ export const genInterspousal = (f,m) => {
       '</td>' +
       '<td style="width:50%;vertical-align:top;padding-left:12pt;border-left:1px solid #ccc;">' +
         '<div style="font-size:9pt;font-weight:bold;text-transform:uppercase;margin-bottom:3pt;">The Undersigned Grantor(s) Declare(s):</div>' +
-        '<div style="font-size:11pt;">Documentary Transfer Tax: $0<br>This conveyance is solely between spouses and is exempt from Documentary Transfer Tax pursuant to R&amp;T §§11930 and 11911. This is an Interspousal Transfer and not a change in ownership under R&amp;T §63. Not Pursuant to Sale.<br>Building Homes and Jobs Act Fee: $75.00 &nbsp; AB1466 Fee: $-0-<br>GC §27388.2(b)</div>' +
+        '<div style="font-size:11pt;">Documentary Transfer Tax: $0<br>This conveyance is solely between spouses and is exempt from Documentary Transfer Tax pursuant to R&amp;T §§11930 and 11911. This is an Interspousal Transfer and not a change in ownership under R&amp;T §63. Not Pursuant to Sale.<br>' + bhjaLine(f) + '</div>' +
       '</td>' +
     '</tr></table>' +
     '<hr class="rule">' +
