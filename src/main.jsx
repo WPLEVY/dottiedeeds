@@ -514,7 +514,7 @@ function DottieDeeds() {
     catch(e) { setMyDocs([]); }
     setMyDocsLoading(false);
   };
-  const openDocument = (d) => { setDocType(d.doc_type); setForm({...blank(master),...(d.form_data||{})}); setStep(0); setOutput(""); setScreen("intake"); };
+  const openDocument = (d) => { setDocType(d.doc_type); setForm({...blank(master),...(d.form_data||{})}); setStep(0); setOutput(""); setScreen("draft"); };
   const deleteDocument = async (id) => { try { await supa.from("saved_documents").delete().eq("id",id); setMyDocs(prev=>prev.filter(x=>x.id!==id)); } catch(e){} };
   const deleteAllMatters = async () => {
     if(!authUser) return;
