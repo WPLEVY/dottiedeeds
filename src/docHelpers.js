@@ -138,11 +138,11 @@ export const getPCORReason = (docType, f) => {
 // --- Recording fee exemptions (GC 27388.1 / SB 2 and GC 27388.2 / AB 1466).
 // Reasons and citations taken from a recorded, county-accepted filing.
 export const FEE_EXEMPTIONS = [
-  {id:"dtt",   cite:"GC 27388.1(a)(2); GC 27388.2(b)",       text:"Exempt from fee per GC 27388.1(a)(2) and GC 27388.2(b); recorded concurrently \u201cin connection with\u201d a transfer subject to the imposition of documentary transfer tax (DTT)."},
-  {id:"owner", cite:"GC 27388.1(a)(2); GC 27388.2(b)",       text:"Exempt from fee per GC 27388.1(a)(2) and GC 27388.2(b); recorded concurrently \u201cin connection with\u201d a transfer of real property that is a residential dwelling to an owner-occupier."},
+  {id:"dtt",   cite:"GC 27388.1(a)(2)(A)",                   text:"Exempt from fee per GC 27388.1(a)(2) and GC 27388.2(b); recorded concurrently \u201cin connection with\u201d a transfer subject to the imposition of documentary transfer tax (DTT)."},
+  {id:"owner", cite:"GC 27388.1(a)(2)(B)",                   text:"Exempt from fee per GC 27388.1(a)(2) and GC 27388.2(b); recorded concurrently \u201cin connection with\u201d a transfer of real property that is a residential dwelling to an owner-occupier."},
   {id:"cap",   cite:"GC 27388.1(a)(1)",                      text:"Exempt from fee per GC 27388.1(a)(1); fee cap of $225.00 reached."},
-  {id:"notrp", cite:"GC 27388.1(b)(2)(D); GC 27388.2(a)",    text:"Exempt from the fee per GC 27388.1(b)(2)(D) and GC 27388.2(a); not related to real property."},
-  {id:"gov",   cite:"GC 27388.1(a)(2); GC 27388.2(b)",       text:"Exempt from the fee per GC 27388.1(a)(2) and GC 27388.2(b); this instrument is executed or recorded by a state, or county, or municipality, or other political subdivision of the state."}
+  {id:"notrp", cite:"GC 27388.1(a)(1)",                      text:"Exempt from the fee per GC 27388.1(b)(2)(D) and GC 27388.2(a); not related to real property."},
+  {id:"gov",   cite:"GC 27388.1(a)(2)(D)",                   text:"Exempt from the fee per GC 27388.1(a)(2) and GC 27388.2(b); this instrument is executed or recorded by a state, or county, or municipality, or other political subdivision of the state."}
 ];
 
 // One-line fee declaration used inside the deed header blocks.
@@ -150,7 +150,7 @@ export const bhjaLine = (f) => {
   const sel = (f && f.feeExemption) || "owner";
   if (sel === "none") return "Building Homes and Jobs Act Fee: $75.00<br>GC 27388.1 (no exemption claimed; $225.00 cap applies)";
   const e = FEE_EXEMPTIONS.find(x => x.id === sel);
-  return "Building Homes and Jobs Act Fee: $-0-<br>" + (e ? e.cite : "GC 27388.1(a)(2); GC 27388.2(b)");
+  return "Building Homes and Jobs Act Fee: $-0-<br>" + (e ? e.cite : "GC 27388.1(a)(2)(B)");
 };
 
 // Full AB 1466 / SB 2 declaration block with the exemption checked, for recording cover pages.
