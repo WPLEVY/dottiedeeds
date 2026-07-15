@@ -431,6 +431,13 @@ function DottieDeeds() {
   };
 
   const hasActiveSub = () => ["active","trialing"].includes(authProfile?.subscription_status);
+  const compDaysLeft = () => {
+    const t = authProfile?.comp_until; if (!t) return null;
+    const ms = new Date(t).getTime() - Date.now();
+    return ms > 0 ? Math.ceil(ms / 86400000) : 0;
+  };
+  const isComped = () => { const d = compDaysLeft(); return d !== null && d > 0; };
+  const canUse = () => hasActiveSub() || isComped() || !!authProfile?.is_admin;
   const registerSession = async (userId) => { try { const sid = (crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()); localStorage.setItem("dd_sid", sid); await supa.from("profiles").update({active_session:sid}).eq("id",userId); } catch(e){} };
   const startCheckout = async (plan, annual) => {
     setBillingBusy(true); setCheckoutMsg("");
@@ -773,7 +780,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   }, []);
 
   const handleGenerate = () => {
-    if (ENFORCE_SUBSCRIPTION && !hasActiveSub() && !authProfile?.is_approved) { loadPeriodUsage(); setScreen("billing"); return; }
+    if (ENFORCE_SUBSCRIPTION && !canUse()) { loadPeriodUsage(); setScreen("billing"); return; }
     const doc = generateDoc(docType,form,master);
     setOutput(doc);
     setStep(3);
@@ -921,7 +928,6 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             <h2 style={{fontSize:26,fontWeight:300,marginBottom:8,lineHeight:1.3}}>
               {authMode==="login"?"Sign in to Dottie Deeds":authMode==="signup"?"Get started with Dottie Deeds":"Forgot your password?"}
             </h2>
-            {authMode==="signup"&&<p style={{fontSize:13,color:C.muted,lineHeight:1.7}}>New accounts are reviewed before activation. We’ll email you when yours is ready.</p>}
           </div>
           <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:4,padding:"28px 32px",boxShadow:"0 4px 20px rgba(0,0,0,0.06)"}}>
             {authMode==="signup"&&<>
@@ -1091,7 +1097,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                   <td style={{padding:"10px",color:C.muted}}>{u.email}</td>
                   <td style={{padding:"10px"}}>{u.role||"—"}</td>
                   <td style={{padding:"10px",textAlign:"center"}}>
-                    <span style={{color:u.is_approved?C.green:C.red,fontWeight:"bold"}}>{u.is_approved?"✓":"✗"}</span>
+                    <span style={{color:u.is_approved?C.green:C.red,fontWeight:"bold"}}>{u.is_approved?(u.comp_until?(new Date(u.comp_until)>new Date()?("✓ free "+Math.ceil((new Date(u.comp_until)-Date.now())/86400000)+"d"):"✓ expired"):"✓"):"✗"}</span>
                   </td>
                   <td style={{padding:"10px",textAlign:"center"}}>
                     <span style={{color:u.is_admin?C.gold:C.muted}}>{u.is_admin?"★":"—"}</span>
@@ -1101,9 +1107,11 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                   <td style={{padding:"10px"}}>
                     <div style={{display:"flex",gap:6}}>
                       {!u.is_approved&&<button onClick={async()=>{
-                        const {error:upErr}=await supa.from("profiles").update({is_approved:true}).eq("id",u.id);
+                        const _patch = {is_approved:true};
+                        if (!u.comp_until) _patch.comp_until = new Date(Date.now()+60*86400000).toISOString();
+                        const {error:upErr}=await supa.from("profiles").update(_patch).eq("id",u.id);
                         if(upErr){ setAdminMsg({ok:false,text:"Could not approve "+(u.name||u.email)+": "+(upErr.message||upErr)}); return; }
-                        setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,is_approved:true}:p));
+                        setAdminUsers(prev=>prev.map(p=>p.id===u.id?{...p,..._patch}:p));
                         try{ const _r=await fetch(STRIPE_WORKER+"/notify-approved",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,email:u.email,name:u.name})}); const _j=await _r.json().catch(()=>({})); if(_j&&_j.ok){ setAdminMsg({ok:true,text:"Approved "+(u.name||u.email)+". Approval email sent to "+u.email+"."}); } else { setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email did not send: "+((_j&&(_j.error||_j.reason))||("HTTP "+_r.status))+". Reach them another way."}); } }catch(e){ setAdminMsg({ok:false,text:"Approved "+(u.name||u.email)+", but the email request failed: "+(e.message||e)+". Reach them another way."}); }
                       }} style={{...ST.btnP,padding:"4px 10px",fontSize:10,background:C.green}}>Approve</button>}
                       {u.is_approved&&<button onClick={async()=>{
@@ -1256,7 +1264,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   if (screen==="home") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"nowrap"}}><button onClick={()=>{loadMyDocuments();setScreen("mydocs");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>My Docs</button><button onClick={()=>setScreen("guide")} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Guide</button><button onClick={()=>{loadPeriodUsage();setScreen("billing");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Billing</button><button onClick={()=>setScreen("master")} style={{background:C.ink,color:"#d4c49a",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}><Icon t="settings" size={12} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Settings</button>{authProfile?.is_admin&&<button onClick={async()=>{const {data:users}=await supa.from("profiles").select("*").order("created_at",{ascending:false});const {data:deeds}=await supa.from("deeds").select("*").order("created_at",{ascending:false});setAdminUsers(users||[]);setAdminDeeds(deeds||[]);setScreen("admin");}} style={{background:"#8a2020",color:"#fff",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}>⚑ Admin</button>}<button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,whiteSpace:"nowrap"}}>Sign out</button></div>}/>
-      {(master.firmName||authProfile?.firm)&&<div style={{background:"#f9f6f0",borderBottom:`1px solid ${C.cream}`,padding:"5px 28px",fontSize:11,color:"#8a7a5a",letterSpacing:1,display:"flex",justifyContent:"space-between"}}><span>{master.firmName||authProfile?.firm}</span><span style={{color:C.muted}}>{authProfile?.name||""}</span></div>}
+      {(master.firmName||authProfile?.firm)&&<div style={{background:"#f9f6f0",borderBottom:`1px solid ${C.cream}`,padding:"5px 28px",fontSize:11,color:"#8a7a5a",letterSpacing:1,display:"flex",justifyContent:"space-between"}}><span>{master.firmName||authProfile?.firm}</span>{isComped()&&!hasActiveSub()&&<span onClick={()=>{loadPeriodUsage();setScreen("billing");}} style={{cursor:"pointer",color:compDaysLeft()<=7?"#8a2020":"#8a7a5a",fontWeight:compDaysLeft()<=7?600:400}}>{compDaysLeft()} {compDaysLeft()===1?"day":"days"} of free access left</span>}<span style={{color:C.muted}}>{authProfile?.name||""}</span></div>}
       <div style={{maxWidth:820,margin:"0 auto",padding:"36px 20px",flex:1}}>
         <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:8}}>What would you like to draft today?</h2>
         <p style={{fontSize:14,color:C.muted,marginBottom:28,lineHeight:1.8}}>Select a document type. Dottie guides you through the rest.</p>
