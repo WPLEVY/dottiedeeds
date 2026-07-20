@@ -982,12 +982,12 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   if (screen==="auth") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`}}>
-        <div style={{height:58,padding:"0 28px",display:"flex",alignItems:"center"}}>
+        <div style={{height:58,padding:isMobile?"0 14px":"0 28px",display:"flex",alignItems:"center"}}>
           <div style={{display:"flex",flexDirection:"column",borderRight:`1px solid ${C.rule}`,paddingRight:18,marginRight:18}}>
             <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Dottie</div>
             <div style={{fontFamily:"monospace",fontSize:9,color:C.ink,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Deeds</div>
           </div>
-          <div style={{fontSize:12,color:C.muted,fontStyle:"italic"}}>California deed drafting. Done right.</div>
+          {!isMobile&&<div style={{fontSize:12,color:C.muted,fontStyle:"italic"}}>California deed drafting. Done right.</div>}
           <a href="/" style={{marginLeft:"auto",fontSize:12,color:C.gold,textDecoration:"none",fontFamily:"monospace",letterSpacing:1}}>← Back to home</a>
         </div>
         <div style={{height:2,background:`linear-gradient(90deg,${C.gold},${C.goldlt},${C.gold})`}}/>
@@ -1123,7 +1123,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
   if (screen==="pending") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`}}>
-        <div style={{height:58,padding:"0 28px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{height:58,padding:isMobile?"0 14px":"0 28px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div style={{display:"flex",flexDirection:"column",borderRight:`1px solid ${C.rule}`,paddingRight:18,marginRight:18}}>
             <div style={{fontFamily:"monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Dottie</div>
             <div style={{fontFamily:"monospace",fontSize:9,color:C.ink,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Deeds</div>
