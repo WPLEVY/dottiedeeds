@@ -1601,7 +1601,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 {docType==="granttrustout"&&<Field label="Beneficiary name"><input value={form.beneficiaryName} onChange={e=>upd("beneficiaryName",e.target.value)} placeholder="e.g. Sarah Smith, an unmarried woman" style={ST.inp}/></Field>}
                 <div style={{background:"#f8f4ec",border:`1px solid ${C.rule}`,padding:"14px 16px",borderRadius:2,marginBottom:18}}><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:form.isSettlorDeceased?12:0,fontSize:13,color:"#8a6020"}}><input type="checkbox" checked={form.isSettlorDeceased} onChange={e=>upd("isSettlorDeceased",e.target.checked)} style={{width:15,height:15}}/>Settlor is deceased — successor trustee transfer</label>{form.isSettlorDeceased&&<Field label="Date of death"><input value={form.dateOfDeath} onChange={e=>upd("dateOfDeath",e.target.value)} placeholder="e.g. March 10, 2025" style={ST.inp}/></Field>}</div>
                 <Field label="Prop 19 reassessment exclusion"><select value={form.prop19} onChange={e=>upd("prop19",e.target.value)} style={ST.inp}><option value="">— Select —</option><option value="P4">Not applicable</option><option value="P1">Parent to child — primary residence</option><option value="P2">Child to parent</option><option value="P3">Grandparent to grandchild (both parents deceased)</option></select></Field>
-                {docType==="granttrustout"&&<label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}><input type="checkbox" checked={form.certify19100} onChange={e=>upd("certify19100",e.target.checked)} style={{width:15,height:15,marginTop:2}}/>Include Probate Code §18100.5 trustee certification</label>}
+                
               </>}
             </>}
 
@@ -2241,8 +2241,8 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                         chk("Is this a family farm? Yes", d.p1cFamilyFarm==="YES");
                         chk("Is this a family farm? No", d.p1cFamilyFarm==="NO");
                       }
-                      chk("D.This transfer is the result of a cotenant\u2019s death_yes", d.p1d==="YES");
-                      chk("D.This transfer is the result of a cotenant\u2019s death_no", d.p1d==="NO");
+                      chk("D.This transfer is the result of a cotenant's death_yes", d.p1d==="YES");
+                      chk("D.This transfer is the result of a cotenant's death_no", d.p1d==="NO");
                       if (d.p1d==="YES") txt("DATE OF DEATH", d.inheritanceDate||f.dateOfDeathJT||"");
                       chk("E. This transaction is to replace a principal residence by a person 55 years of age or older_yes", d.p1e==="YES");
                       chk("E. This transaction is to replace a principal residence by a person 55 years of age or older_no", d.p1e==="NO");
@@ -2252,22 +2252,22 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                       chk("G. This transaction is to replace a principal residence substantially damaged or destroyed by a wildfire or natural disaster for which the Governor proclaimed a state of emergency. No", d.p1g==="NO");
                       chk("H. This transaction is only a correction of the name(s) of the person(s) holding title to the property (e.g. a name change upon marriage) If yes, please explain: _ yes", d.p1h==="YES");
                       chk("H. This transaction is only a correction of the name(s) of the person(s) holding title to the property (e.g. a name change upon marriage) If yes, please explain: _ no", d.p1h==="NO");
-                      chk("I. The recorded document creates, terminates, or reconveys a lender\u2019s interest in the property. Yes", d.p1i==="YES");
-                      chk("I. The recorded document creates, terminates, or reconveys a lender\u2019s interest in the property_no", d.p1i==="NO");
+                      chk("I. The recorded document creates, terminates, or reconveys a lender's interest in the property. Yes", d.p1i==="YES");
+                      chk("I. The recorded document creates, terminates, or reconveys a lender's interest in the property_no", d.p1i==="NO");
                       chk("J. This transaction is recorded only as a requirement for financing purposes or to create, terminate, or reconvey a security interest (e.g., cosigner) Yes", d.p1j==="YES");
                       chk("J. This transaction is recorded only as a requirement for financing purposes or to create, terminate, or reconvey a security interest (e.g., cosigner)\u2011no", d.p1j==="NO");
                       chk("K. The recorded document substitutes a trustee of a trust, mortgage, or other similar documentI. The recorded document substitutes a trustee of a trust, mortgage, or other similar document. Yes", d.p1k==="YES");
                       chk("K. The recorded document substitutes a trustee of a trust, mortgage, or other similar documentI. The recorded document substitutes a trustee of a trust, mortgage, or other similar document_no", d.p1k==="NO");
                       // L1 - revocable trust
-                      chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor\u2019s spouse and/or registered domestic partner Yes", d.p1l1==="YES");
-                      chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor\u2019s spouse and/or registered domestic partner_no", d.p1l1==="NO");
+                      chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor's spouse and/or registered domestic partner Yes", d.p1l1==="YES");
+                      chk("L1. This is a transfer of property to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor and/or the transferor's spouse and/or registered domestic partner_no", d.p1l1==="NO");
                       if (d.p1l1==="YES") {
                         chk("This is a transfer of property 1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor, and/or", true);
                         chk("This is a transfer of property 1. to/from a revocable trust that may be revoked by the transferor and is for the benefit of the transferor\u0027s spouse", true);
                       }
                       // L2 - irrevocable trust
-                      chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor\u2019s trustor\u2019s spouse grantor\u2019s/trustor\u2019s registered domestic partner Yes", d.p1l2==="YES");
-                      chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor\u2019s trustor\u2019s spouse grantor\u2019s/trustor\u2019s registered domestic partner No", d.p1l2==="NO");
+                      chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor's trustor's spouse grantor's/trustor's registered domestic partner Yes", d.p1l2==="YES");
+                      chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the creator/grantor/trustor and/or grantor's trustor's spouse grantor's/trustor's registered domestic partner No", d.p1l2==="NO");
                       if (d.p1l2==="YES") {
                         chk("L2. This is a transfer of property to/from an irrevocable trust for the benefit of the grantor's/trustor's spouse", true);
                       }

@@ -67,7 +67,19 @@ export const genTrust = (f,m) => {
     (f.prop19&&f.prop19!=="P4"&&f.prop19!==""?'<div class="body-text"><strong>CLAIM FOR REASSESSMENT EXCLUSION — Proposition 19</strong><br>Basis: ' + (prop19Labels[f.prop19]||"") + '</div>':'') +
     (f.certify19100?'<div class="body-text">Pursuant to Probate Code §18100.5, the Trustee certifies that the trust has not been revoked, modified, or amended in any manner that would cause the representations herein to be incorrect.</div>':'') +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (isInto ? (f.grantor||"[GRANTOR NAME]") : ((f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of ' + (f.capTrustName||f.trustName||"[TRUST NAME]") + ((f.capTrustDate||f.trustDate)?", dated "+(f.capTrustDate||f.trustDate):"") + (f.isAmended?", as amended":""))) + '</div></div>' +
+    (function(){
+      var trustRef = (f.capTrustName||f.trustName||"[TRUST NAME]") + ((f.capTrustDate||f.trustDate)?", dated "+(f.capTrustDate||f.trustDate):"") + (f.isAmended?", as amended":"");
+      if (isInto) {
+        return '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>';
+      }
+      // out of trust: a signature line for each trustee who will sign
+      var signers = (f.capTrusteeRole==="Co-Trustee" && f.capCoTrustees)
+        ? f.capCoTrustees.split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean)
+        : [ (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of ' + trustRef ];
+      return signers.map(function(nm){
+        return '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + nm + '</div></div>';
+      }).join('');
+    })() +
     notaryHTML(f.grantorCapacity||"Trustee", f);
 };
 
