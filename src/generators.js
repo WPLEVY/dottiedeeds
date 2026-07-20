@@ -72,10 +72,15 @@ export const genTrust = (f,m) => {
       if (isInto) {
         return '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>';
       }
-      // out of trust: a signature line for each trustee who will sign
-      var signers = (f.capTrusteeRole==="Co-Trustee" && f.capCoTrustees)
-        ? f.capCoTrustees.split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean)
-        : [ (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of ' + trustRef ];
+      // out of trust: the transferring trustee always signs; co-trustees each get a line too
+      var primary = (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.capTrusteeRole||f.grantorCapacity||"Trustee") + ' of ' + trustRef;
+      var signers = [primary];
+      if (f.capTrusteeRole==="Co-Trustee" && f.capCoTrustees) {
+        f.capCoTrustees.split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean).forEach(function(extra){
+          // skip a co-trustee entry that just repeats the primary trustee's name
+          if (extra.split(",")[0].trim() !== (f.grantor||"").trim()) signers.push(extra);
+        });
+      }
       return signers.map(function(nm){
         return '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + nm + '</div></div>';
       }).join('');
