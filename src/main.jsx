@@ -176,6 +176,54 @@ const downloadWordDoc = (docHTML, docLabel, apn) => {
   a.click();
   URL.revokeObjectURL(url);
 };
+const NavMenu = ({ isMobile, open, setOpen, isAdmin, go }) => {
+  const items = [
+    { key:"mydocs",  label:"My Docs",  fn:go.mydocs },
+    { key:"guide",   label:"Guide",    fn:go.guide },
+    { key:"billing", label:"Billing",  fn:go.billing },
+    { key:"settings",label:"Settings", fn:go.settings, dark:true },
+    ...(isAdmin ? [{ key:"admin", label:"\u2691 Admin", fn:go.admin, admin:true }] : []),
+    { key:"signout", label:"Sign out", fn:go.signout },
+  ];
+  React.useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [open, setOpen]);
+
+  if (!isMobile) {
+    return (
+      <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
+        {items.map(it => (
+          <button key={it.key} onClick={it.fn} style={
+            it.dark ? {background:C.ink,color:"#d4c49a",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}
+            : it.admin ? {background:"#8a2020",color:"#fff",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}
+            : {...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}
+          }>{it.key==="settings"?<><Icon t="settings" size={12} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Settings</>:it.label}</button>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{position:"relative"}} onClick={e=>e.stopPropagation()}>
+      <button aria-label="Menu" onClick={()=>setOpen(!open)} style={{background:open?C.cream:"#fff",border:`1px solid ${C.rule}`,borderRadius:4,padding:"7px 10px",cursor:"pointer",display:"flex",flexDirection:"column",gap:3,width:38,alignItems:"center",justifyContent:"center",height:34}}>
+        <span style={{display:"block",width:18,height:2,background:C.ink}}/>
+        <span style={{display:"block",width:18,height:2,background:C.ink}}/>
+        <span style={{display:"block",width:18,height:2,background:C.ink}}/>
+      </button>
+      {open && (
+        <div style={{position:"absolute",right:0,top:42,background:"#fff",border:`1px solid ${C.rule}`,borderRadius:6,boxShadow:"0 10px 40px rgba(26,23,16,0.16)",minWidth:180,zIndex:50,overflow:"hidden"}}>
+          {items.map((it,idx) => (
+            <button key={it.key} onClick={()=>{setOpen(false);it.fn();}} style={{display:"block",width:"100%",textAlign:"left",padding:"13px 16px",fontSize:13,fontFamily:"Georgia,serif",cursor:"pointer",background:it.admin?"#fbeaea":"#fff",color:it.admin?"#8a2020":C.ink,border:"none",borderTop:idx?`1px solid ${C.cream}`:"none",letterSpacing:0.5}}>{it.label}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Header = ({subtitle, onHome, rightContent}) => (
   <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`,flexShrink:0}}>
     <div style={{height:58,padding:"0 12px",display:"flex",alignItems:"center",justifyContent:"space-between",overflow:"hidden"}}>
@@ -201,6 +249,7 @@ function DottieDeeds() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+  const [navOpen, setNavOpen] = useState(false);
   const [authUser, setAuthUser] = useState(null);
   const [myDocs, setMyDocs] = useState([]);
   const [myDocsLoading, setMyDocsLoading] = useState(false);
@@ -1292,7 +1341,14 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
 
   if (screen==="home") return (
     <div style={{fontFamily:"Georgia,serif",color:C.ink,background:C.paper,minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-      <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}><button onClick={()=>{loadMyDocuments();setScreen("mydocs");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>My Docs</button><button onClick={()=>setScreen("guide")} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Guide</button><button onClick={()=>{loadPeriodUsage();setScreen("billing");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,letterSpacing:1,whiteSpace:"nowrap"}}>Billing</button><button onClick={()=>setScreen("master")} style={{background:C.ink,color:"#d4c49a",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}><Icon t="settings" size={12} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Settings</button>{authProfile?.is_admin&&<button onClick={async()=>{const {data:users}=await supa.from("profiles").select("*").order("created_at",{ascending:false});const {data:deeds}=await supa.from("deeds").select("*").order("created_at",{ascending:false});setAdminUsers(users||[]);setAdminDeeds(deeds||[]);setScreen("admin");}} style={{background:"#8a2020",color:"#fff",border:"none",padding:"7px 10px",fontSize:9,cursor:"pointer",fontFamily:"Georgia,serif",borderRadius:2,whiteSpace:"nowrap"}}>⚑ Admin</button>}<button onClick={async()=>{await supa.auth.signOut();setScreen("auth");}} style={{...ST.btnS,padding:"6px 10px",fontSize:9,whiteSpace:"nowrap"}}>Sign out</button></div>}/>
+      <Header subtitle="California deed drafting. Done right." onHome={()=>setScreen("home")} rightContent={<NavMenu isMobile={isMobile} open={navOpen} setOpen={setNavOpen} isAdmin={authProfile?.is_admin} go={{
+        mydocs:()=>{loadMyDocuments();setScreen("mydocs");},
+        guide:()=>setScreen("guide"),
+        billing:()=>{loadPeriodUsage();setScreen("billing");},
+        settings:()=>setScreen("master"),
+        admin:async()=>{const {data:users}=await supa.from("profiles").select("*").order("created_at",{ascending:false});const {data:deeds}=await supa.from("deeds").select("*").order("created_at",{ascending:false});setAdminUsers(users||[]);setAdminDeeds(deeds||[]);setScreen("admin");},
+        signout:async()=>{await supa.auth.signOut();setScreen("auth");},
+      }}/>}/>
       {(master.firmName||authProfile?.firm)&&<div style={{background:"#f9f6f0",borderBottom:`1px solid ${C.cream}`,padding:isMobile?"5px 14px":"5px 28px",fontSize:11,color:"#8a7a5a",letterSpacing:1,display:"flex",justifyContent:"space-between"}}><span>{master.firmName||authProfile?.firm}</span>{isComped()&&!hasActiveSub()&&!authProfile?.is_admin&&<span onClick={()=>{loadPeriodUsage();setScreen("billing");}} style={{cursor:"pointer",color:compDaysLeft()<=7?"#8a2020":"#8a7a5a",fontWeight:compDaysLeft()<=7?600:400}}>{compDaysLeft()} {compDaysLeft()===1?"day":"days"} of free access left</span>}<span style={{color:C.muted}}>{authProfile?.name||""}</span></div>}
       <div style={{maxWidth:820,margin:"0 auto",padding:"36px 20px",flex:1}}>
         <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:8}}>What would you like to draft today?</h2>
