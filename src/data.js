@@ -289,7 +289,8 @@ export const COUNTIES = ["Alameda","Alpine","Amador","Butte","Calaveras","Colusa
 
 export const DOC_TYPES = [
   {id:"grant",       icon:"📄", label:"Grant Deed",                             desc:"Individual, LLC, sale, gift"},
-  {id:"granttrust",  icon:"🏛",  label:"Grant Deed — Trust Transfer",            desc:"Into or out of a living trust"},
+  {id:"granttrustin", icon:"🏛",  label:"Grant Deed — Transfer Into Trust",      desc:"Fund property into a living trust"},
+  {id:"granttrustout",icon:"🏛",  label:"Grant Deed — Transfer Out of Trust",     desc:"Distribute trust property to a beneficiary"},
   {id:"dot",         icon:"🔐", label:"Deed of Trust",                           desc:"1st or 2nd lien position"},
   {id:"quitclaim",   icon:"✍️",  label:"Quitclaim Deed",                          desc:"Release of interest, no warranties"},
   {id:"interspousal",icon:"💍", label:"Interspousal Quitclaim Deed",             desc:"Between spouses"},
@@ -304,7 +305,7 @@ export const DOC_TYPES = [
   {id:"trustees",    icon:"⚖️",  label:"Trustee’s Deed Upon Sale",               desc:"Foreclosure sale conveyance"},
   {id:"sheriff",     icon:"🏛",  label:"Sheriff’s Deed",                          desc:"Court-ordered sale conveyance"},
   {id:"corrective",  icon:"📝", label:"Corrective Deed",                        desc:"Fix an error in a recorded deed"},
-  {id:"courtorder",  icon:"⚖️",  label:"Court Order (recording cover)",          desc:"Cover page for a certified court order"},
+  {id:"courtorder",  icon:"⚖️",  label:"Probate Court Order (Cover Sheet)",     desc:"Recorder's cover sheet only; record with the certified order"},
 ];
 
 export const COUNTY_INFO = {
@@ -349,4 +350,4 @@ export const DEFAULT_MASTER = {
   provisions:[], masterVersion:1, masterUpdated:"",
 };
 
-export const PCOR_DOCS = ["grant","granttrust","quitclaim","interspousal","adjt","sscp","easement","trustees","sheriff","adtr"];
+export const PCOR_DOCS = ["grant","granttrustin","granttrustout","quitclaim","interspousal","adjt","sscp","easement","trustees","sheriff","adtr"];

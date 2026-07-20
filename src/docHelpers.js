@@ -128,7 +128,7 @@ export const getPCORReason = (docType, f) => {
   if (docType==="interspousal") return {box:"A", desc:"Transfer between spouses"};
   if (docType==="adjt") return {box:"D", desc:"Death of joint tenant. Date of death: "+( f.dateOfDeathJT||"_______________")};
   if (docType==="sscp") return {box:"A", desc:"Death of spouse — community property succession"};
-  if (docType==="granttrust"||docType==="trust") return {box:"L", desc:`Transfer ${["T2","T4"].includes(f.trustTransferReason)?"out of":"into"} revocable living trust`};
+  if (docType==="granttrustin"||docType==="granttrustout"||docType==="granttrust"||docType==="trust") return {box:"L", desc:`Transfer ${docType==="granttrustout"||["T2","T4"].includes(f.trustTransferReason)?"out of":"into"} revocable living trust`};
   if (docType==="trustees"||docType==="sheriff") return {box:"K", desc:"Foreclosure / court-ordered sale"};
   if (docType==="easement") return {box:"other", desc:"Conveyance of easement only"};
   if (f.exemptFromTax) return {box:"J", desc:"Transfer not subject to documentary transfer tax — "+( f.exemptReason||"see deed")};

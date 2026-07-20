@@ -45,7 +45,7 @@ describe('deed generators', () => {
 });
 
 describe('genPCOR (BOE-502-A)', () => {
-  const out = G.genPCOR('granttrust', FORM, MASTER, {});
+  const out = G.genPCOR('granttrustin', FORM, MASTER, {});
   it('returns a substantial HTML string', () => {
     expect(typeof out).toBe('string');
     expect(out.length).toBeGreaterThan(1000);

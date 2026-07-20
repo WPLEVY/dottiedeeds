@@ -125,7 +125,8 @@ const withFirmProvisions = (html, docType, m) => {
 const _genDocRaw = (docType, f, m) => {
   switch(docType) {
     case "grant":        return genGrant(f,m);
-    case "granttrust":   return genTrust(f,m);
+    case "granttrustin":  return genTrust({...f, trustTransferReason: f.trustTransferReason||"T1"}, m);
+    case "granttrustout": return genTrust({...f, trustTransferReason: f.trustTransferReason||"T2"}, m);
     case "dot":          return genDOT(f,m);
     case "quitclaim":    return genQuitclaim(f,m);
     case "interspousal": return genInterspousal(f,m);
@@ -1292,7 +1293,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
         <p style={{fontSize:14,color:C.muted,marginBottom:28,lineHeight:1.8}}>Select a document type. Dottie guides you through the rest.</p>
         {!master.firmName&&<div style={{...ST.warn,marginBottom:24}}><Icon t="tip" size={14} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/><strong>First time?</strong> Set up your <span style={{color:C.gold,cursor:"pointer",textDecoration:"underline"}} onClick={()=>setScreen("master")}>Firm Settings</span> to pre-populate your firm name on every document.</div>}
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:32}}>
-          {DOC_TYPES.map(d=>(<div key={d.id} onClick={()=>{setDocType(d.id);setScreen("draft");}} style={{background:"#fff",border:`2px solid ${C.rule}`,borderRadius:4,padding:"18px 14px",cursor:"pointer",transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.gold;e.currentTarget.style.background=C.cream;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.rule;e.currentTarget.style.background="#fff";}}><div style={{marginBottom:10}}><Icon t={d.id}/></div><div style={{fontSize:13,fontWeight:"bold",color:C.ink,marginBottom:3}}>{d.label}</div><div style={{fontSize:11,color:C.muted,lineHeight:1.5}}>{d.desc}</div></div>))}
+          {DOC_TYPES.map(d=>(<div key={d.id} onClick={()=>{setDocType(d.id);setStep((d.id==="courtorder")?1:0);setScreen("draft");}} style={{background:"#fff",border:`2px solid ${C.rule}`,borderRadius:4,padding:"18px 14px",cursor:"pointer",transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.gold;e.currentTarget.style.background=C.cream;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.rule;e.currentTarget.style.background="#fff";}}><div style={{marginBottom:10}}><Icon t={d.id}/></div><div style={{fontSize:13,fontWeight:"bold",color:C.ink,marginBottom:3}}>{d.label}</div><div style={{fontSize:11,color:C.muted,lineHeight:1.5}}>{d.desc}</div></div>))}
         </div>
         <div style={{borderTop:`1px solid ${C.rule}`,paddingTop:20,fontSize:13,color:C.muted,lineHeight:1.8}}><strong style={{color:C.ink}}>Dottie</strong> drafts all 14 California deed and transfer document types with AI extraction, correct notary blocks, and a paralegal guide for every county. <span style={{color:C.gold,cursor:"pointer"}} onClick={()=>setScreen("guide")}>View paralegal guide →</span></div>
       </div>
@@ -1305,7 +1306,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
       <Header subtitle={null} onHome={()=>setScreen("home")} rightContent={
         <div style={{display:"flex",alignItems:"center",gap:16}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            {STEPS.slice(0,4).map((s,i)=>(
+            {(docType==="courtorder"?["Cover Details","Details","Review & Download"]:STEPS.slice(0,4)).map((s,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <div style={{width:22,height:22,borderRadius:"50%",background:i<step?"#3a7a3a":i===step?C.gold:"#e0d8c8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:i<=step?"#fff":"#a09070",fontFamily:"'DM Mono',monospace",flexShrink:0}}>
@@ -1411,12 +1412,12 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 <div><input value={docType==="dot"?form.trustorName:form.grantor} onChange={e=>upd(docType==="dot"?"trustorName":"grantor",e.target.value)} placeholder="Full name and vesting exactly as it appears" style={ST.inp}/>{extracted&&<ConfBadge level={extractConf.grantor||"medium"}/>}</div>
               </Field>
             )}
-            {docType!=="adjt"&&docType!=="adtr"&&docType!=="sscp"&&docType!=="interspousal"&&docType!=="dot"&&(
+            {docType!=="adjt"&&docType!=="adtr"&&docType!=="sscp"&&docType!=="interspousal"&&docType!=="dot"&&docType!=="act"&&docType!=="courtorder"&&docType!=="corrective"&&(
               <div style={{background:"#fff",border:`1px solid ${C.rule}`,borderRadius:2,padding:"18px 22px",marginBottom:18}}>
                 <div style={{...ST.sec,marginTop:0}}>Signing capacity</div>
                 <Field label="How is the grantor signing?">
                   <select value={form.grantorCapacity} onChange={e=>upd("grantorCapacity",e.target.value)} style={ST.inp}>
-                    <option value="">— Select capacity —</option>{(docType==="granttrust"
+                    <option value="">— Select capacity —</option>{((docType==="granttrustin"||docType==="granttrustout")
                       ? ["Individual","Trustee","Successor Trustee","Attorney-in-Fact","Corporate Officer","LLC Manager / Member","General Partner","Personal Representative"]
                       : CAPACITY
                     ).map(c=><option key={c} value={c}>{c}</option>)}
@@ -1523,21 +1524,22 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:8}}>Transfer details</h2>
             <p style={{fontSize:14,color:C.muted,marginBottom:24,lineHeight:1.8}}>Enter the details specific to this transfer.</p>
 
-            {(docType==="grant"||docType==="granttrust")&&<>
+            {(docType==="grant"||docType==="granttrustin"||docType==="granttrustout")&&<>
               <Field label="Grantee — full name"><input value={form.grantee} onChange={e=>upd("grantee",e.target.value)} placeholder="e.g. Jane Doe and Robert Doe" style={ST.inp}/></Field>
               <Field label="How the grantee takes title" ><select value={form.granteeVesting} onChange={e=>upd("granteeVesting",e.target.value)} style={ST.inp}><option value="">— Select vesting —</option>{VESTING.map(v=><option key={v} value={v}>{v}</option>)}<option value="custom">Custom vesting...</option></select>{form.granteeVesting==="custom"&&<input value={form.customVesting} onChange={e=>upd("customVesting",e.target.value)} placeholder="Custom vesting language" style={{...ST.inp,marginTop:8}}/>}</Field>
               <Field label="Grantee mailing address"><input value={form.granteeAddress} onChange={e=>upd("granteeAddress",e.target.value)} placeholder="e.g. 123 Main Street, Los Angeles, CA 90001" style={ST.inp}/></Field>
               <Field label="Documentary Transfer Tax"><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:10,fontSize:13,color:C.muted}}><input type="checkbox" checked={form.exemptFromTax} onChange={e=>upd("exemptFromTax",e.target.checked)} style={{width:15,height:15}}/>Exempt from Documentary Transfer Tax</label>{form.exemptFromTax?<RTDropdown/>:<input value={form.dtt} onChange={e=>upd("dtt",e.target.value)} placeholder="e.g. 935.00" style={ST.inp}/>}</Field>
-              {docType==="granttrust"&&<>
+              {(docType==="granttrustin"||docType==="granttrustout")&&<>
                 <Field label="Trust name"><input value={form.trustName} onChange={e=>upd("trustName",e.target.value)} placeholder="e.g. The Smith Family Revocable Living Trust" style={ST.inp}/></Field>
                 <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:16,fontSize:13,color:C.muted}}><input type="checkbox" checked={form.isAmended} onChange={e=>upd("isAmended",e.target.checked)} style={{width:15,height:15}}/>Trust has been amended — include "as amended"</label>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}><Field label="Trust date"><input value={form.trustDate} onChange={e=>upd("trustDate",e.target.value)} placeholder="e.g. January 15, 2018" style={ST.inp}/></Field><Field label="Settlor(s)"><input value={form.settlorName} onChange={e=>upd("settlorName",e.target.value)} placeholder="e.g. John Smith and Jane Smith" style={ST.inp}/></Field></div>
                 <Field label="Trustee(s)"><input value={form.trusteeName} onChange={e=>upd("trusteeName",e.target.value)} placeholder="e.g. John Smith and Jane Smith" style={ST.inp}/></Field>
-                <Field label="Reason for transfer"><select value={form.trustTransferReason} onChange={e=>upd("trustTransferReason",e.target.value)} style={ST.inp}><option value="">— Select reason —</option><option value="T1">Transfer into trust by settlor (initial funding)</option><option value="T2">Transfer out of trust to beneficiary (distribution)</option><option value="T3">Transfer between trusts</option><option value="T4">Transfer upon death of settlor — successor trustee</option><option value="T5">Refinance — out then back into trust</option></select></Field>
-                {["T2","T4"].includes(form.trustTransferReason)&&<Field label="Beneficiary name"><input value={form.beneficiaryName} onChange={e=>upd("beneficiaryName",e.target.value)} placeholder="e.g. Sarah Smith, an unmarried woman" style={ST.inp}/></Field>}
+                {docType==="granttrustin"&&<Field label="Reason for transfer"><select value={form.trustTransferReason} onChange={e=>upd("trustTransferReason",e.target.value)} style={ST.inp}><option value="T1">Initial funding by settlor</option><option value="T3">Transfer between trusts</option><option value="T5">Refinance — out then back into trust</option></select></Field>}
+                {docType==="granttrustout"&&<Field label="Reason for transfer"><select value={form.trustTransferReason} onChange={e=>upd("trustTransferReason",e.target.value)} style={ST.inp}><option value="T2">Distribution to beneficiary</option><option value="T4">Death of settlor — successor trustee to beneficiary</option></select></Field>}
+                {docType==="granttrustout"&&<Field label="Beneficiary name"><input value={form.beneficiaryName} onChange={e=>upd("beneficiaryName",e.target.value)} placeholder="e.g. Sarah Smith, an unmarried woman" style={ST.inp}/></Field>}
                 <div style={{background:"#f8f4ec",border:`1px solid ${C.rule}`,padding:"14px 16px",borderRadius:2,marginBottom:18}}><label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",marginBottom:form.isSettlorDeceased?12:0,fontSize:13,color:"#8a6020"}}><input type="checkbox" checked={form.isSettlorDeceased} onChange={e=>upd("isSettlorDeceased",e.target.checked)} style={{width:15,height:15}}/>Settlor is deceased — successor trustee transfer</label>{form.isSettlorDeceased&&<Field label="Date of death"><input value={form.dateOfDeath} onChange={e=>upd("dateOfDeath",e.target.value)} placeholder="e.g. March 10, 2025" style={ST.inp}/></Field>}</div>
                 <Field label="Prop 19 reassessment exclusion"><select value={form.prop19} onChange={e=>upd("prop19",e.target.value)} style={ST.inp}><option value="">— Select —</option><option value="P4">Not applicable</option><option value="P1">Parent to child — primary residence</option><option value="P2">Child to parent</option><option value="P3">Grandparent to grandchild (both parents deceased)</option></select></Field>
-                <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}><input type="checkbox" checked={form.certify19100} onChange={e=>upd("certify19100",e.target.checked)} style={{width:15,height:15,marginTop:2}}/>Include Probate Code §18100.5 trustee certification</label>
+                {docType==="granttrustout"&&<label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}><input type="checkbox" checked={form.certify19100} onChange={e=>upd("certify19100",e.target.checked)} style={{width:15,height:15,marginTop:2}}/>Include Probate Code §18100.5 trustee certification</label>}
               </>}
             </>}
 
@@ -1780,7 +1782,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                   <button onClick={()=>{
               const reason = getPCORReason(docType,form);
               const isSpouseDeath = docType==="sscp"||(docType==="adjt");
-              const isTrust = docType==="granttrust";
+              const isTrust = docType==="granttrustin"||docType==="granttrustout";
               const isInter = docType==="interspousal";
               const buyer = form.grantee||form.spouseName||form.survivingJointTenant||form.grantor||"";
               setPcorForm(p=>({...p,

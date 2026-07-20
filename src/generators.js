@@ -67,7 +67,7 @@ export const genTrust = (f,m) => {
     (f.prop19&&f.prop19!=="P4"&&f.prop19!==""?'<div class="body-text"><strong>CLAIM FOR REASSESSMENT EXCLUSION — Proposition 19</strong><br>Basis: ' + (prop19Labels[f.prop19]||"") + '</div>':'') +
     (f.certify19100?'<div class="body-text">Pursuant to Probate Code §18100.5, the Trustee certifies that the trust has not been revoked, modified, or amended in any manner that would cause the representations herein to be incorrect.</div>':'') +
     '<div class="body-text">Executed this __________ day of ______________________, ' + yr + ', at _____________________, California.</div>' +
-    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of<br>' + (f.capTrustName||f.trustName||"[TRUST NAME]") + ((f.capTrustDate||f.trustDate)?", dated "+(f.capTrustDate||f.trustDate):"") + (f.isAmended?", as amended":"") + '</div></div>' +
+    '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (isInto ? (f.grantor||"[GRANTOR NAME]") : ((f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of ' + (f.capTrustName||f.trustName||"[TRUST NAME]") + ((f.capTrustDate||f.trustDate)?", dated "+(f.capTrustDate||f.trustDate):"") + (f.isAmended?", as amended":""))) + '</div></div>' +
     notaryHTML(f.grantorCapacity||"Trustee", f);
 };
 
@@ -605,7 +605,7 @@ export const genPCOR = (docType, f, m, pf={}) => {
   const reason = getPCORReason(docType, f);
   const isSale = !f.exemptFromTax && docType==="grant";
   const isSpouseDeath = docType==="sscp" || (docType==="adjt" && f.survivingSpouse);
-  const isTrustTransfer = docType==="granttrust";
+  const isTrustTransfer = docType==="granttrustin" || docType==="granttrustout";
   const isInterspousal = docType==="interspousal";
   const buyer = pf.buyerName||f.grantee||f.spouseName||f.survivingJointTenant||f.grantor||"";
   const seller = f.grantor||"";
@@ -617,15 +617,16 @@ export const genPCOR = (docType, f, m, pf={}) => {
   // Part 1 checkboxes
   const p1a = pf.p1a||(isSpouseDeath||isInterspousal ? "YES" : "NO");
   const p1d = pf.p1d||(docType==="adjt" ? "YES" : "NO");
-  const p1l1 = pf.p1l1||((isTrustTransfer&&["T1","T5"].includes(f.trustTransferReason)) ? "YES" : "NO");
-  const p1l2 = pf.p1l2||((isTrustTransfer&&["T2"].includes(f.trustTransferReason)) ? "YES" : "NO");
+  const isIntoTrust = docType==="granttrustin";
+  const p1l1 = pf.p1l1||((isIntoTrust) ? "YES" : "NO");
+  const p1l2 = pf.p1l2||((docType==="granttrustout") ? "YES" : "NO");
   const p1l = (p1l1==="YES"||p1l2==="YES") ? "YES" : "NO";
   const p1n = pf.p1n||((isTrustTransfer) ? "YES" : "NO");
   const p1c = pf.p1c||"NO";
   const p1m = pf.p1m||"NO";
   const p1o = pf.p1o||"NO";
   const p1p = pf.p1p||"NO";
-  const p1q = pf.p1q||(reason.box==="other"?"YES":"NO");
+  const p1q = pf.p1q||((reason.box==="other" && !isTrustTransfer && !isSpouseDeath) ?"YES":"NO");
 
   // Part 2 transfer type
   let transferType = pf.transferType||"Other";
