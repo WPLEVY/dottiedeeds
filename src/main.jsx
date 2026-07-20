@@ -226,14 +226,14 @@ const NavMenu = ({ isMobile, open, setOpen, isAdmin, go }) => {
 
 const Header = ({subtitle, onHome, rightContent}) => (
   <div style={{background:"#fff",borderBottom:`1px solid ${C.rule}`,flexShrink:0}}>
-    <div style={{height:58,padding:"0 12px",display:"flex",alignItems:"center",justifyContent:"space-between",overflow:"hidden"}}>
+    <div style={{height:58,padding:"0 12px",display:"flex",alignItems:"center",justifyContent:"space-between",overflow:"visible"}}>
       <div style={{display:"flex",alignItems:"center",height:"100%",cursor:"pointer",flexShrink:0}} onClick={onHome}>
         <div style={{display:"flex",flexDirection:"column",justifyContent:"center",borderRight:`1px solid ${C.rule}`,paddingRight:12,marginRight:12,height:"100%"}}>
           <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:C.gold,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Dottie</div>
           <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:C.ink,letterSpacing:5,textTransform:"uppercase",lineHeight:1.5}}>Deeds</div>
         </div>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:6,overflow:"hidden",flexShrink:1,minWidth:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,overflow:"visible",flexShrink:1,minWidth:0}}>
         {rightContent}
       </div>
     </div>
