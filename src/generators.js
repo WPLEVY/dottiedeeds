@@ -72,14 +72,20 @@ export const genTrust = (f,m) => {
       if (isInto) {
         return '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + (f.grantor||"[GRANTOR NAME]") + '</div></div>';
       }
-      // out of trust: the transferring trustee always signs; co-trustees each get a line too
-      var primary = (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.capTrusteeRole||f.grantorCapacity||"Trustee") + ' of ' + trustRef;
-      var signers = [primary];
+      // out of trust: each trustee who signs gets a separate signature line.
+      var signers = [];
       if (f.capTrusteeRole==="Co-Trustee" && f.capCoTrustees) {
-        f.capCoTrustees.split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean).forEach(function(extra){
-          // skip a co-trustee entry that just repeats the primary trustee's name
-          if (extra.split(",")[0].trim() !== (f.grantor||"").trim()) signers.push(extra);
+        // the co-trustee box lists each signer (already carrying their own capacity);
+        // split any entry joined with " and " so co-signers never share a line.
+        f.capCoTrustees.split(/\r?\n/).forEach(function(row){
+          row.split(/\s+and\s+/i).map(function(x){return x.trim().replace(/^and\s+/i,"");}).filter(Boolean).forEach(function(nm){ signers.push(nm); });
         });
+        // if the box did not name the primary trustee, prepend a line for them
+        var primaryName = (f.grantor||"").split(",")[0].split(/\s+and\s+/i)[0].trim();
+        var haveP = signers.some(function(nm){ return nm.split(",")[0].trim()===primaryName && primaryName; });
+        if (!haveP) signers.unshift((f.grantor||"[TRUSTEE NAME]").split(/\s+and\s+/i)[0].trim() + ', as Trustee of ' + trustRef);
+      } else {
+        signers = [ (f.grantor||"[TRUSTEE NAME]") + ', as ' + (f.grantorCapacity||"Trustee") + ' of ' + trustRef ];
       }
       return signers.map(function(nm){
         return '<div class="sig-block"><div class="sig-line">________________________________________</div><div class="sig-name">' + nm + '</div></div>';
