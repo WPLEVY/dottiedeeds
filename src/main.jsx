@@ -1075,7 +1075,22 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                       options:{data:{name:authName,firm:authFirm,role:(authRole==="Other"&&authRoleOther.trim())?authRoleOther.trim():authRole,invite:invite||undefined}}
                     });
                     if (error) throw error;
-                    try{ const _t=data?.session?.access_token; if(_t){ await fetch(STRIPE_WORKER+"/notify-signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:_t,name:authName})}); } }catch(e){}
+                    // Alert the admin (and confirm to the user). Not gated on a session:
+                    // with email confirmation on, signUp returns no session, which is why
+                    // the old session-gated call never fired.
+                    let _notified = false;
+                    try {
+                      const _r = await fetch(STRIPE_WORKER+"/notify-admin-signup",{
+                        method:"POST", headers:{"Content-Type":"application/json"},
+                        body:JSON.stringify({
+                          email:authEmail, name:authName, firm:authFirm,
+                          role:(authRole==="Other"&&authRoleOther.trim())?authRoleOther.trim():authRole
+                        })
+                      });
+                      const _j = await _r.json().catch(()=>({}));
+                      _notified = !!(_j && _j.ok);
+                    } catch(e) { _notified = false; }
+                    // Secondary path. Kept as a backup, no longer the only alert.
                     // Notify admin of new signup via Formspree
                     try {
                       await fetch("https://formspree.io/f/maqzeewn", {
