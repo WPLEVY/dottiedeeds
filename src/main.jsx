@@ -254,6 +254,7 @@ function DottieDeeds() {
   const [myDocs, setMyDocs] = useState([]);
   const [myDocsLoading, setMyDocsLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [trackWarn, setTrackWarn] = useState("");
   const [authProfile, setAuthProfile] = useState(null);
   const [firmId, setFirmId] = useState(null);
   const [firmInviteCode, setFirmInviteCode] = useState("");
@@ -472,10 +473,13 @@ function DottieDeeds() {
   }, [docType]);
 
   // Track deed generation
+  // Records the deed and reports metered usage. supabase-js RETURNS errors rather than
+  // throwing them, so the result must be checked: a swallowed error here once hid a
+  // failing insert for nine days, which would also have meant unbilled documents.
   const trackDeed = async (docType, county, completed) => {
     if (!authUser) return;
     try {
-      await supa.from("deeds").insert({
+      const { error: insErr } = await supa.from("deeds").insert({
         user_id: authUser.id,
         doc_type: docType,
         firm_id: firmId,
@@ -484,10 +488,24 @@ function DottieDeeds() {
         downloaded: false,
         master_version: master.masterVersion || 1,
       });
-      // Update last_seen
-      await supa.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", authUser.id);
-      try { fetch(STRIPE_WORKER+"/report-usage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,quantity:1})}).catch(()=>{}); } catch(e){}
-    } catch(e) {}
+      if (insErr) {
+        console.error("trackDeed: deed was NOT recorded:", insErr);
+        setTrackWarn("This document was created, but it could not be recorded to your account history. " + (insErr.message || ""));
+        return; // do not report usage for a deed we failed to record
+      }
+      setTrackWarn("");
+
+      const { error: seenErr } = await supa.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", authUser.id);
+      if (seenErr) console.error("trackDeed: last_seen not updated:", seenErr);
+
+      try {
+        const r = await fetch(STRIPE_WORKER+"/report-usage",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({_dd_auth:ddToken,quantity:1})});
+        if (!r.ok) console.error("trackDeed: usage not reported, HTTP " + r.status);
+      } catch(e) { console.error("trackDeed: usage not reported:", e); }
+    } catch(e) {
+      console.error("trackDeed failed:", e);
+      setTrackWarn("This document was created, but it could not be recorded to your account history.");
+    }
   };
 
   const hasActiveSub = () => ["active","trialing"].includes(authProfile?.subscription_status);
@@ -1837,6 +1855,7 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
         {step===3&&(
           <div>
             <h2 style={{fontSize:22,fontWeight:"normal",marginBottom:4}}>Document ready</h2>
+            {trackWarn&&<div style={{background:"#fdf6e3",border:"1px solid #e0c97a",color:"#7a5c10",padding:"10px 14px",borderRadius:4,fontSize:12,lineHeight:1.6,marginBottom:14}}>{trackWarn}</div>}
             <div style={{fontSize:12,color:C.muted,marginBottom:20,letterSpacing:1}}>{dt?.label} · {form.county} County · {new Date().toLocaleDateString()}</div>
             <div style={{background:"#fff",border:"1px solid #bbb",boxShadow:"0 4px 20px rgba(0,0,0,0.08)",marginBottom:16,maxHeight:480,overflowY:"auto",overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
               <div style={{padding:"6px 28px 2px",background:"#f0f8e8",borderBottom:"1px solid #c8e0c0",fontSize:11,color:"#4a6a3a",fontStyle:"italic"}}><Icon t="edit" size={12} color="currentColor" style={{display:"inline-block",verticalAlign:"-2px",marginRight:5}}/>Document is editable — click anywhere to make changes before downloading.</div><div style={{padding:"20px 28px",fontFamily:"'Times New Roman',Times,serif",fontSize:"10.5px",lineHeight:1.65,color:"#000",outline:"none"}} dangerouslySetInnerHTML={{__html: wrapDocHTML(output, dt?.label||"deed", form.apn)}} contentEditable={true} suppressContentEditableWarning={true} onInput={e=>{setOutput(e.currentTarget.innerHTML);}}/>
