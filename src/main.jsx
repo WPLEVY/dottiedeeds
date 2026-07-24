@@ -212,6 +212,21 @@ const splitAddress = (raw) => {
   return out;
 };
 
+// Format checks for address fields. These warn, they never block: an attorney must always
+// be able to record an address we do not recognize.
+const US_STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
+const zipWarn = (v) => {
+  const t = String(v || "").trim();
+  if (!t) return "";
+  return /^\d{5}(-\d{4})?$/.test(t) ? "" : "ZIP should be 5 digits, or 5+4 like 90001-1234.";
+};
+const stateWarn = (v) => {
+  const t = String(v || "").trim();
+  if (!t) return "";
+  if (/^california$/i.test(t)) return "";
+  return US_STATES.includes(t.toUpperCase()) ? "" : "Use a two-letter state code, for example CA.";
+};
+
 const NavMenu = ({ isMobile, open, setOpen, isAdmin, go }) => {
   const items = [
     { key:"mydocs",  label:"My Docs",  fn:go.mydocs },
@@ -1963,8 +1978,8 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 <Field label="Buyer mailing address"><input value={pcorForm.buyerAddress} onChange={e=>updPcor("buyerAddress",e.target.value)} placeholder="Street address" style={ST.inp}/></Field>
                 <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr",gap:12}}>
                   <Field label="City"><input value={pcorForm.buyerCity} onChange={e=>updPcor("buyerCity",e.target.value)} style={ST.inp}/></Field>
-                  <Field label="State"><input value={pcorForm.buyerState} onChange={e=>updPcor("buyerState",e.target.value)} style={ST.inp}/></Field>
-                  <Field label="Zip"><input value={pcorForm.buyerZip} onChange={e=>updPcor("buyerZip",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="State" warn={stateWarn(pcorForm.buyerState)}><input value={pcorForm.buyerState} onChange={e=>updPcor("buyerState",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="Zip" warn={zipWarn(pcorForm.buyerZip)}><input value={pcorForm.buyerZip} onChange={e=>updPcor("buyerZip",e.target.value)} style={ST.inp}/></Field>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12}}>
                   <Field label="Buyer daytime phone"><input value={pcorForm.buyerPhone} onChange={e=>updPcor("buyerPhone",e.target.value)} placeholder="(___) ___-____" style={ST.inp}/></Field>
@@ -1976,8 +1991,8 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                 <Field label="Address"><input value={pcorForm.mailTaxAddress} onChange={e=>updPcor("mailTaxAddress",e.target.value)} style={ST.inp}/></Field>
                 <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr",gap:12}}>
                   <Field label="City"><input value={pcorForm.mailTaxCity} onChange={e=>updPcor("mailTaxCity",e.target.value)} style={ST.inp}/></Field>
-                  <Field label="State"><input value={pcorForm.mailTaxState} onChange={e=>updPcor("mailTaxState",e.target.value)} style={ST.inp}/></Field>
-                  <Field label="Zip"><input value={pcorForm.mailTaxZip} onChange={e=>updPcor("mailTaxZip",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="State" warn={stateWarn(pcorForm.mailTaxState)}><input value={pcorForm.mailTaxState} onChange={e=>updPcor("mailTaxState",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="Zip" warn={zipWarn(pcorForm.mailTaxZip)}><input value={pcorForm.mailTaxZip} onChange={e=>updPcor("mailTaxZip",e.target.value)} style={ST.inp}/></Field>
                 </div>
 
                 <div style={ST.sec}>Principal Residence</div>
