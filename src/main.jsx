@@ -176,6 +176,42 @@ const downloadWordDoc = (docHTML, docLabel, apn) => {
   a.click();
   URL.revokeObjectURL(url);
 };
+// Deeds collect a mailing address as one combined string ("123 Main St, Los Angeles, CA 90001"),
+// but the PCOR has separate Address / City / State / Zip boxes. Splitting avoids printing the
+// city, state and zip twice. Anything that does not parse cleanly stays whole in `street`
+// rather than being silently mangled.
+const splitAddress = (raw) => {
+  const out = { street: "", city: "", state: "", zip: "" };
+  const val = String(raw || "").trim();
+  if (!val) return out;
+  const parts = val.split(",").map((x) => x.trim()).filter(Boolean);
+  if (parts.length < 2) { out.street = val; return out; }
+
+  const tail = parts[parts.length - 1];
+  // Only a 2-letter code or a spelled-out "California", optionally with a ZIP, counts as
+  // a state/zip tail. Otherwise a 2-part address like "123 Main St, Oakland" would file
+  // the city as the state.
+  const m = tail.match(/^\s*(?:([A-Za-z]{2})|(California))?\s*(\d{5}(?:-\d{4})?)?\s*$/i);
+  const stateTxt = m ? ((m[1] || m[2] || "").trim()) : "";
+  const zipTxt = m ? ((m[3] || "").trim()) : "";
+  const looksLikeStateZip = !!(stateTxt || zipTxt);
+
+  if (looksLikeStateZip && parts.length >= 3) {
+    out.state = stateTxt;
+    out.zip = zipTxt;
+    out.city = parts[parts.length - 2];
+    out.street = parts.slice(0, parts.length - 2).join(", ");
+  } else if (looksLikeStateZip && parts.length === 2) {
+    out.state = stateTxt;
+    out.zip = zipTxt;
+    out.street = parts[0];
+  } else {
+    out.city = parts[parts.length - 1];
+    out.street = parts.slice(0, parts.length - 1).join(", ");
+  }
+  return out;
+};
+
 const NavMenu = ({ isMobile, open, setOpen, isAdmin, go }) => {
   const items = [
     { key:"mydocs",  label:"My Docs",  fn:go.mydocs },
@@ -1881,12 +1917,19 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
               const isTrust = docType==="granttrustin"||docType==="granttrustout";
               const isInter = docType==="interspousal";
               const buyer = form.grantee||form.spouseName||form.survivingJointTenant||form.grantor||"";
+              // The property's city is deliberately NOT used here: it is not a mailing address.
+              const addr = splitAddress(form.granteeAddress);
               setPcorForm(p=>({...p,
                 buyerName: buyer,
-                buyerAddress: form.granteeAddress||"",
+                buyerAddress: addr.street,
+                buyerCity: addr.city,
+                buyerState: addr.state,
+                buyerZip: addr.zip,
                 mailTaxName: buyer,
-                mailTaxAddress: form.granteeAddress||"",
-                mailTaxCity: form.cityOfProperty||"",
+                mailTaxAddress: addr.street,
+                mailTaxCity: addr.city,
+                mailTaxState: addr.state,
+                mailTaxZip: addr.zip,
               }));
               setPcorStep(1);
               setStep(4);
