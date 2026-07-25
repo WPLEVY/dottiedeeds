@@ -1975,9 +1975,9 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
               <div>
                 <div style={ST.sec}>Buyer / Transferee Information</div>
                 <Field label="Buyer / transferee full name" required><input value={pcorForm.buyerName} onChange={e=>updPcor("buyerName",e.target.value)} style={ST.inp}/></Field>
-                <Field label="Buyer mailing address"><input value={pcorForm.buyerAddress} onChange={e=>updPcor("buyerAddress",e.target.value)} placeholder="Street address" style={ST.inp}/></Field>
+                <Field label="Street address or physical location of real property"><input value={pcorForm.buyerAddress} onChange={e=>updPcor("buyerAddress",e.target.value)} placeholder="Street address or physical location" style={ST.inp}/></Field>
                 <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr",gap:12}}>
-                  <Field label="City"><input value={pcorForm.buyerCity} onChange={e=>updPcor("buyerCity",e.target.value)} style={ST.inp}/></Field>
+                  <Field label="City of the real property"><input value={pcorForm.buyerCity} onChange={e=>updPcor("buyerCity",e.target.value)} style={ST.inp}/></Field>
                   <Field label="State" warn={stateWarn(pcorForm.buyerState)}><input value={pcorForm.buyerState} onChange={e=>updPcor("buyerState",e.target.value)} style={ST.inp}/></Field>
                   <Field label="Zip" warn={zipWarn(pcorForm.buyerZip)}><input value={pcorForm.buyerZip} onChange={e=>updPcor("buyerZip",e.target.value)} style={ST.inp}/></Field>
                 </div>
