@@ -2280,10 +2280,16 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
                       } catch(e) {}
 
                       // ── Page 1: Header ─────────────────────────────────────────────────
+                      // This is the buyer's MAILING address. buyerAddress/buyerCity now hold the
+                      // property location, so read the mail-tax (true mailing) fields here.
+                      const _mAddr = d.mailTaxAddress || "";
+                      const _mCity = d.mailTaxCity || "";
+                      const _mState = d.mailTaxState || "CA";
+                      const _mZip = d.mailTaxZip || "";
                       txt("Name and mailing address of buyer/transferee",
                         (buyer||"") +
-                        (d.buyerAddress?"\n"+d.buyerAddress:"") +
-                        (d.buyerCity?"\n"+d.buyerCity+", "+(d.buyerState||"CA")+" "+(d.buyerZip||""):"")
+                        (_mAddr?"\n"+_mAddr:"") +
+                        (_mCity?"\n"+_mCity+", "+_mState+" "+_mZip:"")
                       );
                       txt("Assessors parcel number", f.apn||"");
                       txt("seller transferor", f.grantor||"");
@@ -2315,10 +2321,10 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
 
                       // Mail tax info
                       txt("mail property tax information to (name)", d.mailTaxName||buyer);
-                      txt("Mail property tax informatino to address", d.mailTaxAddress||d.buyerAddress||"");
-                      txt("city", d.mailTaxCity||d.buyerCity||"");
+                      txt("Mail property tax informatino to address", d.mailTaxAddress||"");
+                      txt("city", d.mailTaxCity||"");
                       txt("state", d.mailTaxState||"CA");
-                      txt("ZIP code", d.mailTaxZip||d.buyerZip||"");
+                      txt("ZIP code", d.mailTaxZip||"");
 
                       // ── Part 1: Transfer Information ───────────────────────────────────
                       chk("A. This transfer is solely between spouses (addition or removal of a spouse, death of a spouse, divorce settlement, etc.)\u00adyes", d.p1a==="YES");
