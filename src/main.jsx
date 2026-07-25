@@ -1932,19 +1932,21 @@ body:JSON.stringify({_dd_auth:ddToken, model:MODEL, max_tokens:1500, messages:[{
               const isTrust = docType==="granttrustin"||docType==="granttrustout";
               const isInter = docType==="interspousal";
               const buyer = form.grantee||form.spouseName||form.survivingJointTenant||form.grantor||"";
-              // The property's city is deliberately NOT used here: it is not a mailing address.
-              const addr = splitAddress(form.granteeAddress);
+              // Buyer block on the PCOR is the PROPERTY's location, so it prefills from the
+              // property address, not the grantee's mailing address. The mail-tax block is the
+              // actual mailing address, so it prefills from the grantee mailing address.
+              const mail = splitAddress(form.granteeAddress);
               setPcorForm(p=>({...p,
                 buyerName: buyer,
-                buyerAddress: addr.street,
-                buyerCity: addr.city,
-                buyerState: addr.state,
-                buyerZip: addr.zip,
+                buyerAddress: form.propertyAddress||"",
+                buyerCity: form.cityOfProperty||"",
+                buyerState: "CA",
+                buyerZip: mail.zip||"",
                 mailTaxName: buyer,
-                mailTaxAddress: addr.street,
-                mailTaxCity: addr.city,
-                mailTaxState: addr.state,
-                mailTaxZip: addr.zip,
+                mailTaxAddress: mail.street,
+                mailTaxCity: mail.city,
+                mailTaxState: mail.state,
+                mailTaxZip: mail.zip,
               }));
               setPcorStep(1);
               setStep(4);
