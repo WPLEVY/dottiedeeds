@@ -627,10 +627,17 @@ function DottieDeeds() {
     setMaster(nm);
     try { localStorage.setItem("dd_master",JSON.stringify(nm)); } catch {}
     if(authUser && firmId){
-      try { await supa.from("firms").update({ master: nm, name: nm.firmName||"" }).eq("id", firmId); } catch(e){}
-      try { await supa.from("master_versions").insert({ user_id: authUser.id, firm_id: firmId, version_no: nm.masterVersion, snapshot: nm, note: (masterNote||"").trim()||null }); } catch(e){}
-    } else if(authUser){
-      try { await supa.from("profiles").update({master:nm, firm:nm.firmName}).eq("id",authUser.id); } catch(e){}
+      const { error: fErr } = await supa.from("firms").update({ master: nm, name: nm.firmName||"" }).eq("id", firmId);
+      if (fErr) console.error("saveMaster: firms update failed:", fErr);
+      const { error: mvErr } = await supa.from("master_versions").insert({ user_id: authUser.id, firm_id: firmId, version_no: nm.masterVersion, snapshot: nm, note: (masterNote||"").trim()||null });
+      if (mvErr) console.error("saveMaster: master_versions insert failed:", mvErr);
+    }
+    // Always keep the profile's own master + firm name in sync, whether or not the user is
+    // in a firm. This is what the admin table reads, and skipping it for firm members is why
+    // the firm name did not update there.
+    if(authUser){
+      const { error: pErr } = await supa.from("profiles").update({ master: nm, firm: nm.firmName }).eq("id", authUser.id);
+      if (pErr) console.error("saveMaster: profiles update failed:", pErr);
     }
     setMasterNote("");
     setMasterSaved(true); setTimeout(()=>setMasterSaved(false),2500);
